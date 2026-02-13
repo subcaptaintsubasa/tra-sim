@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>特練シミュレータ・プロ版</title>
+    <style>
+        :root { --primary: #00f2ff; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* タブ切り替え */
+        .tabs { display: flex; background: #000; padding: 10px; gap: 10px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: #334155; color: white; border-radius: 5px; }
+        .tab-btn.active { background: var(--primary); color: #000; font-weight: bold; }
+        .content { flex: 1; overflow-y: auto; padding: 20px; display: none; }
+        .content.active { display: block; }
+
+        /* 管理画面スタイル */
+        .admin-box { background: var(--card); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+        input, textarea, select { background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+        .btn-update { background: #22c55e; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        
+        /* カードリスト */
+        .card-list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+<div class="tabs">
+    <div class="tab-btn active" onclick="showTab('sim')">シミュレーター</div>
+    <div class="tab-btn" onclick="showTab('admin')">マスターDB管理</div>
+</div>
+
+<!-- シミュレーター画面 -->
+<div id="sim" class="content active">
+    <h2>特練シミュレーション</h2>
+    <p>※ここにカード選択UIと計算結果が表示されます。</p>
+    <div id="simCards">読み込み中...</div>
+</div>
+
+<!-- 管理画面（ここからGitHubを更新する） -->
+<div id="admin" class="content">
+    <h2>マスターデータベース管理</h2>
+    
+    <div class="admin-box">
+        <h3>1. GitHub連携設定</h3>
+        <p style="font-size:0.8rem; color:#94a3b8;">トークンはあなたのブラウザにのみ保存されます。</p>
+        <input type="password" id="ghToken" placeholder="GitHub Personal Access Token (fine-grained)">
+        <input type="text" id="ghRepo" placeholder="ユーザー名/リポジトリ名 (例: myname/training-sim)" style="margin-top:5px;">
+    </div>
+
+    <div class="admin-box">
+        <h3>2. 新規カード追加 (AIデータを貼り付け)</h3>
+        <textarea id="aiInput" placeholder="AIが生成したJSONデータをここに貼り付けてください..." style="height: 100px;"></textarea>
+        <button class="btn-update" onclick="importFromAI()">データを解析してフォームに展開</button>
+    </div>
+
+    <div class="admin-box" id="editorForm">
+        <h3>3. カード内容確認・修正</h3>
+        <input type="text" id="editTitle" placeholder="【称号】選手名">
+        <select id="editRarity" style="margin-top:5px;">
+            <option value="SSR">SSR</option>
+            <option value="SR">SR</option>
+        </select>
+        <div class="stat-grid" id="editStats">
+            <!-- JSで17項目生成 -->
+        </div>
+        <button class="btn-update" style="background:var(--primary); color:#000;" onclick="pushToGitHub()">GitHub上のマスターDBを更新（保存）</button>
+    </div>
+
+    <div class="admin-box">
+        <h3>現在の登録カード一覧</h3>
+        <div id="masterList"></div>
+    </div>
+</div>
+
+<script>
+    // 17項目のマスター定義
+    const STAT_NAMES = ["突破力","決定力","走力","冷静さ","コンタクト","キープ力","敏捷性","ボールタッチ","パスカット","ショートパス","マーク","タックル","キック精度","ジャンプ","ヘディング","セービング","反応速度"];
+    let masterDB = [];
+
+    // 初期化：フォーム生成
+    const statGrid = document.getElementById('editStats');
+    STAT_NAMES.forEach(s => {
+        statGrid.innerHTML += `<div><label style="font-size:0.7rem">${s}</label><input type="number" step="0.1" id="field_${s}" class="stat-field"></div>`;
+    });
+
+    function showTab(id) {
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // AIからのデータをフォームに展開
+    function importFromAI() {
+        try {
+            const data = JSON.parse(document.getElementById('aiInput').value);
+            document.getElementById('editTitle').value = `${data.title} ${data.name}`;
+            document.getElementById('editRarity').value = data.rarity;
+            STAT_NAMES.forEach(s => {
+                document.getElementById(`field_${s}`).value = data.stats[s] || "";
+            });
+            alert("データを読み込みました。内容を確認して保存してください。");
+        } catch(e) {
+            alert("JSONの形式が正しくありません。");
+        }
+    }
+
+    // GitHub API連携：保存処理
+    async function pushToGitHub() {
+        const token = document.getElementById('ghToken').value;
+        const repo = document.getElementById('ghRepo').value;
+        if(!token || !repo) return alert("GitHubのトークンとリポジトリ名を設定してください。");
+
+        // 1. 現在のフォームから新規データを作成
+        const newCard = {
+            title: document.getElementById('editTitle').value,
+            rarity: document.getElementById('editRarity').value,
+            stats: {}
+        };
+        STAT_NAMES.forEach(s => {
+            const val = document.getElementById(`field_${s}`).value;
+            if(val) newCard.stats[s] = parseFloat(val);
+        });
+
+        // 2. 本来は既存のmasterDBにマージする処理が入る
+        masterDB.push(newCard);
+
+        // 3. GitHub APIを叩いてファイルを更新
+        // (ここでは仕組みの説明のため、実際のリクエストコードの骨組みを示します)
+        const path = "data/cards.json";
+        const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+        
+        // ※実際にはここで既存ファイルのSHA取得 -> PUTリクエスト という流れになります
+        console.log("Saving to GitHub...", masterDB);
+        alert("GitHub APIへの接続設定を完了させると、ここから直接ファイルが更新されます！");
+    }
+</script>
+</body>
+</html>
