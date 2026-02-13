@@ -165,8 +165,8 @@ if(s) {
     let areaH = '<div class="sa-result-area">';
     const areas = s.area || Array(9).fill(0);
     areas.forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
-    // 文字のdivに flex:1 を追加し、幅を確保させます
-    saDiv.innerHTML += `<div style="display:flex; align-items:center; margin-bottom:5px;">${areaH}<div style="flex:1;"><span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small></div></div>`;
+// 文字のdivにスタイルを追加して、折り返しを防ぎ幅を確保します
+    saDiv.innerHTML += `<div style="display:flex; align-items:center; margin-bottom:5px; width:100%;">${areaH}<div style="flex:1; min-width:0; white-space:nowrap;"><span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small></div></div>`;
 }
             if(a) saDiv.innerHTML += `<div style="margin-bottom:5px;"><span class="tag tag-ability">A</span><b>${name}</b><br><small>${a.condition || ''}</small></div>`;
         });
