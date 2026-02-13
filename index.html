@@ -2,140 +2,305 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>特練シミュレータ・プロ版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特練シミュレータ Pro</title>
     <style>
-        :root { --primary: #00f2ff; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        :root { --primary: #00f2ff; --accent: #22c55e; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; }
         
-        /* タブ切り替え */
-        .tabs { display: flex; background: #000; padding: 10px; gap: 10px; }
-        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: #334155; color: white; border-radius: 5px; }
-        .tab-btn.active { background: var(--primary); color: #000; font-weight: bold; }
-        .content { flex: 1; overflow-y: auto; padding: 20px; display: none; }
+        /* Navigation */
+        nav { background: #000; padding: 10px; display: flex; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: #334155; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: var(--primary); color: #000; }
+
+        .content { display: none; padding: 15px; max-width: 1000px; margin: 0 auto; }
         .content.active { display: block; }
 
-        /* 管理画面スタイル */
-        .admin-box { background: var(--card); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
-        input, textarea, select { background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box; }
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
-        .btn-update { background: #22c55e; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        
-        /* カードリスト */
-        .card-list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #334155; }
+        /* Common UI */
+        .card-box { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; }
+        input, textarea, select { background: #000; border: 1px solid #334155; color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .btn { padding: 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-save { background: var(--accent); color: #fff; width: 100%; margin-top: 10px; font-size: 1.1rem; }
+
+        /* Simulator UI */
+        .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .slot { border: 2px dashed #444; border-radius: 8px; height: 100px; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; font-size: 0.8rem; padding: 5px; }
+        .slot.filled { border: 2px solid var(--primary); background: rgba(0,242,255,0.1); }
+        .result-panel { background: #000; padding: 15px; border-radius: 10px; border: 2px solid var(--primary); position: sticky; bottom: 10px; }
+        .stat-result-row { display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding: 4px 0; font-size: 0.9rem; }
+
+        /* Admin UI */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 10px; }
+        .stat-item label { display: block; font-size: 0.75rem; color: #94a3b8; }
+        .master-card-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #334155; }
+        .del-btn { background: #ef4444; color: white; padding: 5px 10px; border-radius: 4px; border: none; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
-<div class="tabs">
-    <div class="tab-btn active" onclick="showTab('sim')">シミュレーター</div>
-    <div class="tab-btn" onclick="showTab('admin')">マスターDB管理</div>
-</div>
+<nav>
+    <button class="tab-btn active" onclick="showTab('sim')">シミュレーター</button>
+    <button class="tab-btn" onclick="showTab('admin')">マスター管理</button>
+</nav>
 
-<!-- シミュレーター画面 -->
+<!-- 1. シミュレーター画面 -->
 <div id="sim" class="content active">
-    <h2>特練シミュレーション</h2>
-    <p>※ここにカード選択UIと計算結果が表示されます。</p>
-    <div id="simCards">読み込み中...</div>
+    <h3>特練枠選択（最大6枠）</h3>
+    <div class="slot-grid" id="simSlots">
+        <!-- JSで6枠生成 -->
+    </div>
+
+    <div class="card-box">
+        <label>成功度（コンディション）</label>
+        <select id="conditionMod" onchange="updateCalc()">
+            <option value="1.0">普通 (Good) x1.0</option>
+            <option value="1.25">好調 (Great) x1.25</option>
+            <option value="1.5">絶好調 (Excellent) x1.5</option>
+        </select>
+    </div>
+
+    <div class="result-panel">
+        <h4 style="margin:0 0 10px 0; color:var(--primary);">合計上昇値予測</h4>
+        <div id="totalResults">
+            <!-- 合計値がここに並ぶ -->
+        </div>
+    </div>
 </div>
 
-<!-- 管理画面（ここからGitHubを更新する） -->
+<!-- 2. 管理画面 -->
 <div id="admin" class="content">
-    <h2>マスターデータベース管理</h2>
-    
-    <div class="admin-box">
-        <h3>1. GitHub連携設定</h3>
-        <p style="font-size:0.8rem; color:#94a3b8;">トークンはあなたのブラウザにのみ保存されます。</p>
-        <input type="password" id="ghToken" placeholder="GitHub Personal Access Token (fine-grained)">
-        <input type="text" id="ghRepo" placeholder="ユーザー名/リポジトリ名 (例: myname/training-sim)" style="margin-top:5px;">
+    <div class="card-box">
+        <h4>GitHub連携設定</h4>
+        <input type="password" id="ghToken" placeholder="GitHubアクセストークン" style="margin-bottom:5px;">
+        <input type="text" id="ghRepo" placeholder="ユーザー名/リポジトリ名 (例: subcaptaintsubasa/tra-sim)">
+        <p style="font-size:0.7rem; color:#888;">※設定はブラウザに保存されます。</p>
     </div>
 
-    <div class="admin-box">
-        <h3>2. 新規カード追加 (AIデータを貼り付け)</h3>
-        <textarea id="aiInput" placeholder="AIが生成したJSONデータをここに貼り付けてください..." style="height: 100px;"></textarea>
-        <button class="btn-update" onclick="importFromAI()">データを解析してフォームに展開</button>
+    <div class="card-box">
+        <h4>新規カード追加 (AIデータをペースト)</h4>
+        <textarea id="aiPaste" placeholder="AIが生成したデータをここに貼り付け..." style="height:80px;"></textarea>
+        <button class="btn btn-primary" onclick="parseAIJSON()" style="width:100%; margin-top:10px;">データを読み込む</button>
     </div>
 
-    <div class="admin-box" id="editorForm">
-        <h3>3. カード内容確認・修正</h3>
-        <input type="text" id="editTitle" placeholder="【称号】選手名">
-        <select id="editRarity" style="margin-top:5px;">
-            <option value="SSR">SSR</option>
-            <option value="SR">SR</option>
-        </select>
-        <div class="stat-grid" id="editStats">
-            <!-- JSで17項目生成 -->
+    <div class="card-box" id="editorForm" style="display:none; border:2px solid var(--primary);">
+        <h4>カード編集エディタ</h4>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <input type="text" id="editName" placeholder="選手名">
+            <select id="editRarity" style="width:80px;"><option value="SSR">SSR</option><option value="SR">SR</option></select>
         </div>
-        <button class="btn-update" style="background:var(--primary); color:#000;" onclick="pushToGitHub()">GitHub上のマスターDBを更新（保存）</button>
+        <input type="text" id="editTitle" placeholder="称号（【】内）">
+        <div class="stat-grid" id="editStatsGrid"></div>
+        <button class="btn btn-save" onclick="saveToGitHub()">GitHubを更新する</button>
+        <button class="btn" onclick="cancelEdit()" style="width:100%; margin-top:5px; background:#444; color:#fff;">キャンセル</button>
     </div>
 
-    <div class="admin-box">
-        <h3>現在の登録カード一覧</h3>
-        <div id="masterList"></div>
+    <div class="card-box">
+        <h4>登録済みカード一覧</h4>
+        <div id="masterList">読み込み中...</div>
     </div>
+</div>
+
+<!-- カード選択モーダル -->
+<div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; overflow-y:auto; padding:20px; box-sizing:border-box;">
+    <h3 style="color:var(--primary);">カードを選択</h3>
+    <div id="modalList"></div>
+    <button class="btn" onclick="closeModal()" style="width:100%; margin-top:20px; background:#444; color:#fff;">閉じる</button>
 </div>
 
 <script>
-    // 17項目のマスター定義
+    // --- 定数・初期化 ---
     const STAT_NAMES = ["突破力","決定力","走力","冷静さ","コンタクト","キープ力","敏捷性","ボールタッチ","パスカット","ショートパス","マーク","タックル","キック精度","ジャンプ","ヘディング","セービング","反応速度"];
-    let masterDB = [];
+    let cardsDB = [];
+    let selectedSlots = [null, null, null, null, null, null];
+    let activeSlotIndex = null;
 
-    // 初期化：フォーム生成
-    const statGrid = document.getElementById('editStats');
-    STAT_NAMES.forEach(s => {
-        statGrid.innerHTML += `<div><label style="font-size:0.7rem">${s}</label><input type="number" step="0.1" id="field_${s}" class="stat-field"></div>`;
-    });
+    window.onload = async () => {
+        loadSettings();
+        await fetchMasterDB();
+        initUI();
+    };
 
-    function showTab(id) {
+    function loadSettings() {
+        document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
+        document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
+    }
+
+    function initUI() {
+        const grid = document.getElementById('simSlots');
+        grid.innerHTML = '';
+        selectedSlots.forEach((card, i) => {
+            const div = document.createElement('div');
+            div.className = `slot ${card ? 'filled' : ''}`;
+            div.innerHTML = card ? `<b>${card.title}</b><br>${card.name}` : `枠 ${i+1}<br>(タップで選択)`;
+            div.onclick = () => openModal(i);
+            grid.appendChild(div);
+        });
+        
+        const editorStats = document.getElementById('editStatsGrid');
+        editorStats.innerHTML = '';
+        STAT_NAMES.forEach(s => {
+            editorStats.innerHTML += `<div class="stat-item"><label>${s}</label><input type="number" step="0.1" class="edit-stat-val" data-stat="${s}"></div>`;
+        });
+        updateCalc();
+    }
+
+    function showTab(tabId) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+        document.getElementById(tabId).classList.add('active');
         event.target.classList.add('active');
     }
 
-    // AIからのデータをフォームに展開
-    function importFromAI() {
-        try {
-            const data = JSON.parse(document.getElementById('aiInput').value);
-            document.getElementById('editTitle').value = `${data.title} ${data.name}`;
-            document.getElementById('editRarity').value = data.rarity;
-            STAT_NAMES.forEach(s => {
-                document.getElementById(`field_${s}`).value = data.stats[s] || "";
-            });
-            alert("データを読み込みました。内容を確認して保存してください。");
-        } catch(e) {
-            alert("JSONの形式が正しくありません。");
-        }
+    // --- 核心ロジック：特練計算エンジン ---
+    function calculateGrowth(d1, level = 45) {
+        // N = round(D1 * 6)
+        const N = Math.round(d1 * 6);
+        // V_Base(L) = (10*D1 + floor(10 * (N-D1) * (L-1) / 44)) / 10
+        const term1 = 10 * d1;
+        const term2 = Math.floor((10 * (N - d1) * (level - 1)) / 44);
+        return (term1 + term2) / 10;
     }
 
-    // GitHub API連携：保存処理
-    async function pushToGitHub() {
+    function updateCalc() {
+        const multiplier = parseFloat(document.getElementById('conditionMod').value);
+        const totals = {};
+        STAT_NAMES.forEach(s => totals[s] = 0);
+
+        selectedSlots.forEach(card => {
+            if(!card) return;
+            const level = card.rarity === 'SSR' ? 50 : 45; // 完凸前提で計算
+            for(let s in card.stats) {
+                const baseGrowth = calculateGrowth(card.stats[s], level);
+                totals[s] += baseGrowth * multiplier;
+            }
+        });
+
+        const resDiv = document.getElementById('totalResults');
+        resDiv.innerHTML = '';
+        STAT_NAMES.forEach(s => {
+            if(totals[s] > 0) {
+                resDiv.innerHTML += `<div class="stat-result-row"><span>${s}</span><span style="color:var(--primary); font-weight:bold;">+${totals[s].toFixed(1)}</span></div>`;
+            }
+        });
+    }
+
+    // --- GitHub API連携 ---
+    async function fetchMasterDB() {
+        const repo = document.getElementById('ghRepo').value;
+        if(!repo) return;
+        try {
+            const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/data/cards.json?t=${Date.now()}`);
+            cardsDB = await res.json();
+            renderMasterList();
+        } catch(e) { console.error("DB Load Error", e); }
+    }
+
+    async function saveToGitHub() {
         const token = document.getElementById('ghToken').value;
         const repo = document.getElementById('ghRepo').value;
-        if(!token || !repo) return alert("GitHubのトークンとリポジトリ名を設定してください。");
+        if(!token || !repo) return alert("GitHubトークンとリポジトリ名が必要です");
 
-        // 1. 現在のフォームから新規データを作成
-        const newCard = {
+        localStorage.setItem('gh_token', token);
+        localStorage.setItem('gh_repo', repo);
+
+        // エディタからデータ収集
+        const card = {
+            name: document.getElementById('editName').value,
             title: document.getElementById('editTitle').value,
             rarity: document.getElementById('editRarity').value,
             stats: {}
         };
-        STAT_NAMES.forEach(s => {
-            const val = document.getElementById(`field_${s}`).value;
-            if(val) newCard.stats[s] = parseFloat(val);
+        document.querySelectorAll('.edit-stat-val').forEach(el => {
+            if(el.value) card.stats[el.dataset.stat] = parseFloat(el.value);
         });
 
-        // 2. 本来は既存のmasterDBにマージする処理が入る
-        masterDB.push(newCard);
+        // 重複チェック（名前とタイトルが一致したら上書き）
+        const idx = cardsDB.findIndex(c => c.name === card.name && c.title === card.title);
+        if(idx >= 0) cardsDB[idx] = card; else cardsDB.push(card);
 
-        // 3. GitHub APIを叩いてファイルを更新
-        // (ここでは仕組みの説明のため、実際のリクエストコードの骨組みを示します)
+        await pushDB(token, repo, cardsDB);
+    }
+
+    async function pushDB(token, repo, data) {
         const path = "data/cards.json";
         const url = `https://api.github.com/repos/${repo}/contents/${path}`;
         
-        // ※実際にはここで既存ファイルのSHA取得 -> PUTリクエスト という流れになります
-        console.log("Saving to GitHub...", masterDB);
-        alert("GitHub APIへの接続設定を完了させると、ここから直接ファイルが更新されます！");
+        // 1. 現在のファイルのSHAを取得
+        const getRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+        const getData = await getRes.json();
+        const sha = getData.sha;
+
+        // 2. アップロード
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+        const putRes = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: "Update Master DB", content: content, sha: sha })
+        });
+
+        if(putRes.ok) {
+            alert("GitHubのマスターDBを更新しました！");
+            location.reload();
+        } else {
+            alert("エラーが発生しました。トークンの権限を確認してください。");
+        }
     }
+
+    // --- 管理用ツール関数 ---
+    function renderMasterList() {
+        const list = document.getElementById('masterList');
+        list.innerHTML = '';
+        cardsDB.forEach((c, i) => {
+            list.innerHTML += `<div class="master-card-item">
+                <span>${c.title} ${c.name} (${c.rarity})</span>
+                <button class="del-btn" onclick="deleteCard(${i})">削除</button>
+            </div>`;
+        });
+    }
+
+    function parseAIJSON() {
+        try {
+            const raw = document.getElementById('aiInput') ? document.getElementById('aiInput').value : document.getElementById('aiPaste').value;
+            const data = JSON.parse(raw);
+            document.getElementById('editName').value = data.name || "";
+            document.getElementById('editTitle').value = data.title || "";
+            document.getElementById('editRarity').value = data.rarity || "SSR";
+            document.querySelectorAll('.edit-stat-val').forEach(el => {
+                el.value = data.stats[el.dataset.stat] || "";
+            });
+            document.getElementById('editorForm').style.display = 'block';
+        } catch(e) { alert("JSON解析エラー"); }
+    }
+
+    async function deleteCard(idx) {
+        if(!confirm("本当に削除してGitHubに反映しますか？")) return;
+        cardsDB.splice(idx, 1);
+        const token = document.getElementById('ghToken').value;
+        const repo = document.getElementById('ghRepo').value;
+        await pushDB(token, repo, cardsDB);
+    }
+
+    // --- シミュレーター用ツール関数 ---
+    function openModal(slotIdx) {
+        activeSlotIndex = slotIdx;
+        const modal = document.getElementById('cardModal');
+        const list = document.getElementById('modalList');
+        modal.style.display = 'block';
+        list.innerHTML = '<div class="card-box" onclick="selectCard(null)">（空欄にする）</div>';
+        cardsDB.forEach((c, i) => {
+            list.innerHTML += `<div class="card-box" onclick="selectCard(${i})"><b>${c.title}</b><br>${c.name}</div>`;
+        });
+    }
+
+    function selectCard(idx) {
+        selectedSlots[activeSlotIndex] = idx === null ? null : cardsDB[idx];
+        closeModal();
+        initUI();
+    }
+
+    function closeModal() { document.getElementById('cardModal').style.display = 'none'; }
+    function cancelEdit() { document.getElementById('editorForm').style.display = 'none'; }
 </script>
 </body>
 </html>
