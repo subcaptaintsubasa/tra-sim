@@ -47,18 +47,48 @@
 
 <!-- シミュレーター -->
 <div id="sim" class="content active">
+    <!-- 1. 選手ステータス入力エリア -->
+    <div class="card-box" style="border-color: #3b82f6;">
+        <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="document.getElementById('statInputArea').style.display = document.getElementById('statInputArea').style.display==='none'?'grid':'none'">
+            <label style="color:#3b82f6; font-weight:bold;">▼ 育成選手のステータス入力 (現在値 / 最大値)</label>
+            <span style="font-size:0.8rem;">開閉</span>
+        </div>
+        <div id="statInputArea" class="stat-grid" style="display:none; margin-top:10px;">
+            <!-- JSで自動生成 -->
+        </div>
+    </div>
+
+    <!-- 2. プレイスタイル入力 -->
     <div class="card-box" style="border-color: var(--accent);">
         <label style="color:var(--accent); font-weight:bold; font-size:0.8rem;">育成選手のプレイスタイル</label>
         <input type="text" id="traineeStyle" placeholder="例: アタッカー" oninput="updateCalc()" list="styleSuggestions">
         <datalist id="styleSuggestions"></datalist>
     </div>
+
+    <!-- 3. 特練スロット -->
     <div id="simSlots" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;"></div>
-    <div class="card-box">
-        <label>コンディション</label>
-        <select id="conditionMod" onchange="updateCalc()">
-            <option value="1.0">普通</option><option value="1.25">好調</option><option value="1.5">絶好調</option>
-        </select>
+
+    <!-- 4. 各種設定（コンディション & オート編成） -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+        <div class="card-box" style="margin-bottom:0;">
+            <label>コンディション</label>
+            <select id="conditionMod" onchange="updateCalc()">
+                <option value="1.0">普通</option>
+                <option value="1.25">好調</option>
+                <option value="1.5">絶好調</option>
+            </select>
+        </div>
+        <div class="card-box" style="margin-bottom:0; border: 2px solid var(--skill);">
+            <label style="color:var(--skill); font-weight:bold; font-size:0.8rem;">🤖 オート編成</label>
+            <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                <input type="range" id="targetPct" min="50" max="120" value="100" step="5" oninput="document.getElementById('targetPctDisp').innerText=this.value">
+                <span id="targetPctDisp" style="font-size:0.7rem; min-width:25px;">100</span>%
+            </div>
+            <button class="btn" style="background:var(--skill); color:#000; font-size:0.75rem; padding:5px;" onclick="runAutoSim()">実行</button>
+        </div>
     </div>
+
+    <!-- 5. 結果表示 -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
         <div id="totalResults" class="card-box"></div>
         <div id="saResults" class="card-box"></div>
@@ -75,13 +105,20 @@
     <div class="card-box">
         <h4>JSON一括登録</h4>
         <textarea id="aiPasteCard" placeholder="カードデータを貼り付け" style="height:60px;"></textarea>
-        <div style="display:flex; gap:5px; margin-top:5px;"><button class="btn" onclick="loadCardToEditor()">エディタへ</button><button class="btn btn-accent" onclick="batchRegisterCards()">一括保存</button></div>
+        <div style="display:flex; gap:5px; margin-top:5px;">
+            <button class="btn" onclick="loadCardToEditor()">エディタへ</button>
+            <button class="btn btn-accent" onclick="batchRegisterCards()">一括保存</button>
+        </div>
     </div>
     <div class="card-box" id="cardEditor" style="border:2px solid var(--primary);">
         <h4>個別編集</h4>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;"><input id="editName" placeholder="選手名"><input id="editTitle" placeholder="【称号】"></div>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:5px;"><select id="editRarity"><option>SSR</option><option>SR</option></select><input id="editBonusType" placeholder="条件"><input id="editBonusVal" type="number" placeholder="値%"></div>
-        <input id="editAbilityName" placeholder="スキル名" list="skillList" style="margin-top:5px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:5px;">
+            <select id="editRarity"><option>SSR</option><option>SR</option></select>
+            <input id="editBonusType" placeholder="条件スタイル">
+            <input id="editBonusVal" type="number" placeholder="ボーナス%">
+        </div>
+        <input id="editAbilityName" placeholder="スキル/アビ名" list="skillList" style="margin-top:5px;">
         <datalist id="skillList"></datalist>
         <div class="stat-grid" id="editStatsGrid"></div>
         <button class="btn btn-accent" onclick="saveCardToGH()">保存</button>
@@ -111,6 +148,7 @@
     <div id="saList"></div>
 </div>
 
+<!-- カード選択用モーダル -->
 <div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; padding:20px; overflow-y:auto;">
     <div id="modalList"></div><button class="btn" onclick="document.getElementById('cardModal').style.display='none'">閉じる</button>
 </div>
@@ -124,288 +162,212 @@
         document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
         document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
         document.getElementById('traineeStyle').value = localStorage.getItem('trainee_style') || '';
+        
+        // UI生成: カード編集用グリッド
         const grid = document.getElementById('editStatsGrid');
         STATS.forEach(s => grid.innerHTML += `<div class="stat-item ${GK_STATS.includes(s)?'gk-stat':''}"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`);
+        
+        // UI生成: 選手ステータス入力エリア
+        const inputArea = document.getElementById('statInputArea');
+        STATS.forEach(s => {
+            const isGk = GK_STATS.includes(s);
+            inputArea.innerHTML += `
+                <div class="stat-item ${isGk?'gk-stat':''}" style="background:#0f172a; padding:5px; border-radius:4px;">
+                    <label>${s}</label>
+                    <div style="display:flex; gap:2px;">
+                        <input type="number" placeholder="現在" id="now_${s}" onchange="updateCalc()" style="font-size:0.7rem; padding:4px;">
+                        <input type="number" placeholder="最大" id="max_${s}" onchange="updateCalc()" style="font-size:0.7rem; padding:4px;">
+                    </div>
+                    <div id="gap_${s}" style="text-align:right; font-size:0.7rem; color:#64748b;">残: -</div>
+                </div>`;
+        });
+
+        // UI生成: スキルターゲット
         const saTgt = document.getElementById('saTargets');
         STATS.forEach(s => saTgt.innerHTML += `<label style="font-size:0.7rem;"><input type="checkbox" value="${s}" name="sa_tgt"> ${s}</label>`);
+        
+        // UI生成: エリアグリッド
         const areaGrid = document.getElementById('saAreaGrid');
         for(let i=0; i<9; i++) areaGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
+        
         initSimSlots(); await fetchAllDB();
     };
 
-// 修正版：リポジトリ設定なしでもローカル(./data)から読み込むように変更
+    // データベース取得（ローカル優先）
     async function fetchAllDB() {
-        // 設定入力がなくても、とりあえず相対パスからデータを読み込む
-        const ts = Date.now();
-        const base = './data'; 
-
+        const ts = Date.now(), base = './data';
         try {
-            // キャッシュ回避のタイムスタンプ(?t=)を付けて取得
-            const [c, s, a] = await Promise.all([ 
-                fetch(`${base}/cards.json?t=${ts}`), 
-                fetch(`${base}/skills.json?t=${ts}`), 
-                fetch(`${base}/abilities.json?t=${ts}`) 
-            ]);
-
-            if(c.ok) cardsDB = await c.json(); 
-            if(s.ok) skillsDB = await s.json(); 
-            if(a.ok) abilitiesDB = await a.json();
-            
-            renderCardList(); 
-            renderSAList(); 
-            updateAutoComplete(); 
-            updateCalc();
+            const [c, s, a] = await Promise.all([ fetch(`${base}/cards.json?t=${ts}`), fetch(`${base}/skills.json?t=${ts}`), fetch(`${base}/abilities.json?t=${ts}`) ]);
+            if(c.ok) cardsDB = await c.json(); if(s.ok) skillsDB = await s.json(); if(a.ok) abilitiesDB = await a.json();
+            renderCardList(); renderSAList(); updateAutoComplete(); updateCalc();
         } catch(e) { console.error(e); }
     }
-    // 計算ロジック完全版（整数計算導入 ＋ SSR分母修正 ＋ スタイル横書き維持）
+
+    // 数値計算ロジック（整数空間x10）
     function updateCalc() {
         const conditionStr = document.getElementById('conditionMod').value;
         const mult = parseFloat(conditionStr);
         const style = document.getElementById('traineeStyle').value;
         localStorage.setItem('trainee_style', style);
         
-        // 浮動小数点誤差回避のため、全て「表示値の10倍の整数」として加算する
         const totals_x10 = {}; 
         const saList = new Set();
         
         selectedSlots.forEach(card => {
             if(!card) return;
-            
-            // レアリティによるレベル上限 (SR:45, SSR:50)
             const L = card.rarity === 'SSR' ? 50 : 45;
-            
-            // ボーナス倍率
-            const bonusPct = (card.bonus_type === style) ? card.bonus_value : 0;
-            const bonusMult = 1 + (bonusPct / 100);
+            const bonusMult = (card.bonus_type === style) ? (1 + (card.bonus_value/100)) : 1.0;
 
             for(let s in card.stats) { 
-                const d1 = card.stats[s]; // Lv1 初期値
-
-                // 表示値の10倍の整数空間へ変換
+                const d1 = card.stats[s];
                 const d1_int = Math.round(d1 * 10); 
-
-                // 目標整数値 N = round(D1 * 6)
                 const N = Math.round(d1 * 6);
-                
-                // レベル別上昇値算出
-                // 分子: (N*10 - d1_int) * (L - 1)
                 const term_numerator = (N * 10 - d1_int) * (L - 1);
-                
-                // 【修正箇所】分母を固定の44ではなく、(L - 1) で割る
-                // これにより SR(44)でも SSR(49)でも、LvMAX時に正しく目標値Nに到達する
                 const term = Math.floor(term_numerator / (L - 1));
-                
                 const vBase_x10 = d1_int + term;
-
-                // コンディション補正とボーナス適用
                 const val_x10 = Math.round(vBase_x10 * mult * bonusMult);
-
                 totals_x10[s] = (totals_x10[s] || 0) + val_x10;
             }
             if(card.abilities && card.abilities[0]) saList.add(card.abilities[0]);
         });
 
+        // 上昇値 & Gap比較表示
         const resDiv = document.getElementById('totalResults'); 
-        resDiv.innerHTML = '<h4>特練 上昇値</h4>';
-        
-        STATS.forEach(s => { 
+        resDiv.innerHTML = '<h4>特練 上昇値 vs Gap</h4>';
+        STATS.forEach(s => {
+            const nowVal = parseFloat(document.getElementById(`now_${s}`).value) || 0;
+            const maxVal = parseFloat(document.getElementById(`max_${s}`).value) || 0;
+            const gap = (maxVal > 0 && nowVal > 0) ? (maxVal - nowVal) : null;
+            const gapEl = document.getElementById(`gap_${s}`);
+            if(gap !== null) { gapEl.innerHTML = `残: <b>${gap.toFixed(1)}</b>`; gapEl.style.color = "#fbbf24"; }
+            else { gapEl.innerHTML = `残: -`; gapEl.style.color = "#64748b"; }
+
             if(totals_x10[s] > 0) {
-                // 整数空間(x10)から実数に戻して表示
                 const finalVal = totals_x10[s] / 10;
-                resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333;"><span>${s}</span><b>+${finalVal.toFixed(1)}</b></div>`; 
+                let color = "#fff", note = "";
+                if(gap !== null) {
+                    if(finalVal > gap) { color = "#ef4444"; note = `<span style="font-size:0.6rem;">(+${(finalVal-gap).toFixed(1)})</span>`; }
+                    else if(finalVal >= gap * 0.9) color = "#22c55e";
+                }
+                resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333;"><span>${s}</span><b style="color:${color}">+${finalVal.toFixed(1)}${note}</b></div>`; 
             }
         });
 
+        // 獲得スキル表示
         const saDiv = document.getElementById('saResults'); 
         saDiv.innerHTML = '<h4>予定スキル/アビ</h4>';
         saList.forEach(name => {
             const s = skillsDB.find(i=>i.name===name), a = abilitiesDB.find(i=>i.name===name);
             if(s) {
                 let areaH = '<div class="sa-result-area">';
-                const areas = s.area || Array(9).fill(0);
-                areas.forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
-                // 文字の折り返しを防ぐスタイル
+                (s.area || Array(9).fill(0)).forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
                 saDiv.innerHTML += `<div style="display:flex; align-items:center; margin-bottom:5px; width:100%;">${areaH}<div style="flex:1; min-width:0; white-space:nowrap;"><span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small></div></div>`;
             }
-            if(a) saDiv.innerHTML += `<div style="margin-bottom:5px;"><span class="tag tag-ability">A</span><b>${name}</b><br><small>${a.condition || ''}</small></div>`;
+            if(a) saDiv.innerHTML += `<div style="margin-bottom:5px; width:100%; white-space:nowrap;"><span class="tag tag-ability">A</span><b>${name}</b><br><small>${a.condition || ''}</small></div>`;
         });
         initSimSlots();
     }
+
+    // オート編成ロジック (ビームサーチ)
+    window.runAutoSim = () => {
+        if(cardsDB.length === 0) return alert("データ不足");
+        const style = document.getElementById('traineeStyle').value;
+        const targetPct = parseInt(document.getElementById('targetPct').value) / 100;
+        const mult = parseFloat(document.getElementById('conditionMod').value);
+
+        const gaps = {};
+        STATS.forEach(s => {
+            const now = parseFloat(document.getElementById(`now_${s}`).value) || 0, max = parseFloat(document.getElementById(`max_${s}`).value) || 0;
+            gaps[s] = (max > 0) ? Math.max(0, max - now) * targetPct : 999999;
+        });
+
+        const optDB = cardsDB.map((card, idx) => {
+            const L = card.rarity === 'SSR' ? 50 : 45, bMult = (card.bonus_type === style) ? (1 + (card.bonus_value/100)) : 1.0;
+            const vals = {};
+            STATS.forEach(s => {
+                const d1 = card.stats[s] || 0; if(d1===0) return;
+                const d1_i = Math.round(d1*10), N = Math.round(d1*6);
+                vals[s] = Math.round((d1_i + Math.floor(((N*10-d1_i)*(L-1))/(L-1))) * mult * bMult);
+            });
+            return { id: idx, vals: vals };
+        });
+
+        const getScore = (sums) => {
+            let sc = 0; STATS.forEach(s => sc += Math.min((sums[s]||0)/10, gaps[s])); return sc;
+        };
+
+        let beam = [{ idxs: [], sums: {}, score: 0 }];
+        const WIDTH = 2000;
+
+        for(let step=0; step<6; step++) {
+            let next = [];
+            for(const node of beam) {
+                for(const card of optDB) {
+                    const nSums = { ...node.sums };
+                    for(const s in card.vals) nSums[s] = (nSums[s]||0) + card.vals[s];
+                    next.push({ idxs: [...node.idxs, card.id], sums: nSums, score: getScore(nSums) });
+                }
+            }
+            beam = next.sort((a,b)=>b.score - a.score).slice(0, WIDTH);
+        }
+
+        selectedSlots = beam[0].idxs.map(i => cardsDB[i]);
+        updateCalc();
+        alert(`最適化完了 (Score: ${beam[0].score.toFixed(1)})`);
+    };
+
+    // GitHub連携用
     async function pushToGH(file, data, msg) {
         const token = document.getElementById('ghToken').value, repo = document.getElementById('ghRepo').value;
         if(!token || !repo) return alert("GitHub設定不足");
-        localStorage.setItem('gh_token', token); localStorage.setItem('gh_repo', repo);
         const url = `https://api.github.com/repos/${repo}/contents/data/${file}`;
         try {
             const g = await fetch(url, { headers:{'Authorization':`token ${token}`} });
             const sha = g.ok ? (await g.json()).sha : null;
-            const res = await fetch(url, {
-                method:'PUT', headers:{'Authorization':`token ${token}`},
-                body: JSON.stringify({ message:msg, sha:sha, content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))) })
-            });
+            const res = await fetch(url, { method:'PUT', headers:{'Authorization':`token ${token}`}, body: JSON.stringify({ message:msg, sha:sha, content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))) }) });
             return res.ok;
         } catch(e) { return false; }
     }
 
-    async function batchRegisterSA() {
-        try {
-            const d = JSON.parse(document.getElementById('aiPasteSA').value);
-            if(d.skills) d.skills.forEach(s => { const i=skillsDB.findIndex(x=>x.name===s.name); if(i>=0) skillsDB[i]=s; else skillsDB.push(s); });
-            if(d.abilities) d.abilities.forEach(a => { const i=abilitiesDB.findIndex(x=>x.name===a.name); if(i>=0) abilitiesDB[i]=a; else abilitiesDB.push(a); });
-            const sOk = await pushToGH('skills.json', skillsDB, "Update Skills");
-            const aOk = await pushToGH('abilities.json', abilitiesDB, "Update Abilities");
-            if(sOk && aOk) alert("保存成功"); else alert("一部保存失敗");
-            renderSAList(); updateAutoComplete(); updateCalc();
-        } catch(e) { alert("JSON形式エラー"); }
-    }
-
-    function toggleAreaGrid() { document.getElementById('areaContainer').style.display = document.getElementById('saType').value==='skill'?'block':'none'; }
+    // 管理機能
     function showTab(id) { document.querySelectorAll('.content').forEach(c=>c.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); }
     function openModal(i) { activeSlotIndex=i; const m=document.getElementById('modalList'); m.innerHTML='<div class="card-box" onclick="selectSlot(null)">（空）</div>'; cardsDB.forEach((c,idx)=>m.innerHTML+=`<div class="card-box" onclick="selectSlot(${idx})">${c.title}<br><b>${c.name}</b></div>`); document.getElementById('cardModal').style.display='block'; }
     function selectSlot(i) { selectedSlots[activeSlotIndex] = i===null?null:cardsDB[i]; document.getElementById('cardModal').style.display='none'; updateCalc(); }
-// 修正版：カードリスト描画（削除ボタン追加・エラー修正）
-    function renderCardList() { 
-        const l=document.getElementById('masterList'); l.innerHTML=''; 
-        // cardCountへの参照を削除済み
-        cardsDB.forEach((c,idx)=>l.innerHTML+=`<div class="list-item"><b>${c.name}</b><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadCardToEditor(cardsDB[${idx}])">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteCard(${idx})">削除</button></div></div>`); 
-    }
-
-    // 修正版：スキルリスト描画（編集・削除ボタン追加）
-    function renderSAList() { 
-        const l=document.getElementById('saList'); l.innerHTML=''; 
-        skillsDB.forEach(s=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-skill">S</span>${s.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('skill','${s.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('skill','${s.name}')">削除</button></div></div>`); 
-        abilitiesDB.forEach(a=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-ability">A</span>${a.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('ability','${a.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('ability','${a.name}')">削除</button></div></div>`); 
-    }
-
-    function updateAutoComplete() { const l=document.getElementById('skillList'), s=document.getElementById('styleSuggestions'); l.innerHTML=''; s.innerHTML=''; [...skillsDB,...abilitiesDB].forEach(i=>l.innerHTML+=`<option value="${i.name}">`); const st=new Set(); cardsDB.forEach(c=>st.add(c.bonus_type)); st.forEach(i=>s.innerHTML+=`<option value="${i}">`); }
     function initSimSlots() { const g=document.getElementById('simSlots'), s=document.getElementById('traineeStyle').value; g.innerHTML=''; selectedSlots.forEach((c,i)=>{ let h=`枠 ${i+1}`; if(c){ const on=(c.bonus_type===s); h=`<div style="font-weight:bold;font-size:0.7rem;">${c.name}</div><div class="${on?'bonus-on':'bonus-off'}" style="font-size:0.6rem;">${c.bonus_type}+${c.bonus_value}%</div>`; } g.innerHTML+=`<div onclick="openModal(${i})" class="${c?'slot-active':'slot-empty'}" style="height:65px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center;padding:2px;">${h}</div>`; }); }
-    function loadCardToEditor(d) { document.getElementById('editName').value=d.name; document.getElementById('editTitle').value=d.title; document.getElementById('editRarity').value=d.rarity; document.getElementById('editBonusType').value=d.bonus_type; document.getElementById('editBonusVal').value=d.bonus_value; document.getElementById('editAbilityName').value=d.abilities[0]; document.querySelectorAll('.edit-val').forEach(i=>i.value=d.stats[i.dataset.stat]||''); }
-    async function batchRegisterCards() { try { const d=JSON.parse(document.getElementById('aiPasteCard').value); (Array.isArray(d)?d:[d]).forEach(c=>{ const i=cardsDB.findIndex(x=>x.name===c.name&&x.title===c.title); if(i>=0)cardsDB[i]=c; else cardsDB.push(c); }); await pushToGH('cards.json',cardsDB,"Bulk Card Update"); alert("保存成功"); renderCardList(); } catch(e){alert("JSONエラー");} }
-// カード個別保存機能（ここを上書きしてください）
+    
+    function renderCardList() { const l=document.getElementById('masterList'); l.innerHTML=''; cardsDB.forEach((c,idx)=>l.innerHTML+=`<div class="list-item"><b>${c.name}</b><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadCardToEditor(cardsDB[${idx}])">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteCard(${idx})">削除</button></div></div>`); }
+    function renderSAList() { const l=document.getElementById('saList'); l.innerHTML=''; skillsDB.forEach(s=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-skill">S</span>${s.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('skill','${s.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('skill','${s.name}')">削除</button></div></div>`); abilitiesDB.forEach(a=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-ability">A</span>${a.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('ability','${a.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('ability','${a.name}')">削除</button></div></div>`); }
+    function updateAutoComplete() { const l=document.getElementById('skillList'), s=document.getElementById('styleSuggestions'); l.innerHTML=''; s.innerHTML=''; [...skillsDB,...abilitiesDB].forEach(i=>l.innerHTML+=`<option value="${i.name}">`); const st=new Set(); cardsDB.forEach(c=>st.add(c.bonus_type)); st.forEach(i=>s.innerHTML+=`<option value="${i}">`); }
+    
+    function loadCardToEditor(d) { if(!d){ document.querySelectorAll('.edit-val').forEach(i=>i.value=''); return; } document.getElementById('editName').value=d.name; document.getElementById('editTitle').value=d.title; document.getElementById('editRarity').value=d.rarity; document.getElementById('editBonusType').value=d.bonus_type; document.getElementById('editBonusVal').value=d.bonus_value; document.getElementById('editAbilityName').value=d.abilities[0]||''; document.querySelectorAll('.edit-val').forEach(i=>i.value=d.stats[i.dataset.stat]||''); }
     async function saveCardToGH() {
-        const name = document.getElementById('editName').value;
-        if(!name) return alert("選手名を入力してください");
-        
-        const title = document.getElementById('editTitle').value;
-        const rarity = document.getElementById('editRarity').value;
-        const bonusType = document.getElementById('editBonusType').value;
-        const bonusVal = parseFloat(document.getElementById('editBonusVal').value) || 0;
-        const ability = document.getElementById('editAbilityName').value;
-        
-        const stats = {};
-        document.querySelectorAll('.edit-val').forEach(i => {
-            if(i.value) stats[i.dataset.stat] = parseFloat(i.value);
-        });
-
-        const newCard = {
-            title: title,
-            name: name,
-            rarity: rarity,
-            bonus_type: bonusType,
-            bonus_value: bonusVal,
-            abilities: ability ? [ability] : [],
-            stats: stats
-        };
-
-        // 既存データを検索して更新、なければ新規追加
-        // 同名・同称号なら上書きとみなす
-        const idx = cardsDB.findIndex(c => c.name === name && c.title === title);
-        if(idx >= 0) cardsDB[idx] = newCard; else cardsDB.push(newCard);
-
-        const success = await pushToGH('cards.json', cardsDB, "Update Card: " + name);
-        if(success) {
-            alert("カードを保存しました");
-            renderCardList();
-            updateCalc();
-        } else {
-            alert("保存に失敗しました");
-        }
-    }    // カード削除機能
-    async function deleteCard(idx) {
-        if(!confirm("本当に削除しますか？")) return;
-        cardsDB.splice(idx, 1);
-        await pushToGH('cards.json', cardsDB, "Delete Card");
-        renderCardList();
-        initSimSlots();
+        const name=document.getElementById('editName').value, title=document.getElementById('editTitle').value; if(!name) return;
+        const stats={}; document.querySelectorAll('.edit-val').forEach(i=>{if(i.value) stats[i.dataset.stat]=parseFloat(i.value)});
+        const nc = { title, name, rarity:document.getElementById('editRarity').value, bonus_type:document.getElementById('editBonusType').value, bonus_value:parseFloat(document.getElementById('editBonusVal').value)||0, abilities:[document.getElementById('editAbilityName').value], stats };
+        const i=cardsDB.findIndex(x=>x.name===name&&x.title===title); if(i>=0) cardsDB[i]=nc; else cardsDB.push(nc);
+        if(await pushToGH('cards.json',cardsDB,"Update Card")) { alert("保存成功"); renderCardList(); }
     }
+    async function deleteCard(idx) { if(!confirm("削除しますか？")) return; cardsDB.splice(idx,1); await pushToGH('cards.json',cardsDB,"Delete Card"); renderCardList(); }
+    async function batchRegisterCards() { try { const d=JSON.parse(document.getElementById('aiPasteCard').value); (Array.isArray(d)?d:[d]).forEach(c=>{const i=cardsDB.findIndex(x=>x.name===c.name&&x.title===c.title); if(i>=0)cardsDB[i]=c; else cardsDB.push(c);}); await pushToGH('cards.json',cardsDB,"Bulk Update"); alert("保存成功"); renderCardList(); } catch(e){alert("JSONエラー");} }
 
-    // スキル/アビリティのエディタ読み込み機能
+    function toggleAreaGrid() { document.getElementById('areaContainer').style.display = document.getElementById('saType').value==='skill'?'block':'none'; }
     window.loadSA = (type, name) => {
-        const db = type === 'skill' ? skillsDB : abilitiesDB;
-        const item = db.find(i => i.name === name);
-        if(!item) return;
-
-        document.getElementById('saType').value = type;
-        toggleAreaGrid();
-        document.getElementById('saName').value = item.name;
-        document.getElementById('saValue').value = item.value || '';
-        document.getElementById('saCondition').value = item.condition || '';
-
-        // 対象ステータスのチェックボックス反映
-        document.querySelectorAll('input[name="sa_tgt"]').forEach(c => c.checked = false);
-        if(item.targets) {
-            item.targets.forEach(t => {
-                const el = document.querySelector(`input[name="sa_tgt"][value="${t}"]`);
-                if(el) el.checked = true;
-            });
-        }
-
-        // エリアの反映
-        const cells = document.querySelectorAll('.area-cell');
-        cells.forEach(c => c.classList.remove('active'));
-        if(type === 'skill' && item.area) {
-            item.area.forEach((val, idx) => {
-                if(val) cells[idx].classList.add('active');
-            });
-        }
+        const db = type==='skill'?skillsDB:abilitiesDB, item = db.find(i=>i.name===name); if(!item) return;
+        document.getElementById('saType').value = type; toggleAreaGrid();
+        document.getElementById('saName').value = item.name; document.getElementById('saValue').value = item.value||''; document.getElementById('saCondition').value = item.condition||'';
+        document.querySelectorAll('input[name="sa_tgt"]').forEach(c => c.checked = item.targets?.includes(c.value));
+        const cells = document.querySelectorAll('.area-cell'); cells.forEach((c,idx) => { c.classList.remove('active'); if(type==='skill'&&item.area?.[idx]) c.classList.add('active'); });
     };
-
-    // スキル/アビリティの保存機能
     window.saveSA = async () => {
-        const type = document.getElementById('saType').value;
-        const name = document.getElementById('saName').value;
-        if(!name) return alert("名称を入力してください");
-
-        const targets = Array.from(document.querySelectorAll('input[name="sa_tgt"]:checked')).map(c => c.value);
-        const data = {
-            name: name,
-            value: parseFloat(document.getElementById('saValue').value) || 0,
-            targets: targets
-        };
-
-        if(type === 'skill') {
-            const area = [];
-            document.querySelectorAll('.area-cell').forEach(c => area.push(c.classList.contains('active') ? 1 : 0));
-            data.area = area;
-            // 既存更新または新規追加
-            const idx = skillsDB.findIndex(s => s.name === name);
-            if(idx >= 0) skillsDB[idx] = data; else skillsDB.push(data);
-            await pushToGH('skills.json', skillsDB, "Update Skill: " + name);
-        } else {
-            data.condition = document.getElementById('saCondition').value;
-            const idx = abilitiesDB.findIndex(a => a.name === name);
-            if(idx >= 0) abilitiesDB[idx] = data; else abilitiesDB.push(data);
-            await pushToGH('abilities.json', abilitiesDB, "Update Ability: " + name);
-        }
-        
-        alert("保存しました");
-        renderSAList();
-        updateAutoComplete();
+        const type=document.getElementById('saType').value, name=document.getElementById('saName').value; if(!name) return;
+        const tgts = Array.from(document.querySelectorAll('input[name="sa_tgt"]:checked')).map(c=>c.value);
+        const data = { name, value:parseFloat(document.getElementById('saValue').value)||0, targets:tgts };
+        if(type==='skill'){ data.area = Array.from(document.querySelectorAll('.area-cell')).map(c=>c.classList.contains('active')?1:0); const i=skillsDB.findIndex(s=>s.name===name); if(i>=0)skillsDB[i]=data; else skillsDB.push(data); await pushToGH('skills.json',skillsDB,"Update Skill"); }
+        else { data.condition = document.getElementById('saCondition').value; const i=abilitiesDB.findIndex(a=>a.name===name); if(i>=0)abilitiesDB[i]=data; else abilitiesDB.push(data); await pushToGH('abilities.json',abilitiesDB,"Update Ability"); }
+        alert("保存完了"); renderSAList(); updateAutoComplete();
     };
-
-    // スキル/アビリティの削除機能
-    window.deleteSA = async (type, name) => {
-        if(!confirm(name + " を削除しますか？")) return;
-        if(type === 'skill') {
-            skillsDB = skillsDB.filter(s => s.name !== name);
-            await pushToGH('skills.json', skillsDB, "Delete Skill: " + name);
-        } else {
-            abilitiesDB = abilitiesDB.filter(a => a.name !== name);
-            await pushToGH('abilities.json', abilitiesDB, "Delete Ability: " + name);
-        }
-        renderSAList();
-        updateAutoComplete();
-    };
+    window.deleteSA = async (type, name) => { if(!confirm("削除？")) return; if(type==='skill') skillsDB=skillsDB.filter(s=>s.name!==name); else abilitiesDB=abilitiesDB.filter(a=>a.name!==name); await pushToGH(type==='skill'?'skills.json':'abilities.json', type==='skill'?skillsDB:abilitiesDB, "Delete SA"); renderSAList(); };
+    async function batchRegisterSA() { try { const d=JSON.parse(document.getElementById('aiPasteSA').value); if(d.skills) d.skills.forEach(s=>{const i=skillsDB.findIndex(x=>x.name===s.name); if(i>=0)skillsDB[i]=s; else skillsDB.push(s);}); if(d.abilities) d.abilities.forEach(a=>{const i=abilitiesDB.findIndex(x=>x.name===a.name); if(i>=0)abilitiesDB[i]=a; else abilitiesDB.push(a);}); await pushToGH('skills.json',skillsDB,"Update"); await pushToGH('abilities.json',abilitiesDB,"Update"); alert("保存成功"); renderSAList(); } catch(e){alert("JSONエラー");} }
 </script>
 </body>
 </html>
