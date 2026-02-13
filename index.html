@@ -2,54 +2,67 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>特練シミュレータ Pro v2.4</title>
+    <title>特練シミュレータ Pro v3.0</title>
     <style>
-        :root { --primary: #00f2ff; --accent: #22c55e; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --gk: #f97316; }
+        :root { --primary: #00f2ff; --accent: #22c55e; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --gk: #f97316; --skill: #fbbf24; --ability: #a78bfa; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; }
-        nav { background: #000; padding: 10px; display: flex; gap: 10px; position: sticky; top: 0; z-index: 100; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: #334155; color: white; border-radius: 6px; cursor: pointer; }
+        nav { background: #000; padding: 10px; display: flex; gap: 5px; position: sticky; top: 0; z-index: 100; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: #334155; color: white; border-radius: 6px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; }
         .tab-btn.active { background: var(--primary); color: #000; font-weight: bold; }
+        
         .content { display: none; padding: 15px; max-width: 1000px; margin: 0 auto; }
         .content.active { display: block; }
+        
         .card-box { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; }
         input, textarea, select { background: #000; border: 1px solid #334155; color: #fff; padding: 8px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        
+        /* Stats Grid */
         .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-top: 10px; }
         .stat-item label { display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 2px; }
-        .gk-stat { border-color: var(--gk); }
-        .gk-stat label { color: var(--gk); }
-        .btn { padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .gk-stat { border-color: var(--gk); } .gk-stat label { color: var(--gk); }
+        
+        /* Buttons */
+        .btn { padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; width: 100%; }
         .btn-primary { background: var(--primary); color: #000; }
         .btn-accent { background: var(--accent); color: #fff; }
-        .btn-danger { background: #ef4444; color: #fff; padding: 5px 10px; font-size: 0.7rem; }
-        .btn-edit { background: #3b82f6; color: #fff; padding: 5px 10px; font-size: 0.7rem; margin-right: 5px; }
+        .btn-danger { background: #ef4444; color: #fff; width: auto; padding: 5px 10px; font-size: 0.7rem; }
+        .btn-edit { background: #3b82f6; color: #fff; width: auto; padding: 5px 10px; font-size: 0.7rem; margin-right: 5px; }
+
+        /* Lists */
+        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #334155; font-size: 0.85rem; }
+        .tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
+        .tag-skill { background: var(--skill); color: #000; }
+        .tag-ability { background: var(--ability); color: #fff; }
+
+        /* Sim Slots */
+        .slot-active { border: 2px solid var(--primary); background: rgba(0,242,255,0.1); }
+        .slot-empty { border: 2px dashed #444; }
+        .bonus-text { font-size: 0.65rem; }
+        .bonus-on { color: var(--accent); font-weight: bold; }
+        .bonus-off { color: #ef4444; text-decoration: line-through; opacity: 0.6; }
         
-        /* Master List Table-like UI */
-        .master-card-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #334155; font-size: 0.85rem; }
-        .master-card-info { flex: 1; }
-        .master-card-actions { display: flex; gap: 5px; }
-        
-        .slot-card-info { font-size: 0.65rem; color: #94a3b8; }
-        .bonus-active { color: var(--accent); font-weight: bold; }
-        .bonus-inactive { color: #ef4444; text-decoration: line-through; opacity: 0.6; }
+        /* Checkbox Grid for Skills */
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 5px; margin-top: 5px; max-height: 150px; overflow-y: auto; background: #000; padding: 5px; border-radius: 4px; }
+        .chk-label { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <nav>
     <button class="tab-btn active" onclick="showTab('sim')">シミュレーター</button>
-    <button class="tab-btn" onclick="showTab('admin')">DB管理</button>
+    <button class="tab-btn" onclick="showTab('admin-card')">カード管理</button>
+    <button class="tab-btn" onclick="showTab('admin-skill')">スキル/アビ管理</button>
 </nav>
 
 <!-- 1. シミュレーター -->
 <div id="sim" class="content active">
     <div class="card-box" style="border-color: var(--accent);">
-        <label style="color: var(--accent); font-weight: bold; font-size: 0.8rem;">育成選手のプレイスタイル（ボーナス判定用）</label>
+        <label style="color:var(--accent); font-weight:bold; font-size:0.8rem;">育成選手のプレイスタイル</label>
         <input type="text" id="traineeStyle" placeholder="例: アタッカー, 組立CB" oninput="updateCalc()" list="styleSuggestions">
-        <datalist id="styleSuggestions">
-            <option value="アタッカー"><option value="ドリブラー"><option value="サイドアタッカー"><option value="ストッパー"><option value="組立CB"><option value="守護神">
-        </datalist>
     </div>
+
     <div id="simSlots" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;"></div>
+
     <div class="card-box">
         <label>コンディション</label>
         <select id="conditionMod" onchange="updateCalc()">
@@ -58,244 +71,390 @@
             <option value="1.5">絶好調 x1.5</option>
         </select>
     </div>
+
     <div id="totalResults" class="card-box" style="border:2px solid var(--primary);"></div>
 </div>
 
-<!-- 2. 管理画面 -->
-<div id="admin" class="content">
+<!-- 2. カード管理 -->
+<div id="admin-card" class="content">
     <div class="card-box">
-        <h4>1. GitHub接続設定</h4>
-        <input type="password" id="ghToken" placeholder="GitHubアクセストークン" style="margin-bottom:5px;">
-        <input type="text" id="ghRepo" placeholder="subcaptaintsubasa/tra-sim">
+        <h4>GitHub設定</h4>
+        <input type="password" id="ghToken" placeholder="GitHub Token">
+        <input type="text" id="ghRepo" placeholder="user/repo" style="margin-top:5px;">
     </div>
 
     <div class="card-box">
-        <h4>2. JSONデータ読み込み / 一括登録</h4>
-        <textarea id="aiPaste" placeholder="AIが作成したデータを貼り付けてください" style="height:100px;"></textarea>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn btn-primary" style="flex:1" onclick="loadToEditor()">エディタで確認(1件目)</button>
-            <button class="btn btn-accent" style="flex:1" onclick="batchRegister()">表示データを一括GitHub保存</button>
+        <h4>JSON一括登録</h4>
+        <textarea id="aiPasteCard" placeholder="AI作成のカードデータを貼り付け" style="height:60px;"></textarea>
+        <div style="display:flex; gap:5px; margin-top:5px;">
+            <button class="btn btn-primary" onclick="loadCardToEditor()">エディタへ</button>
+            <button class="btn btn-accent" onclick="batchRegisterCards()">一括保存</button>
         </div>
     </div>
 
-    <!-- 編集エディタ -->
-    <div class="card-box" id="editorForm" style="border:2px solid var(--primary);">
-        <h4 id="editorTitle">選手データ登録・編集</h4>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <input type="text" id="editName" placeholder="選手名">
-            <input type="text" id="editTitle" placeholder="【称号】">
+    <div class="card-box" id="cardEditor" style="border:2px solid var(--primary);">
+        <h4>カード編集</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+            <input id="editName" placeholder="選手名">
+            <input id="editTitle" placeholder="【称号】">
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:5px;">
             <select id="editRarity"><option value="SSR">SSR</option><option value="SR">SR</option></select>
-            <input type="text" id="editBonusType" placeholder="条件(例:組立CB)">
+            <input id="editBonusType" placeholder="条件(組立CB)">
             <input type="number" id="editBonusVal" placeholder="値(%)">
         </div>
+        <div style="margin-top:5px;">
+            <input id="editAbilityName" placeholder="習得スキル/アビリティ名 (DBから検索)" list="skillList">
+            <datalist id="skillList"></datalist>
+        </div>
         <div class="stat-grid" id="editStatsGrid"></div>
-        <button class="btn btn-accent" style="width:100%; margin-top:15px; font-size:1rem;" onclick="saveToGitHub()">この内容でGitHubを更新</button>
-        <button class="btn" style="width:100%; background:#444; color:#fff;" onclick="clearEditor()">エディタをクリア</button>
+        <button class="btn btn-accent" onclick="saveCardToGH()">GitHubへ保存</button>
+        <button class="btn" style="background:#444; color:#fff;" onclick="clearCardEditor()">クリア</button>
     </div>
 
     <div class="card-box">
-        <h4>登録済みカード一覧 (<span id="cardCount">0</span>件)</h4>
+        <h4>登録済みカード (<span id="cardCount">0</span>)</h4>
         <div id="masterList"></div>
     </div>
 </div>
 
-<!-- カード選択モーダル -->
+<!-- 3. スキル・アビリティ管理 -->
+<div id="admin-skill" class="content">
+    <div class="card-box">
+        <h4>スキル/アビリティ登録</h4>
+        <select id="saType" style="margin-bottom:5px;">
+            <option value="skill">SKILL (割合UP %)</option>
+            <option value="ability">ABILITY (固定値UP)</option>
+        </select>
+        <input id="saName" placeholder="名称 (例: インビンシブルフィード)">
+        <input type="number" id="saValue" placeholder="効果値 (例: 8 または 23)" style="margin-top:5px;">
+        
+        <label style="margin-top:10px; display:block;">対象ステータス:</label>
+        <div class="checkbox-grid" id="saTargets"></div>
+
+        <button class="btn btn-accent" onclick="saveSA()">リストに追加して保存</button>
+    </div>
+
+    <div class="card-box">
+        <h4>登録済みリスト</h4>
+        <div id="saList"></div>
+    </div>
+</div>
+
+<!-- モーダル -->
 <div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; padding:20px; box-sizing:border-box; overflow-y:auto;">
     <div id="modalList"></div>
-    <button class="btn" onclick="closeModal()" style="width:100%; background:#444; color:#fff;">閉じる</button>
+    <button class="btn" onclick="document.getElementById('cardModal').style.display='none'" style="background:#444; color:#fff;">閉じる</button>
 </div>
 
 <script>
-    const COMMON_STATS = ["決定力","ショートパス","突破力","ジャンプ","走力","キック力","ロングパス","キープ力","コンタクト","敏捷性","冷静さ","キック精度","ボールタッチ","スタミナ"];
-    const FP_STATS = ["タックル","パスカット","マーク"];
+    // --- 定数・変数 ---
+    const STATS = ["決定力","ショートパス","突破力","ジャンプ","走力","キック力","ロングパス","キープ力","コンタクト","敏捷性","冷静さ","キック精度","ボールタッチ","スタミナ","タックル","パスカット","マーク","セービング","反応速度","1対1"];
     const GK_STATS = ["セービング","反応速度","1対1"];
-    const ALL_STATS = [...COMMON_STATS, ...FP_STATS, ...GK_STATS];
-
+    
     let cardsDB = [];
-    let selectedSlots = [null, null, null, null, null, null];
+    let skillsDB = []; // 割合
+    let abilitiesDB = []; // 固定
+    let selectedSlots = Array(6).fill(null);
     let activeSlotIndex = null;
 
+    // --- 初期化 ---
     window.onload = async () => {
         document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
         document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
         document.getElementById('traineeStyle').value = localStorage.getItem('trainee_style') || '';
-        initEditor();
-        initSimSlots();
-        await fetchMasterDB();
+        
+        initUI();
+        await fetchAllDB();
     };
 
-    function initEditor() {
+    function initUI() {
+        // カード編集用ステータスグリッド
         const grid = document.getElementById('editStatsGrid');
         grid.innerHTML = '';
-        ALL_STATS.forEach(s => {
+        STATS.forEach(s => {
             const isGK = GK_STATS.includes(s);
             grid.innerHTML += `<div class="stat-item ${isGK?'gk-stat':''}">
-                <label>${s}</label>
-                <input type="number" step="0.1" class="edit-val" data-stat="${s}">
+                <label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}">
             </div>`;
         });
+
+        // スキル対象選択チェックボックス
+        const chkGrid = document.getElementById('saTargets');
+        STATS.forEach(s => {
+            chkGrid.innerHTML += `<label class="chk-label"><input type="checkbox" value="${s}" name="sa_tgt"> ${s}</label>`;
+        });
+        
+        initSimSlots();
     }
 
-    async function fetchMasterDB() {
+    async function fetchAllDB() {
         const repo = document.getElementById('ghRepo').value;
         if(!repo) return;
+        const ts = Date.now();
+        const base = `https://raw.githubusercontent.com/${repo}/main/data`;
+
         try {
-            const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/data/cards.json?t=${Date.now()}`);
-            if(!res.ok) return;
-            cardsDB = await res.json();
-            renderMasterList();
-        } catch(e) { console.error(e); }
+            const [cRes, sRes, aRes] = await Promise.all([
+                fetch(`${base}/cards.json?t=${ts}`),
+                fetch(`${base}/skills.json?t=${ts}`),
+                fetch(`${base}/abilities.json?t=${ts}`)
+            ]);
+
+            if(cRes.ok) cardsDB = await cRes.json();
+            if(sRes.ok) skillsDB = await sRes.json();
+            if(aRes.ok) abilitiesDB = await aRes.json();
+
+            renderCardList();
+            renderSAList();
+            updateAutoComplete();
+        } catch(e) { console.error("DB Load Error", e); }
     }
 
-    // エディタへの読み込み
-    function loadToEditor(data = null) {
+    // --- シミュレーターロジック ---
+    function updateCalc() {
+        const mult = parseFloat(document.getElementById('conditionMod').value);
+        const style = document.getElementById('traineeStyle').value;
+        localStorage.setItem('trainee_style', style);
+        
+        const totals = {};
+        
+        selectedSlots.forEach(card => {
+            if(!card) return;
+            const lv = card.rarity === 'SSR' ? 50 : 45;
+            
+            // 1. 特練ボーナス判定
+            const isBonusActive = (card.bonus_type === style);
+            let bonusPct = isBonusActive ? (card.bonus_value || 0) : 0;
+
+            // 2. スキル/アビリティ判定
+            const cardSkillName = (card.abilities && card.abilities[0]) ? card.abilities[0] : "";
+            let skillPct = 0;
+            let abilityFixed = {}; // { ステータス名: 値 }
+
+            // スキルDB検索 (割合UP)
+            const skillData = skillsDB.find(s => s.name === cardSkillName);
+            if(skillData) {
+                // スキルは対象ステータスにのみ％加算される
+                // ここでは簡易的に「対象ステータスの時だけ % を上乗せする」ロジックにするため、
+                // 下のループ内で判定します。
+            }
+
+            // アビリティDB検索 (固定UP)
+            const abilityData = abilitiesDB.find(a => a.name === cardSkillName);
+
+            // ステータス計算
+            for(let s in card.stats) {
+                const d1 = card.stats[s];
+                const N = Math.round(d1 * 6);
+                const vBase = (10 * d1 + Math.floor((10 * (N - d1) * (lv - 1)) / 44)) / 10;
+                
+                // 補正率計算: コンディション * (1 + 特練ボーナス% + スキル%)
+                let finalMult = mult * (1 + bonusPct / 100);
+                
+                // スキル補正加算 (対象ステータスなら)
+                if (skillData && skillData.targets.includes(s)) {
+                    finalMult += mult * (skillData.value / 100); 
+                    // ※仕様確認: スキルは「基礎値」にかかるのか「コンディション後」にかかるのか？
+                    // 一般的には全て加算枠 (1 + Bonus + Skill) だが、ここでは安全策で乗算ベースの加算にする
+                }
+
+                let val = vBase * finalMult;
+
+                // アビリティ固定値加算
+                if (abilityData && abilityData.targets.includes(s)) {
+                    val += abilityData.value;
+                }
+
+                totals[s] = (totals[s] || 0) + val;
+            }
+        });
+
+        const resDiv = document.getElementById('totalResults');
+        resDiv.innerHTML = '<h4>合計上昇値予測</h4>';
+        STATS.forEach(s => {
+            if(totals[s] && totals[s] > 0) {
+                resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333;">
+                    <span>${s}</span><b>+${totals[s].toFixed(1)}</b>
+                </div>`;
+            }
+        });
+        initSimSlots();
+    }
+
+    // --- 管理: スキル/アビリティ ---
+    async function saveSA() {
+        const type = document.getElementById('saType').value;
+        const name = document.getElementById('saName').value;
+        const val = parseFloat(document.getElementById('saValue').value);
+        const targets = Array.from(document.querySelectorAll('input[name="sa_tgt"]:checked')).map(c => c.value);
+
+        if(!name || !val || targets.length === 0) return alert("全項目を入力してください");
+
+        const newItem = { name, value: val, targets };
+        let targetDB = (type === 'skill') ? skillsDB : abilitiesDB;
+        let file = (type === 'skill') ? 'skills.json' : 'abilities.json';
+
+        // 重複チェック＆更新
+        const idx = targetDB.findIndex(i => i.name === name);
+        if(idx >= 0) targetDB[idx] = newItem; else targetDB.push(newItem);
+
+        await pushToGH(file, targetDB, `${name} を更新`);
+        renderSAList();
+        updateAutoComplete();
+    }
+
+    function renderSAList() {
+        const list = document.getElementById('saList');
+        list.innerHTML = '';
+        
+        const drawItem = (item, type) => {
+            const cls = type === 'skill' ? 'tag-skill' : 'tag-ability';
+            const unit = type === 'skill' ? '%' : '';
+            list.innerHTML += `<div class="list-item">
+                <div><span class="tag ${cls}">${type.toUpperCase()}</span> <b>${item.name}</b></div>
+                <div style="font-size:0.8rem">${item.targets.join(', ')} +${item.value}${unit}</div>
+                <button class="btn-danger" onclick="deleteSA('${type}', '${item.name}')">削除</button>
+            </div>`;
+        };
+        skillsDB.forEach(i => drawItem(i, 'skill'));
+        abilitiesDB.forEach(i => drawItem(i, 'ability'));
+    }
+
+    async function deleteSA(type, name) {
+        if(!confirm("削除しますか？")) return;
+        let targetDB = (type === 'skill') ? skillsDB : abilitiesDB;
+        let file = (type === 'skill') ? 'skills.json' : 'abilities.json';
+        const idx = targetDB.findIndex(i => i.name === name);
+        if(idx >= 0) {
+            targetDB.splice(idx, 1);
+            await pushToGH(file, targetDB, "削除");
+            renderSAList();
+        }
+    }
+
+    // --- 管理: カード (既存機能の移植) ---
+    function loadCardToEditor(data = null) {
         if(!data) {
             try {
-                let raw = document.getElementById('aiPaste').value;
-                let dataArr = JSON.parse(raw);
-                data = Array.isArray(dataArr) ? dataArr[0] : dataArr;
+                let raw = document.getElementById('aiPasteCard').value;
+                let arr = JSON.parse(raw);
+                data = Array.isArray(arr) ? arr[0] : arr;
             } catch(e) { return alert("JSON解析失敗"); }
         }
         document.getElementById('editName').value = data.name || "";
         document.getElementById('editTitle').value = data.title || "";
         document.getElementById('editRarity').value = data.rarity || "SSR";
         document.getElementById('editBonusType').value = data.bonus_type || "";
-        document.getElementById('editBonusVal').value = data.bonus_value || 0;
-        document.querySelectorAll('.edit-val').forEach(input => {
-            input.value = (data.stats && data.stats[input.dataset.stat]) ? data.stats[input.dataset.stat] : "";
+        document.getElementById('editBonusVal').value = data.bonus_value || "";
+        document.getElementById('editAbilityName').value = (data.abilities && data.abilities[0]) ? data.abilities[0] : "";
+        
+        document.querySelectorAll('.edit-val').forEach(i => {
+            i.value = (data.stats && data.stats[i.dataset.stat]) ? data.stats[i.dataset.stat] : "";
         });
-        document.getElementById('editorTitle').innerText = "選手データ編集モード";
-        window.scrollTo(0, document.getElementById('editorForm').offsetTop - 70);
+        window.scrollTo(0, document.getElementById('cardEditor').offsetTop);
     }
 
-    // 登録済みリストから編集
-    function editCardFromList(idx) {
-        loadToEditor(cardsDB[idx]);
-    }
-
-    // 一括登録機能
-    async function batchRegister() {
-        try {
-            let raw = document.getElementById('aiPaste').value;
-            let dataArr = JSON.parse(raw);
-            if (!Array.isArray(dataArr)) dataArr = [dataArr];
-
-            dataArr.forEach(newCard => {
-                const idx = cardsDB.findIndex(c => c.name === newCard.name && c.title === newCard.title);
-                if (idx >= 0) cardsDB[idx] = newCard; else cardsDB.push(newCard);
-            });
-
-            await pushDBToGitHub("一括登録完了！");
-        } catch(e) { alert("JSON解析エラーまたは通信エラー"); }
-    }
-
-    function clearEditor() {
-        document.getElementById('editName').value = "";
-        document.getElementById('editTitle').value = "";
-        document.getElementById('editBonusVal').value = "";
-        document.querySelectorAll('.edit-val').forEach(i => i.value = "");
-        document.getElementById('editorTitle').innerText = "選手データ登録・編集";
-    }
-
-    async function saveToGitHub() {
+    async function saveCardToGH() {
         const card = {
             name: document.getElementById('editName').value,
             title: document.getElementById('editTitle').value,
             rarity: document.getElementById('editRarity').value,
             bonus_type: document.getElementById('editBonusType').value,
-            bonus_value: parseInt(document.getElementById('editBonusVal').value || 0),
+            bonus_value: parseFloat(document.getElementById('editBonusVal').value || 0),
+            abilities: [document.getElementById('editAbilityName').value],
             stats: {}
         };
-        document.querySelectorAll('.edit-val').forEach(input => {
-            if(input.value) card.stats[input.dataset.stat] = parseFloat(input.value);
+        document.querySelectorAll('.edit-val').forEach(i => {
+            if(i.value) card.stats[i.dataset.stat] = parseFloat(i.value);
         });
 
         const idx = cardsDB.findIndex(c => c.name === card.name && c.title === card.title);
         if(idx >= 0) cardsDB[idx] = card; else cardsDB.push(card);
 
-        await pushDBToGitHub("保存完了！");
+        await pushToGH('cards.json', cardsDB, "カード更新");
+        renderCardList();
     }
 
-    async function pushDBToGitHub(successMsg) {
+    async function batchRegisterCards() {
+        try {
+            let arr = JSON.parse(document.getElementById('aiPasteCard').value);
+            if(!Array.isArray(arr)) arr = [arr];
+            arr.forEach(newC => {
+                const idx = cardsDB.findIndex(c => c.name === newC.name && c.title === newC.title);
+                if(idx >= 0) cardsDB[idx] = newC; else cardsDB.push(newC);
+            });
+            await pushToGH('cards.json', cardsDB, "一括登録");
+            renderCardList();
+        } catch(e) { alert("エラー"); }
+    }
+
+    function renderCardList() {
+        const list = document.getElementById('masterList');
+        document.getElementById('cardCount').innerText = cardsDB.length;
+        list.innerHTML = '';
+        cardsDB.forEach((c, i) => {
+            const skill = (c.abilities && c.abilities[0]) ? ` / ${c.abilities[0]}` : "";
+            list.innerHTML += `<div class="list-item">
+                <div><b>${c.name}</b><br><span style="color:#888; font-size:0.7rem">${c.title} (${c.rarity}) ${skill}</span></div>
+                <div><button class="btn-edit" onclick="loadCardToEditor(cardsDB[${i}])">編集</button>
+                <button class="btn-danger" onclick="deleteCard(${i})">削除</button></div>
+            </div>`;
+        });
+    }
+    
+    async function deleteCard(i) {
+        if(confirm("削除しますか？")) {
+            cardsDB.splice(i, 1);
+            await pushToGH('cards.json', cardsDB, "削除");
+            renderCardList();
+        }
+    }
+
+    function clearCardEditor() {
+        document.getElementById('editName').value = "";
+        document.getElementById('editTitle').value = "";
+        document.getElementById('editBonusVal').value = "";
+        document.getElementById('editAbilityName').value = "";
+        document.querySelectorAll('.edit-val').forEach(i => i.value = "");
+    }
+
+    // --- 共通GitHub処理 ---
+    async function pushToGH(filename, data, msg) {
         const token = document.getElementById('ghToken').value;
         const repo = document.getElementById('ghRepo').value;
-        if(!token || !repo) return alert("GitHub設定を入力してください");
-
+        if(!token || !repo) return alert("GitHub設定がありません");
         localStorage.setItem('gh_token', token);
         localStorage.setItem('gh_repo', repo);
 
-        const url = `https://api.github.com/repos/${repo}/contents/data/cards.json`;
+        const url = `https://api.github.com/repos/${repo}/contents/data/${filename}`;
         try {
-            const getSha = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
-            const sha = (await getSha.json()).sha;
+            // SHA取得
+            const getRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+            const sha = getRes.ok ? (await getRes.json()).sha : null;
+            
+            // PUT
+            const body = {
+                message: msg,
+                content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))))
+            };
+            if(sha) body.sha = sha;
 
             const res = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${token}` },
-                body: JSON.stringify({
-                    message: "Update master DB", sha: sha,
-                    content: btoa(unescape(encodeURIComponent(JSON.stringify(cardsDB, null, 2))))
-                })
+                body: JSON.stringify(body)
             });
-
-            if(res.ok) { alert(successMsg); location.reload(); } else { alert("GitHub更新失敗"); }
-        } catch(e) { alert("エラー: " + e.message); }
+            if(res.ok) alert("保存しました！"); else alert("保存失敗: 権限を確認してください");
+        } catch(e) { alert("通信エラー"); }
     }
 
-    async function deleteCard(idx) {
-        if(!confirm("このカードを削除してGitHubに反映しますか？")) return;
-        cardsDB.splice(idx, 1);
-        await pushDBToGitHub("削除完了！");
-    }
-
-    // --- シミュレータ・表示系 ---
-    function updateCalc() {
-        const mult = parseFloat(document.getElementById('conditionMod').value);
-        const traineeStyle = document.getElementById('traineeStyle').value;
-        localStorage.setItem('trainee_style', traineeStyle);
-        
-        const totals = {};
-        selectedSlots.forEach(card => {
-            if(!card) return;
-            const lv = card.rarity === 'SSR' ? 50 : 45;
-            const isActive = (card.bonus_type === traineeStyle);
-            const cardBonusMult = isActive ? (1 + (card.bonus_value / 100)) : 1.0;
-            
-            for(let s in card.stats) {
-                const d1 = card.stats[s];
-                const N = Math.round(d1 * 6);
-                const vBase = (10 * d1 + Math.floor((10 * (N - d1) * (lv - 1)) / 44)) / 10;
-                totals[s] = (totals[s] || 0) + (vBase * mult * cardBonusMult);
-            }
-        });
-
-        const resDiv = document.getElementById('totalResults');
-        resDiv.innerHTML = '<h4>合計上昇値予測</h4>';
-        ALL_STATS.forEach(s => {
-            if(totals[s]) resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333; padding:2px 0;"><span>${s}</span><b>+${totals[s].toFixed(1)}</b></div>`;
-        });
-        initSimSlots(); 
-    }
-
-    function renderMasterList() {
-        const list = document.getElementById('masterList');
-        document.getElementById('cardCount').innerText = cardsDB.length;
-        list.innerHTML = '';
-        cardsDB.forEach((c, idx) => {
-            list.innerHTML += `
-                <div class="master-card-item">
-                    <div class="master-card-info">
-                        <b>${c.title} ${c.name}</b><br>
-                        <span style="font-size:0.7rem; color:#888;">${c.rarity} | ${c.bonus_type}+${c.bonus_value}%</span>
-                    </div>
-                    <div class="master-card-actions">
-                        <button class="btn-edit" onclick="editCardFromList(${idx})">編集</button>
-                        <button class="btn-danger" onclick="deleteCard(${idx})">削除</button>
-                    </div>
-                </div>`;
-        });
+    // --- 補助機能 ---
+    function updateAutoComplete() {
+        const dl = document.getElementById('skillList');
+        dl.innerHTML = '';
+        skillsDB.forEach(s => dl.innerHTML += `<option value="${s.name}">SKILL: ${s.targets} +${s.value}%</option>`);
+        abilitiesDB.forEach(a => dl.innerHTML += `<option value="${a.name}">ABILITY: ${a.targets} +${a.value}</option>`);
     }
 
     function initSimSlots() {
@@ -303,13 +462,17 @@
         const style = document.getElementById('traineeStyle').value;
         grid.innerHTML = '';
         selectedSlots.forEach((card, i) => {
-            let content = `枠 ${i+1}`;
-            if (card) {
-                const isActive = (card.bonus_type === style);
-                content = `<div style="font-weight:bold; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; width:100%;">${card.name}</div>
-                           <div class="slot-card-info ${isActive?'bonus-active':'bonus-inactive'}">${card.bonus_type}+${card.bonus_value}%</div>`;
+            const cls = card ? 'slot-active' : 'slot-empty';
+            let html = `枠 ${i+1}`;
+            if(card) {
+                const isBonus = (card.bonus_type === style);
+                const bCls = isBonus ? 'bonus-on' : 'bonus-off';
+                const skill = (card.abilities && card.abilities[0]) ? card.abilities[0] : "なし";
+                html = `<div style="font-weight:bold; font-size:0.7rem; overflow:hidden; white-space:nowrap; width:100%; text-overflow:ellipsis;">${card.name}</div>
+                        <div class="bonus-text ${bCls}">${card.bonus_type} +${card.bonus_value}%</div>
+                        <div style="font-size:0.6rem; color:#aaa; overflow:hidden; white-space:nowrap; width:100%;">${skill}</div>`;
             }
-            grid.innerHTML += `<div onclick="openModal(${i})" id="slot-${i}" style="border:2px ${card?'solid var(--primary)':'dashed #444'}; height:70px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-size:0.65rem; cursor:pointer; background:${card?'rgba(0,242,255,0.05)':'none'}; padding:2px;">${content}</div>`;
+            grid.innerHTML += `<div onclick="openModal(${i})" class="${cls}" style="height:70px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; padding:2px; text-align:center;">${html}</div>`;
         });
     }
 
@@ -317,20 +480,21 @@
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        event.target.classList.add('active');
+        event.target.classList.add('active'); // ボタンのハイライト
     }
-    function openModal(i) { activeSlotIndex = i; document.getElementById('cardModal').style.display='block'; renderModalList(); }
-    function closeModal() { document.getElementById('cardModal').style.display='none'; }
-    function renderModalList() {
+    
+    function openModal(i) {
+        activeSlotIndex = i;
         const list = document.getElementById('modalList');
-        list.innerHTML = '<div class="card-box" onclick="selectCard(null)">（空にする）</div>';
+        list.innerHTML = '<div class="card-box" onclick="selectSlot(null)">（空にする）</div>';
         cardsDB.forEach((c, idx) => {
-            list.innerHTML += `<div class="card-box" onclick="selectCard(${idx})">${c.title}<br>${c.name} (${c.bonus_type}+${c.bonus_value}%)</div>`;
+             list.innerHTML += `<div class="card-box" onclick="selectSlot(${idx})">${c.title}<br><b>${c.name}</b></div>`;
         });
+        document.getElementById('cardModal').style.display='block';
     }
-    function selectCard(idx) {
+    function selectSlot(idx) {
         selectedSlots[activeSlotIndex] = idx === null ? null : cardsDB[idx];
-        closeModal();
+        document.getElementById('cardModal').style.display='none';
         updateCalc();
     }
 </script>
