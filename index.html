@@ -133,16 +133,30 @@
         initSimSlots(); await fetchAllDB();
     };
 
+// 修正版：リポジトリ設定なしでもローカル(./data)から読み込むように変更
     async function fetchAllDB() {
-        const repo = document.getElementById('ghRepo').value; if(!repo) return;
-        const ts = Date.now(), base = `https://raw.githubusercontent.com/${repo}/main/data`;
+        // 設定入力がなくても、とりあえず相対パスからデータを読み込む
+        const ts = Date.now();
+        const base = './data'; 
+
         try {
-            const [c, s, a] = await Promise.all([ fetch(`${base}/cards.json?t=${ts}`), fetch(`${base}/skills.json?t=${ts}`), fetch(`${base}/abilities.json?t=${ts}`) ]);
-            if(c.ok) cardsDB = await c.json(); if(s.ok) skillsDB = await s.json(); if(a.ok) abilitiesDB = await a.json();
-            renderCardList(); renderSAList(); updateAutoComplete(); updateCalc();
+            // キャッシュ回避のタイムスタンプ(?t=)を付けて取得
+            const [c, s, a] = await Promise.all([ 
+                fetch(`${base}/cards.json?t=${ts}`), 
+                fetch(`${base}/skills.json?t=${ts}`), 
+                fetch(`${base}/abilities.json?t=${ts}`) 
+            ]);
+
+            if(c.ok) cardsDB = await c.json(); 
+            if(s.ok) skillsDB = await s.json(); 
+            if(a.ok) abilitiesDB = await a.json();
+            
+            renderCardList(); 
+            renderSAList(); 
+            updateAutoComplete(); 
+            updateCalc();
         } catch(e) { console.error(e); }
     }
-
     // 計算ロジック完全版（整数計算導入 ＋ SSR分母修正 ＋ スタイル横書き維持）
     function updateCalc() {
         const conditionStr = document.getElementById('conditionMod').value;
