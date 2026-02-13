@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  web:
+    image: nginx:alpine
+    container_name: tra-sim-web
+    ports:
+      - "8080:80"
+    volumes:
+      # 現在のフォルダ(./)をコンテナの公開フォルダにマウントします
+      - ./:/usr/share/nginx/html

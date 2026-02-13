@@ -161,12 +161,13 @@
         const saDiv = document.getElementById('saResults'); saDiv.innerHTML = '<h4>予定スキル/アビ</h4>';
         saList.forEach(name => {
             const s = skillsDB.find(i=>i.name===name), a = abilitiesDB.find(i=>i.name===name);
-            if(s) {
-                let areaH = '<div class="sa-result-area">';
-                const areas = s.area || Array(9).fill(0);
-                areas.forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
-                saDiv.innerHTML += `<div style="display:flex; align-items:center; margin-bottom:5px;">${areaH}<div><span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small></div></div>`;
-            }
+if(s) {
+    let areaH = '<div class="sa-result-area">';
+    const areas = s.area || Array(9).fill(0);
+    areas.forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
+    // 文字のdivに flex:1 を追加し、幅を確保させます
+    saDiv.innerHTML += `<div style="display:flex; align-items:center; margin-bottom:5px;">${areaH}<div style="flex:1;"><span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small></div></div>`;
+}
             if(a) saDiv.innerHTML += `<div style="margin-bottom:5px;"><span class="tag tag-ability">A</span><b>${name}</b><br><small>${a.condition || ''}</small></div>`;
         });
         initSimSlots();
@@ -204,13 +205,111 @@
     function showTab(id) { document.querySelectorAll('.content').forEach(c=>c.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); }
     function openModal(i) { activeSlotIndex=i; const m=document.getElementById('modalList'); m.innerHTML='<div class="card-box" onclick="selectSlot(null)">（空）</div>'; cardsDB.forEach((c,idx)=>m.innerHTML+=`<div class="card-box" onclick="selectSlot(${idx})">${c.title}<br><b>${c.name}</b></div>`); document.getElementById('cardModal').style.display='block'; }
     function selectSlot(i) { selectedSlots[activeSlotIndex] = i===null?null:cardsDB[i]; document.getElementById('cardModal').style.display='none'; updateCalc(); }
-    function renderCardList() { const l=document.getElementById('masterList'); l.innerHTML=''; document.getElementById('cardCount').innerText=cardsDB.length; cardsDB.forEach((c,idx)=>l.innerHTML+=`<div class="list-item"><b>${c.name}</b><button class="btn-edit" onclick="loadCardToEditor(cardsDB[${idx}])">編集</button></div>`); }
-    function renderSAList() { const l=document.getElementById('saList'); l.innerHTML=''; skillsDB.forEach(s=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-skill">S</span>${s.name}</span></div>`); abilitiesDB.forEach(a=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-ability">A</span>${a.name}</span></div>`); }
+// 修正版：カードリスト描画（削除ボタン追加・エラー修正）
+    function renderCardList() { 
+        const l=document.getElementById('masterList'); l.innerHTML=''; 
+        // cardCountへの参照を削除済み
+        cardsDB.forEach((c,idx)=>l.innerHTML+=`<div class="list-item"><b>${c.name}</b><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadCardToEditor(cardsDB[${idx}])">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteCard(${idx})">削除</button></div></div>`); 
+    }
+
+    // 修正版：スキルリスト描画（編集・削除ボタン追加）
+    function renderSAList() { 
+        const l=document.getElementById('saList'); l.innerHTML=''; 
+        skillsDB.forEach(s=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-skill">S</span>${s.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('skill','${s.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('skill','${s.name}')">削除</button></div></div>`); 
+        abilitiesDB.forEach(a=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-ability">A</span>${a.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('ability','${a.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('ability','${a.name}')">削除</button></div></div>`); 
+    }
+
     function updateAutoComplete() { const l=document.getElementById('skillList'), s=document.getElementById('styleSuggestions'); l.innerHTML=''; s.innerHTML=''; [...skillsDB,...abilitiesDB].forEach(i=>l.innerHTML+=`<option value="${i.name}">`); const st=new Set(); cardsDB.forEach(c=>st.add(c.bonus_type)); st.forEach(i=>s.innerHTML+=`<option value="${i}">`); }
     function initSimSlots() { const g=document.getElementById('simSlots'), s=document.getElementById('traineeStyle').value; g.innerHTML=''; selectedSlots.forEach((c,i)=>{ let h=`枠 ${i+1}`; if(c){ const on=(c.bonus_type===s); h=`<div style="font-weight:bold;font-size:0.7rem;">${c.name}</div><div class="${on?'bonus-on':'bonus-off'}" style="font-size:0.6rem;">${c.bonus_type}+${c.bonus_value}%</div>`; } g.innerHTML+=`<div onclick="openModal(${i})" class="${c?'slot-active':'slot-empty'}" style="height:65px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center;padding:2px;">${h}</div>`; }); }
     function loadCardToEditor(d) { document.getElementById('editName').value=d.name; document.getElementById('editTitle').value=d.title; document.getElementById('editRarity').value=d.rarity; document.getElementById('editBonusType').value=d.bonus_type; document.getElementById('editBonusVal').value=d.bonus_value; document.getElementById('editAbilityName').value=d.abilities[0]; document.querySelectorAll('.edit-val').forEach(i=>i.value=d.stats[i.dataset.stat]||''); }
     async function batchRegisterCards() { try { const d=JSON.parse(document.getElementById('aiPasteCard').value); (Array.isArray(d)?d:[d]).forEach(c=>{ const i=cardsDB.findIndex(x=>x.name===c.name&&x.title===c.title); if(i>=0)cardsDB[i]=c; else cardsDB.push(c); }); await pushToGH('cards.json',cardsDB,"Bulk Card Update"); alert("保存成功"); renderCardList(); } catch(e){alert("JSONエラー");} }
     async function saveCardToGH() { /* 個別保存ロジックもbatch同様にcardsDB更新してpushToGH */ }
+    // カード削除機能
+    async function deleteCard(idx) {
+        if(!confirm("本当に削除しますか？")) return;
+        cardsDB.splice(idx, 1);
+        await pushToGH('cards.json', cardsDB, "Delete Card");
+        renderCardList();
+        initSimSlots();
+    }
+
+    // スキル/アビリティのエディタ読み込み機能
+    window.loadSA = (type, name) => {
+        const db = type === 'skill' ? skillsDB : abilitiesDB;
+        const item = db.find(i => i.name === name);
+        if(!item) return;
+
+        document.getElementById('saType').value = type;
+        toggleAreaGrid();
+        document.getElementById('saName').value = item.name;
+        document.getElementById('saValue').value = item.value || '';
+        document.getElementById('saCondition').value = item.condition || '';
+
+        // 対象ステータスのチェックボックス反映
+        document.querySelectorAll('input[name="sa_tgt"]').forEach(c => c.checked = false);
+        if(item.targets) {
+            item.targets.forEach(t => {
+                const el = document.querySelector(`input[name="sa_tgt"][value="${t}"]`);
+                if(el) el.checked = true;
+            });
+        }
+
+        // エリアの反映
+        const cells = document.querySelectorAll('.area-cell');
+        cells.forEach(c => c.classList.remove('active'));
+        if(type === 'skill' && item.area) {
+            item.area.forEach((val, idx) => {
+                if(val) cells[idx].classList.add('active');
+            });
+        }
+    };
+
+    // スキル/アビリティの保存機能
+    window.saveSA = async () => {
+        const type = document.getElementById('saType').value;
+        const name = document.getElementById('saName').value;
+        if(!name) return alert("名称を入力してください");
+
+        const targets = Array.from(document.querySelectorAll('input[name="sa_tgt"]:checked')).map(c => c.value);
+        const data = {
+            name: name,
+            value: parseFloat(document.getElementById('saValue').value) || 0,
+            targets: targets
+        };
+
+        if(type === 'skill') {
+            const area = [];
+            document.querySelectorAll('.area-cell').forEach(c => area.push(c.classList.contains('active') ? 1 : 0));
+            data.area = area;
+            // 既存更新または新規追加
+            const idx = skillsDB.findIndex(s => s.name === name);
+            if(idx >= 0) skillsDB[idx] = data; else skillsDB.push(data);
+            await pushToGH('skills.json', skillsDB, "Update Skill: " + name);
+        } else {
+            data.condition = document.getElementById('saCondition').value;
+            const idx = abilitiesDB.findIndex(a => a.name === name);
+            if(idx >= 0) abilitiesDB[idx] = data; else abilitiesDB.push(data);
+            await pushToGH('abilities.json', abilitiesDB, "Update Ability: " + name);
+        }
+        
+        alert("保存しました");
+        renderSAList();
+        updateAutoComplete();
+    };
+
+    // スキル/アビリティの削除機能
+    window.deleteSA = async (type, name) => {
+        if(!confirm(name + " を削除しますか？")) return;
+        if(type === 'skill') {
+            skillsDB = skillsDB.filter(s => s.name !== name);
+            await pushToGH('skills.json', skillsDB, "Delete Skill: " + name);
+        } else {
+            abilitiesDB = abilitiesDB.filter(a => a.name !== name);
+            await pushToGH('abilities.json', abilitiesDB, "Delete Ability: " + name);
+        }
+        renderSAList();
+        updateAutoComplete();
+    };
 </script>
 </body>
 </html>
