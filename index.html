@@ -2,9 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>特練シミュレータ Pro v2.1</title>
+    <title>特練シミュレータ Pro v2.3</title>
     <style>
-        /* CSSは以前のものを継承しつつ、調整 */
         :root { --primary: #00f2ff; --accent: #22c55e; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --gk: #f97316; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; }
         nav { background: #000; padding: 10px; display: flex; gap: 10px; position: sticky; top: 0; z-index: 100; }
@@ -21,6 +20,9 @@
         .btn { padding: 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
         .btn-primary { background: var(--primary); color: #000; }
         .master-card-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #334155; font-size: 0.9rem; }
+        .slot-card-info { font-size: 0.65rem; color: #94a3b8; }
+        .bonus-active { color: var(--accent); font-weight: bold; }
+        .bonus-inactive { color: #ef4444; text-decoration: line-through; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -31,22 +33,33 @@
 </nav>
 
 <div id="sim" class="content active">
-    <!-- シミュレータ部分は基本的に継承。20項目表示に対応 -->
-    <div id="simSlots" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;"></div>
+    <!-- 生徒設定 -->
+    <div class="card-box" style="border-color: var(--accent);">
+        <label style="color: var(--accent); font-weight: bold; font-size: 0.8rem;">育成対象（生徒）のプレイスタイル</label>
+        <input type="text" id="traineeStyle" placeholder="例: アタッカー, 組立CB, ドリブラー..." oninput="updateCalc()" list="styleSuggestions">
+        <datalist id="styleSuggestions">
+            <option value="アタッカー"><option value="ドリブラー"><option value="サイドアタッカー">
+            <option value="ストッパー"><option value="組立CB"><option value="守護神">
+        </datalist>
+    </div>
+
+    <div id="simSlots" style="display:grid; grid-template-columns:repeat(3,2fr); gap:10px; margin-bottom:20px;"></div>
+
     <div class="card-box">
-        <label>コンディション</label>
+        <label>成功度（コンディション）</label>
         <select id="conditionMod" onchange="updateCalc()">
             <option value="1.0">普通 x1.0</option>
             <option value="1.25">好調 x1.25</option>
             <option value="1.5">絶好調 x1.5</option>
         </select>
     </div>
+
     <div id="totalResults" class="card-box" style="border:2px solid var(--primary);"></div>
 </div>
 
 <div id="admin" class="content">
     <div class="card-box">
-        <h4>1. GitHub接続 (初回のみ)</h4>
+        <h4>1. GitHub接続</h4>
         <input type="password" id="ghToken" placeholder="GitHub Token" style="margin-bottom:5px;">
         <input type="text" id="ghRepo" placeholder="subcaptaintsubasa/tra-sim">
     </div>
@@ -63,11 +76,11 @@
             <input type="text" id="editName" placeholder="選手名">
             <input type="text" id="editTitle" placeholder="【称号】">
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
             <select id="editRarity"><option value="SSR">SSR</option><option value="SR">SR</option></select>
-            <input type="text" id="editAbility" placeholder="習得能力名">
+            <input type="text" id="editBonusType" placeholder="条件(例:アタッカー)">
+            <input type="number" id="editBonusVal" placeholder="値(%)">
         </div>
-        
         <div class="stat-grid" id="editStatsGrid"></div>
         <button class="btn btn-primary" style="background:var(--accent); color:#fff;" onclick="saveToGitHub()">GitHubに保存</button>
     </div>
@@ -78,8 +91,7 @@
     </div>
 </div>
 
-<!-- カード選択モーダル -->
-<div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; padding:20px; box-sizing:border-box;">
+<div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; padding:20px; box-sizing:border-box; overflow-y:auto;">
     <div id="modalList"></div>
     <button class="btn" onclick="closeModal()">閉じる</button>
 </div>
@@ -97,6 +109,7 @@
     window.onload = async () => {
         document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
         document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
+        document.getElementById('traineeStyle').value = localStorage.getItem('trainee_style') || '';
         initEditor();
         initSimSlots();
         await fetchMasterDB();
@@ -115,9 +128,17 @@
 
     function initSimSlots() {
         const grid = document.getElementById('simSlots');
+        const traineeStyle = document.getElementById('traineeStyle').value;
         grid.innerHTML = '';
-        selectedSlots.forEach((_, i) => {
-            grid.innerHTML += `<div onclick="openModal(${i})" id="slot-${i}" style="border:2px dashed #444; height:60px; border-radius:8px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:0.7rem; cursor:pointer;">枠 ${i+1}</div>`;
+        selectedSlots.forEach((card, i) => {
+            let content = `枠 ${i+1}`;
+            if (card) {
+                const isActive = (card.bonus_type === traineeStyle);
+                content = `<div style="font-weight:bold;">${card.name}</div>
+                           <div class="slot-card-info ${isActive?'bonus-active':'bonus-inactive'}">
+                           ${card.bonus_type} +${card.bonus_value}%</div>`;
+            }
+            grid.innerHTML += `<div onclick="openModal(${i})" id="slot-${i}" style="border:2px ${card?'solid var(--primary)':'dashed #444'}; height:75px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-size:0.7rem; cursor:pointer; background:${card?'rgba(0,242,255,0.05)':'none'}">${content}</div>`;
         });
     }
 
@@ -133,15 +154,16 @@
 
     function parseAIJSON() {
         try {
-            const data = JSON.parse(document.getElementById('aiPaste').value);
+            let raw = document.getElementById('aiPaste').value;
+            let dataArr = JSON.parse(raw);
+            if (!Array.isArray(dataArr)) dataArr = [dataArr];
+            const data = dataArr[0];
             document.getElementById('editName').value = data.name || "";
             document.getElementById('editTitle').value = data.title || "";
             document.getElementById('editRarity').value = data.rarity || "SSR";
-            document.getElementById('editAbility').value = (data.abilities && data.abilities.length > 0) ? data.abilities[0] : "";
-            
-            document.querySelectorAll('.edit-val').forEach(input => {
-                input.value = data.stats[input.dataset.stat] || "";
-            });
+            document.getElementById('editBonusType').value = data.bonus_type || "";
+            document.getElementById('editBonusVal').value = data.bonus_value || 0;
+            document.querySelectorAll('.edit-val').forEach(input => { input.value = data.stats[input.dataset.stat] || ""; });
             document.getElementById('editorForm').style.display = 'block';
         } catch(e) { alert("JSON解析失敗"); }
     }
@@ -156,7 +178,8 @@
             name: document.getElementById('editName').value,
             title: document.getElementById('editTitle').value,
             rarity: document.getElementById('editRarity').value,
-            abilities: [document.getElementById('editAbility').value],
+            bonus_type: document.getElementById('editBonusType').value,
+            bonus_value: parseInt(document.getElementById('editBonusVal').value || 0),
             stats: {}
         };
         document.querySelectorAll('.edit-val').forEach(input => {
@@ -166,7 +189,6 @@
         const idx = cardsDB.findIndex(c => c.name === card.name && c.title === card.title);
         if(idx >= 0) cardsDB[idx] = card; else cardsDB.push(card);
 
-        // GitHub更新
         const url = `https://api.github.com/repos/${repo}/contents/data/cards.json`;
         const getSha = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
         const sha = (await getSha.json()).sha;
@@ -175,38 +197,42 @@
             method: 'PUT',
             headers: { 'Authorization': `token ${token}` },
             body: JSON.stringify({
-                message: "Update card",
-                sha: sha,
+                message: "Update card", sha: sha,
                 content: btoa(unescape(encodeURIComponent(JSON.stringify(cardsDB, null, 2))))
             })
         });
-
         if(res.ok) { alert("保存完了！"); location.reload(); }
     }
 
-    // --- 計算エンジン（仕様準拠） ---
     function updateCalc() {
         const mult = parseFloat(document.getElementById('conditionMod').value);
+        const traineeStyle = document.getElementById('traineeStyle').value;
+        localStorage.setItem('trainee_style', traineeStyle);
+        
         const totals = {};
         selectedSlots.forEach(card => {
             if(!card) return;
             const lv = card.rarity === 'SSR' ? 50 : 45;
+            // スタイルが一致する場合のみボーナスを適用
+            const isActive = (card.bonus_type === traineeStyle);
+            const cardBonusMult = isActive ? (1 + (card.bonus_value / 100)) : 1.0;
+            
             for(let s in card.stats) {
                 const d1 = card.stats[s];
                 const N = Math.round(d1 * 6);
                 const vBase = (10 * d1 + Math.floor((10 * (N - d1) * (lv - 1)) / 44)) / 10;
-                totals[s] = (totals[s] || 0) + (vBase * mult);
+                totals[s] = (totals[s] || 0) + (vBase * mult * cardBonusMult);
             }
         });
 
         const resDiv = document.getElementById('totalResults');
-        resDiv.innerHTML = '<h4>合計上昇値</h4>';
+        resDiv.innerHTML = '<h4>合計上昇値予測</h4>';
         ALL_STATS.forEach(s => {
-            if(totals[s]) resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; border-bottom:1px solid #333;"><span>${s}</span><b>+${totals[s].toFixed(1)}</b></div>`;
+            if(totals[s]) resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333; padding:2px 0;"><span>${s}</span><b>+${totals[s].toFixed(1)}</b></div>`;
         });
+        initSimSlots(); // ボーナスの有効/無効表示を更新
     }
 
-    // モーダル・タブ制御
     function showTab(id) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -219,19 +245,18 @@
         const list = document.getElementById('modalList');
         list.innerHTML = '<div class="card-box" onclick="selectCard(null)">（空にする）</div>';
         cardsDB.forEach((c, idx) => {
-            list.innerHTML += `<div class="card-box" onclick="selectCard(${idx})">${c.title}<br>${c.name}</div>`;
+            list.innerHTML += `<div class="card-box" onclick="selectCard(${idx})">${c.title}<br>${c.name} (${c.bonus_type}+${c.bonus_value}%)</div>`;
         });
     }
     function selectCard(idx) {
         selectedSlots[activeSlotIndex] = idx === null ? null : cardsDB[idx];
-        document.getElementById(`slot-${activeSlotIndex}`).innerHTML = idx === null ? `枠 ${activeSlotIndex+1}` : cardsDB[idx].name;
         closeModal();
         updateCalc();
     }
     function renderMasterList() {
         const list = document.getElementById('masterList');
         list.innerHTML = '';
-        cardsDB.forEach(c => list.innerHTML += `<div class="master-card-item">${c.title} ${c.name}</div>`);
+        cardsDB.forEach(c => list.innerHTML += `<div class="master-card-item">${c.title} ${c.name} (${c.bonus_type}+${c.bonus_value}%)</div>`);
     }
 </script>
 </body>
