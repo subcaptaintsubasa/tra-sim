@@ -143,36 +143,80 @@
         } catch(e) { console.error(e); }
     }
 
+    // 計算ロジック完全版（整数計算導入 ＋ SSR分母修正 ＋ スタイル横書き維持）
     function updateCalc() {
-        const mult = parseFloat(document.getElementById('conditionMod').value), style = document.getElementById('traineeStyle').value;
+        const conditionStr = document.getElementById('conditionMod').value;
+        const mult = parseFloat(conditionStr);
+        const style = document.getElementById('traineeStyle').value;
         localStorage.setItem('trainee_style', style);
-        const totals = {}, saList = new Set();
+        
+        // 浮動小数点誤差回避のため、全て「表示値の10倍の整数」として加算する
+        const totals_x10 = {}; 
+        const saList = new Set();
+        
         selectedSlots.forEach(card => {
             if(!card) return;
-            const lv = card.rarity === 'SSR' ? 50 : 45, bonusMult = (card.bonus_type === style) ? (1 + (card.bonus_value/100)) : 1.0;
+            
+            // レアリティによるレベル上限 (SR:45, SSR:50)
+            const L = card.rarity === 'SSR' ? 50 : 45;
+            
+            // ボーナス倍率
+            const bonusPct = (card.bonus_type === style) ? card.bonus_value : 0;
+            const bonusMult = 1 + (bonusPct / 100);
+
             for(let s in card.stats) { 
-                const d1=card.stats[s], N=Math.round(d1*6), vBase=(10*d1+Math.floor((10*(N-d1)*(lv-1))/44))/10; 
-                totals[s] = (totals[s]||0) + (vBase * mult * bonusMult); 
+                const d1 = card.stats[s]; // Lv1 初期値
+
+                // 表示値の10倍の整数空間へ変換
+                const d1_int = Math.round(d1 * 10); 
+
+                // 目標整数値 N = round(D1 * 6)
+                const N = Math.round(d1 * 6);
+                
+                // レベル別上昇値算出
+                // 分子: (N*10 - d1_int) * (L - 1)
+                const term_numerator = (N * 10 - d1_int) * (L - 1);
+                
+                // 【修正箇所】分母を固定の44ではなく、(L - 1) で割る
+                // これにより SR(44)でも SSR(49)でも、LvMAX時に正しく目標値Nに到達する
+                const term = Math.floor(term_numerator / (L - 1));
+                
+                const vBase_x10 = d1_int + term;
+
+                // コンディション補正とボーナス適用
+                const val_x10 = Math.round(vBase_x10 * mult * bonusMult);
+
+                totals_x10[s] = (totals_x10[s] || 0) + val_x10;
             }
             if(card.abilities && card.abilities[0]) saList.add(card.abilities[0]);
         });
-        const resDiv = document.getElementById('totalResults'); resDiv.innerHTML = '<h4>特練 上昇値</h4>';
-        STATS.forEach(s => { if(totals[s] > 0) resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333;"><span>${s}</span><b>+${totals[s].toFixed(1)}</b></div>`; });
-        const saDiv = document.getElementById('saResults'); saDiv.innerHTML = '<h4>予定スキル/アビ</h4>';
+
+        const resDiv = document.getElementById('totalResults'); 
+        resDiv.innerHTML = '<h4>特練 上昇値</h4>';
+        
+        STATS.forEach(s => { 
+            if(totals_x10[s] > 0) {
+                // 整数空間(x10)から実数に戻して表示
+                const finalVal = totals_x10[s] / 10;
+                resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333;"><span>${s}</span><b>+${finalVal.toFixed(1)}</b></div>`; 
+            }
+        });
+
+        const saDiv = document.getElementById('saResults'); 
+        saDiv.innerHTML = '<h4>予定スキル/アビ</h4>';
         saList.forEach(name => {
             const s = skillsDB.find(i=>i.name===name), a = abilitiesDB.find(i=>i.name===name);
-if(s) {
-    let areaH = '<div class="sa-result-area">';
-    const areas = s.area || Array(9).fill(0);
-    areas.forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
-// 文字のdivにスタイルを追加して、折り返しを防ぎ幅を確保します
-    saDiv.innerHTML += `<div style="display:flex; align-items:center; margin-bottom:5px; width:100%;">${areaH}<div style="flex:1; min-width:0; white-space:nowrap;"><span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small></div></div>`;
-}
+            if(s) {
+                let areaH = '<div class="sa-result-area">';
+                const areas = s.area || Array(9).fill(0);
+                areas.forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
+                // 文字の折り返しを防ぐスタイル
+                saDiv.innerHTML += `<div style="display:flex; align-items:center; margin-bottom:5px; width:100%;">${areaH}<div style="flex:1; min-width:0; white-space:nowrap;"><span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small></div></div>`;
+            }
             if(a) saDiv.innerHTML += `<div style="margin-bottom:5px;"><span class="tag tag-ability">A</span><b>${name}</b><br><small>${a.condition || ''}</small></div>`;
         });
         initSimSlots();
     }
-
     async function pushToGH(file, data, msg) {
         const token = document.getElementById('ghToken').value, repo = document.getElementById('ghRepo').value;
         if(!token || !repo) return alert("GitHub設定不足");
