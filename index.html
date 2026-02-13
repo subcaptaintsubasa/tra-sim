@@ -223,8 +223,46 @@ if(s) {
     function initSimSlots() { const g=document.getElementById('simSlots'), s=document.getElementById('traineeStyle').value; g.innerHTML=''; selectedSlots.forEach((c,i)=>{ let h=`枠 ${i+1}`; if(c){ const on=(c.bonus_type===s); h=`<div style="font-weight:bold;font-size:0.7rem;">${c.name}</div><div class="${on?'bonus-on':'bonus-off'}" style="font-size:0.6rem;">${c.bonus_type}+${c.bonus_value}%</div>`; } g.innerHTML+=`<div onclick="openModal(${i})" class="${c?'slot-active':'slot-empty'}" style="height:65px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center;padding:2px;">${h}</div>`; }); }
     function loadCardToEditor(d) { document.getElementById('editName').value=d.name; document.getElementById('editTitle').value=d.title; document.getElementById('editRarity').value=d.rarity; document.getElementById('editBonusType').value=d.bonus_type; document.getElementById('editBonusVal').value=d.bonus_value; document.getElementById('editAbilityName').value=d.abilities[0]; document.querySelectorAll('.edit-val').forEach(i=>i.value=d.stats[i.dataset.stat]||''); }
     async function batchRegisterCards() { try { const d=JSON.parse(document.getElementById('aiPasteCard').value); (Array.isArray(d)?d:[d]).forEach(c=>{ const i=cardsDB.findIndex(x=>x.name===c.name&&x.title===c.title); if(i>=0)cardsDB[i]=c; else cardsDB.push(c); }); await pushToGH('cards.json',cardsDB,"Bulk Card Update"); alert("保存成功"); renderCardList(); } catch(e){alert("JSONエラー");} }
-    async function saveCardToGH() { /* 個別保存ロジックもbatch同様にcardsDB更新してpushToGH */ }
-    // カード削除機能
+// カード個別保存機能（ここを上書きしてください）
+    async function saveCardToGH() {
+        const name = document.getElementById('editName').value;
+        if(!name) return alert("選手名を入力してください");
+        
+        const title = document.getElementById('editTitle').value;
+        const rarity = document.getElementById('editRarity').value;
+        const bonusType = document.getElementById('editBonusType').value;
+        const bonusVal = parseFloat(document.getElementById('editBonusVal').value) || 0;
+        const ability = document.getElementById('editAbilityName').value;
+        
+        const stats = {};
+        document.querySelectorAll('.edit-val').forEach(i => {
+            if(i.value) stats[i.dataset.stat] = parseFloat(i.value);
+        });
+
+        const newCard = {
+            title: title,
+            name: name,
+            rarity: rarity,
+            bonus_type: bonusType,
+            bonus_value: bonusVal,
+            abilities: ability ? [ability] : [],
+            stats: stats
+        };
+
+        // 既存データを検索して更新、なければ新規追加
+        // 同名・同称号なら上書きとみなす
+        const idx = cardsDB.findIndex(c => c.name === name && c.title === title);
+        if(idx >= 0) cardsDB[idx] = newCard; else cardsDB.push(newCard);
+
+        const success = await pushToGH('cards.json', cardsDB, "Update Card: " + name);
+        if(success) {
+            alert("カードを保存しました");
+            renderCardList();
+            updateCalc();
+        } else {
+            alert("保存に失敗しました");
+        }
+    }    // カード削除機能
     async function deleteCard(idx) {
         if(!confirm("本当に削除しますか？")) return;
         cardsDB.splice(idx, 1);
