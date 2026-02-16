@@ -3,8 +3,8 @@ services:
   web:
     image: nginx:alpine
     container_name: tra-sim-web
+    restart: always  # コンテナが停止しても自動で再起動
     ports:
       - "8080:80"
     volumes:
-      # 現在のフォルダ(./)をコンテナの公開フォルダにマウントします
       - ./:/usr/share/nginx/html
