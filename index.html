@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>特練シミュレータ Pro v3.3</title>
+    <!-- OCRライブラリの読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root { --primary: #00f2ff; --accent: #22c55e; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --skill: #fbbf24; --ability: #a78bfa; --gk: #f97316; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; }
@@ -53,6 +55,15 @@
             <label style="color:#3b82f6; font-weight:bold;">▼ 育成選手のステータス入力 (現在値 / 最大値)</label>
             <span style="font-size:0.8rem;">開閉</span>
         </div>
+        <!-- OCRボタン -->
+        <div style="margin-top:10px; border-top:1px solid #334155; padding-top:10px;">
+            <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px;">スクリーンショット(16:9)から自動抽出</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="file" id="ocrUpload" accept="image/*" style="display:none;" onchange="handleOCR(this)">
+                <button class="btn" style="background:#3b82f6; width:auto; font-size:0.75rem; padding:5px 15px;" onclick="document.getElementById('ocrUpload').click()">画像を選択</button>
+                <span id="ocrStatus" style="font-size:0.7rem; color:var(--skill);"></span>
+            </div>
+        </div>
         <div id="statInputArea" class="stat-grid" style="display:none; margin-top:10px;">
             <!-- JSで自動生成 -->
         </div>
@@ -68,7 +79,7 @@
     <!-- 3. 特練スロット -->
     <div id="simSlots" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;"></div>
 
-    <!-- 4. 各種設定（コンディション & オート編成） -->
+    <!-- 4. 設定（コンディション & オート編成） -->
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
         <div class="card-box" style="margin-bottom:0;">
             <label>コンディション</label>
@@ -79,12 +90,12 @@
             </select>
         </div>
         <div class="card-box" style="margin-bottom:0; border: 2px solid var(--skill);">
-            <label style="color:var(--skill); font-weight:bold; font-size:0.8rem;">🤖 オート編成</label>
+            <label style="color:var(--skill); font-weight:bold; font-size:0.8rem;">🤖 最適化オート編成</label>
             <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
                 <input type="range" id="targetPct" min="50" max="120" value="100" step="5" oninput="document.getElementById('targetPctDisp').innerText=this.value">
                 <span id="targetPctDisp" style="font-size:0.7rem; min-width:25px;">100</span>%
             </div>
-            <button class="btn" style="background:var(--skill); color:#000; font-size:0.75rem; padding:5px;" onclick="runAutoSim()">実行</button>
+            <button class="btn" style="background:var(--skill); color:#000; font-size:0.75rem; padding:5px;" onclick="runAutoSim()">最適編成を実行</button>
         </div>
     </div>
 
@@ -163,11 +174,11 @@
         document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
         document.getElementById('traineeStyle').value = localStorage.getItem('trainee_style') || '';
         
-        // UI生成: カード編集用グリッド
+        // カード編集用UI
         const grid = document.getElementById('editStatsGrid');
         STATS.forEach(s => grid.innerHTML += `<div class="stat-item ${GK_STATS.includes(s)?'gk-stat':''}"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`);
         
-        // UI生成: 選手ステータス入力エリア
+        // 選手ステータス入力エリア生成
         const inputArea = document.getElementById('statInputArea');
         STATS.forEach(s => {
             const isGk = GK_STATS.includes(s);
@@ -182,18 +193,15 @@
                 </div>`;
         });
 
-        // UI生成: スキルターゲット
         const saTgt = document.getElementById('saTargets');
         STATS.forEach(s => saTgt.innerHTML += `<label style="font-size:0.7rem;"><input type="checkbox" value="${s}" name="sa_tgt"> ${s}</label>`);
         
-        // UI生成: エリアグリッド
         const areaGrid = document.getElementById('saAreaGrid');
         for(let i=0; i<9; i++) areaGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
         
         initSimSlots(); await fetchAllDB();
     };
 
-    // データベース取得（ローカル優先）
     async function fetchAllDB() {
         const ts = Date.now(), base = './data';
         try {
@@ -203,7 +211,7 @@
         } catch(e) { console.error(e); }
     }
 
-    // 数値計算ロジック（整数空間x10）
+    // 計算ロジック (整数x10 ＋ SSR分母補正)
     function updateCalc() {
         const conditionStr = document.getElementById('conditionMod').value;
         const mult = parseFloat(conditionStr);
@@ -216,13 +224,15 @@
         selectedSlots.forEach(card => {
             if(!card) return;
             const L = card.rarity === 'SSR' ? 50 : 45;
-            const bonusMult = (card.bonus_type === style) ? (1 + (card.bonus_value/100)) : 1.0;
+            const bonusPct = (card.bonus_type === style) ? card.bonus_value : 0;
+            const bonusMult = 1 + (bonusPct / 100);
 
             for(let s in card.stats) { 
                 const d1 = card.stats[s];
                 const d1_int = Math.round(d1 * 10); 
                 const N = Math.round(d1 * 6);
                 const term_numerator = (N * 10 - d1_int) * (L - 1);
+                // 分母を L-1 にすることで SSR(49) と SR(44) を切り分け
                 const term = Math.floor(term_numerator / (L - 1));
                 const vBase_x10 = d1_int + term;
                 const val_x10 = Math.round(vBase_x10 * mult * bonusMult);
@@ -231,7 +241,6 @@
             if(card.abilities && card.abilities[0]) saList.add(card.abilities[0]);
         });
 
-        // 上昇値 & Gap比較表示
         const resDiv = document.getElementById('totalResults'); 
         resDiv.innerHTML = '<h4>特練 上昇値 vs Gap</h4>';
         STATS.forEach(s => {
@@ -246,14 +255,13 @@
                 const finalVal = totals_x10[s] / 10;
                 let color = "#fff", note = "";
                 if(gap !== null) {
-                    if(finalVal > gap) { color = "#ef4444"; note = `<span style="font-size:0.6rem;">(+${(finalVal-gap).toFixed(1)})</span>`; }
+                    if(finalVal > gap) { color = "#ef4444"; note = ` (${(finalVal-gap).toFixed(1)}過剰)`; }
                     else if(finalVal >= gap * 0.9) color = "#22c55e";
                 }
-                resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333;"><span>${s}</span><b style="color:${color}">+${finalVal.toFixed(1)}${note}</b></div>`; 
+                resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333; padding:2px 0;"><span>${s}</span><b style="color:${color}">+${finalVal.toFixed(1)}${note}</b></div>`; 
             }
         });
 
-        // 獲得スキル表示
         const saDiv = document.getElementById('saResults'); 
         saDiv.innerHTML = '<h4>予定スキル/アビ</h4>';
         saList.forEach(name => {
@@ -268,9 +276,9 @@
         initSimSlots();
     }
 
-    // オート編成ロジック (ビームサーチ)
+    // ビームサーチ最適化 (重複許可)
     window.runAutoSim = () => {
-        if(cardsDB.length === 0) return alert("データ不足");
+        if(cardsDB.length === 0) return alert("カードデータがありません。");
         const style = document.getElementById('traineeStyle').value;
         const targetPct = parseInt(document.getElementById('targetPct').value) / 100;
         const mult = parseFloat(document.getElementById('conditionMod').value);
@@ -310,13 +318,142 @@
             }
             beam = next.sort((a,b)=>b.score - a.score).slice(0, WIDTH);
         }
-
         selectedSlots = beam[0].idxs.map(i => cardsDB[i]);
         updateCalc();
-        alert(`最適化完了 (Score: ${beam[0].score.toFixed(1)})`);
+        alert(`最適化完了 (合計有効上昇値: +${beam[0].score.toFixed(1)})`);
     };
 
-    // GitHub連携用
+    // --- 高精度OCR (V31統合版) ---
+    const OCR_GRID_DEFS = [
+        { name: "決定力", r: 0, c: 0 }, { name: "ショートパス", r: 0, c: 1 }, { name: "突破力", r: 0, c: 2 }, { name: "タックル", r: 0, c: 3 }, { name: "ジャンプ", r: 0, c: 4 }, { name: "走力", r: 0, c: 5 },
+        { name: "キック力", r: 1, c: 0 }, { name: "ロングパス", r: 1, c: 1 }, { name: "キープ力", r: 1, c: 2 }, { name: "パスカット", r: 1, c: 3 }, { name: "コンタクト", r: 1, c: 4 }, { name: "敏捷性", r: 1, c: 5 },
+        { name: "冷静さ", r: 2, c: 0 }, { name: "キック精度", r: 2, c: 1 }, { name: "ボールタッチ", r: 2, c: 2 }, { name: "マーク", r: 2, c: 3 }, { name: "スタミナ", r: 2, c: 4 }
+    ];
+
+    async function handleOCR(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const statusEl = document.getElementById('ocrStatus');
+        statusEl.innerText = "読み取り中...";
+
+        const img = new Image();
+        img.onload = async () => {
+            const scale = 3.5;
+            const cvs = document.createElement('canvas');
+            const ctx = cvs.getContext('2d');
+            cvs.width = img.width * scale; cvs.height = img.height * scale;
+            ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+            
+            const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
+            const d = imageData.data;
+            const grayData = new Uint8Array(cvs.width * cvs.height);
+            for (let i = 0; i < d.length; i += 4) {
+                const b = (d[i] + d[i+1] + d[i+2]) / 3;
+                grayData[i/4] = b;
+            }
+
+            // 1. グリッド(水平線)検出
+            const scanL = Math.floor(cvs.width * 0.42), scanR = Math.floor(cvs.width * 0.98), scanW = scanR - scanL;
+            const lineHits = [];
+            for(let y=0; y < cvs.height; y++) {
+                let count = 0;
+                for(let x=scanL; x < scanR; x++) if(grayData[y * cvs.width + x] > 115) count++;
+                if(count > scanW * 0.55) lineHits.push(y);
+            }
+            const rowYs = [];
+            if(lineHits.length > 0) {
+                let group = [lineHits[0]];
+                for(let i=1; i < lineHits.length; i++){
+                    if(lineHits[i] - lineHits[i-1] < 20) group.push(lineHits[i]);
+                    else { rowYs.push(group[Math.floor(group.length/2)]); group = [lineHits[i]]; }
+                }
+                rowYs.push(group[Math.floor(group.length/2)]);
+            }
+            if(rowYs.length < 3) { statusEl.innerText = "グリッド検出失敗"; return; }
+            const targetRows = rowYs.slice(-3);
+
+            // 2. 列位置の確定
+            let islands = [];
+            const refY = targetRows[0] - Math.floor(80 * scale / 3), refH = Math.floor(60 * scale / 3);
+            const hProj = new Array(scanW).fill(0);
+            for(let x=0; x < scanW; x++) for(let y=refY; y < refY+refH; y++) if(grayData[y * cvs.width + (scanL+x)] > 120) hProj[x]++;
+            
+            let inIsland = false, sX = 0;
+            for(let x=0; x < scanW; x++){
+                if(!inIsland && hProj[x] > 2) { inIsland = true; sX = x; }
+                else if(inIsland && hProj[x] <= 2) {
+                    let gap = 0; while(x+gap < scanW && hProj[x+gap] <= 2) gap++;
+                    if(gap < 20) x += gap;
+                    else { inIsland = false; if(x - sX > 100) islands.push({x: scanL + sX, w: x - sX}); }
+                }
+            }
+            let xCoords = [];
+            if (islands.length >= 2) {
+                const pitch = (islands[islands.length-1].x - islands[0].x) / (islands.length-1);
+                const startX = islands[0].x - (Math.round((islands[0].x - scanL) / pitch) * pitch);
+                for(let c=0; c<6; c++) xCoords.push({ x: startX + (c * pitch), w: islands[0].w });
+            } else { statusEl.innerText = "列位置特定失敗"; return; }
+
+            // 3. OCRプロセス
+            const worker = await Tesseract.createWorker('eng');
+            await worker.setParameters({ tessedit_char_whitelist: '0123456789/', tessedit_pageseg_mode: '7' });
+
+            for (let i = 0; i < OCR_GRID_DEFS.length; i++) {
+                const def = OCR_GRID_DEFS[i];
+                const xObj = xCoords[def.c];
+                const cropW = Math.floor(xObj.w + 65), cropX = Math.floor(xObj.x - 48);
+                const cropH = Math.floor(100 * scale / 3), cropY = targetRows[def.r] - cropH + 5;
+                
+                const process = async (thresh) => {
+                    const tCvs = document.createElement('canvas');
+                    tCvs.width = cropW + 100; tCvs.height = cropH + 100;
+                    const tCtx = tCvs.getContext('2d');
+                    tCtx.fillStyle = "white"; tCtx.fillRect(0,0,tCvs.width,tCvs.height);
+                    const sCvs = document.createElement('canvas');
+                    sCvs.width = cropW; sCvs.height = cropH;
+                    const sCtx = sCvs.getContext('2d');
+                    sCtx.drawImage(img, cropX/scale, cropY/scale, cropW/scale, cropH/scale, 0, 0, cropW, cropH);
+                    const sd = sCtx.getImageData(0,0,cropW,cropH);
+                    for(let j=0; j<sd.data.length; j+=4){
+                        const v = ((sd.data[j]+sd.data[j+1]+sd.data[j+2])/3 > thresh) ? 0 : 255;
+                        sd.data[j]=sd.data[j+1]=sd.data[j+2]=v;
+                    }
+                    const cutY = Math.floor(cropH * 0.85);
+                    for(let y=cutY; y<cropH; y++) for(let x=0; x<cropW; x++) {
+                        const idx = (y*cropW+x)*4; sd.data[idx]=sd.data[idx+1]=sd.data[idx+2]=255;
+                    }
+                    sCtx.putImageData(sd, 0, 0);
+                    tCtx.drawImage(sCvs, 50, 50);
+                    const { data: { text } } = await worker.recognize(tCvs);
+                    return text.trim().replace(/[^0-9/]/g, '');
+                };
+
+                const r1 = await process(110);
+                const r2 = await process(135);
+                let clean = (r2.includes('/') && r2.length >= 5) ? r2 : r1;
+
+                let n = "", m = "";
+                if (clean.includes('/')) {
+                    const p = clean.split('/'); n = p[0].substring(0,3); m = p[1].substring(0,3);
+                } else if (clean.length >= 5) {
+                    n = clean.substring(0,3); m = clean.substring(3,6);
+                } else if (clean.length >= 3) {
+                    n = clean.substring(0,3);
+                }
+
+                if (n) document.getElementById(`now_${def.name}`).value = n;
+                if (m) document.getElementById(`max_${def.name}`).value = m;
+                statusEl.innerText = `解析中... (${i+1}/17)`;
+            }
+
+            statusEl.innerText = "解析完了";
+            await worker.terminate();
+            updateCalc();
+        };
+        img.src = URL.createObjectURL(file);
+    }
+
+    // --- 管理機能 (GitHub連携 ほか) ---
     async function pushToGH(file, data, msg) {
         const token = document.getElementById('ghToken').value, repo = document.getElementById('ghRepo').value;
         if(!token || !repo) return alert("GitHub設定不足");
@@ -329,16 +466,13 @@
         } catch(e) { return false; }
     }
 
-    // 管理機能
     function showTab(id) { document.querySelectorAll('.content').forEach(c=>c.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); }
     function openModal(i) { activeSlotIndex=i; const m=document.getElementById('modalList'); m.innerHTML='<div class="card-box" onclick="selectSlot(null)">（空）</div>'; cardsDB.forEach((c,idx)=>m.innerHTML+=`<div class="card-box" onclick="selectSlot(${idx})">${c.title}<br><b>${c.name}</b></div>`); document.getElementById('cardModal').style.display='block'; }
     function selectSlot(i) { selectedSlots[activeSlotIndex] = i===null?null:cardsDB[i]; document.getElementById('cardModal').style.display='none'; updateCalc(); }
     function initSimSlots() { const g=document.getElementById('simSlots'), s=document.getElementById('traineeStyle').value; g.innerHTML=''; selectedSlots.forEach((c,i)=>{ let h=`枠 ${i+1}`; if(c){ const on=(c.bonus_type===s); h=`<div style="font-weight:bold;font-size:0.7rem;">${c.name}</div><div class="${on?'bonus-on':'bonus-off'}" style="font-size:0.6rem;">${c.bonus_type}+${c.bonus_value}%</div>`; } g.innerHTML+=`<div onclick="openModal(${i})" class="${c?'slot-active':'slot-empty'}" style="height:65px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center;padding:2px;">${h}</div>`; }); }
-    
     function renderCardList() { const l=document.getElementById('masterList'); l.innerHTML=''; cardsDB.forEach((c,idx)=>l.innerHTML+=`<div class="list-item"><b>${c.name}</b><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadCardToEditor(cardsDB[${idx}])">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteCard(${idx})">削除</button></div></div>`); }
     function renderSAList() { const l=document.getElementById('saList'); l.innerHTML=''; skillsDB.forEach(s=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-skill">S</span>${s.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('skill','${s.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('skill','${s.name}')">削除</button></div></div>`); abilitiesDB.forEach(a=>l.innerHTML+=`<div class="list-item"><span><span class="tag tag-ability">A</span>${a.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('ability','${a.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('ability','${a.name}')">削除</button></div></div>`); }
     function updateAutoComplete() { const l=document.getElementById('skillList'), s=document.getElementById('styleSuggestions'); l.innerHTML=''; s.innerHTML=''; [...skillsDB,...abilitiesDB].forEach(i=>l.innerHTML+=`<option value="${i.name}">`); const st=new Set(); cardsDB.forEach(c=>st.add(c.bonus_type)); st.forEach(i=>s.innerHTML+=`<option value="${i}">`); }
-    
     function loadCardToEditor(d) { if(!d){ document.querySelectorAll('.edit-val').forEach(i=>i.value=''); return; } document.getElementById('editName').value=d.name; document.getElementById('editTitle').value=d.title; document.getElementById('editRarity').value=d.rarity; document.getElementById('editBonusType').value=d.bonus_type; document.getElementById('editBonusVal').value=d.bonus_value; document.getElementById('editAbilityName').value=d.abilities[0]||''; document.querySelectorAll('.edit-val').forEach(i=>i.value=d.stats[i.dataset.stat]||''); }
     async function saveCardToGH() {
         const name=document.getElementById('editName').value, title=document.getElementById('editTitle').value; if(!name) return;
@@ -349,7 +483,6 @@
     }
     async function deleteCard(idx) { if(!confirm("削除しますか？")) return; cardsDB.splice(idx,1); await pushToGH('cards.json',cardsDB,"Delete Card"); renderCardList(); }
     async function batchRegisterCards() { try { const d=JSON.parse(document.getElementById('aiPasteCard').value); (Array.isArray(d)?d:[d]).forEach(c=>{const i=cardsDB.findIndex(x=>x.name===c.name&&x.title===c.title); if(i>=0)cardsDB[i]=c; else cardsDB.push(c);}); await pushToGH('cards.json',cardsDB,"Bulk Update"); alert("保存成功"); renderCardList(); } catch(e){alert("JSONエラー");} }
-
     function toggleAreaGrid() { document.getElementById('areaContainer').style.display = document.getElementById('saType').value==='skill'?'block':'none'; }
     window.loadSA = (type, name) => {
         const db = type==='skill'?skillsDB:abilitiesDB, item = db.find(i=>i.name===name); if(!item) return;
@@ -363,7 +496,7 @@
         const tgts = Array.from(document.querySelectorAll('input[name="sa_tgt"]:checked')).map(c=>c.value);
         const data = { name, value:parseFloat(document.getElementById('saValue').value)||0, targets:tgts };
         if(type==='skill'){ data.area = Array.from(document.querySelectorAll('.area-cell')).map(c=>c.classList.contains('active')?1:0); const i=skillsDB.findIndex(s=>s.name===name); if(i>=0)skillsDB[i]=data; else skillsDB.push(data); await pushToGH('skills.json',skillsDB,"Update Skill"); }
-        else { data.condition = document.getElementById('saCondition').value; const i=abilitiesDB.findIndex(a=>a.name===name); if(i>=0)abilitiesDB[i]=data; else abilitiesDB.push(data); await pushToGH('abilities.json',abilitiesDB,"Update Ability"); }
+        else { data.condition = document.getElementById('saCondition').value; const i=abilitiesDB.findIndex(a=>a.name===name); if(i>=0) abilitiesDB[i]=data; else abilitiesDB.push(data); await pushToGH('abilities.json',abilitiesDB,"Update Ability"); }
         alert("保存完了"); renderSAList(); updateAutoComplete();
     };
     window.deleteSA = async (type, name) => { if(!confirm("削除？")) return; if(type==='skill') skillsDB=skillsDB.filter(s=>s.name!==name); else abilitiesDB=abilitiesDB.filter(a=>a.name!==name); await pushToGH(type==='skill'?'skills.json':'abilities.json', type==='skill'?skillsDB:abilitiesDB, "Delete SA"); renderSAList(); };
