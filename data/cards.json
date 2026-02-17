@@ -3,8 +3,9 @@
     "title": "【赤き勝者の雄叫び】",
     "name": "フィルジル・ファン・ダイク",
     "rarity": "SSR",
-    "bonus_type": "組立CB",
-    "bonus_value": 25,
+    "bonuses": [
+      { "type": "組立CB", "value": 25 }
+    ],
     "abilities": [
       "インビンシブルフィード"
     ],
@@ -23,8 +24,9 @@
     "title": "【アンストッパブル・ドク】",
     "name": "ジェレミー・ドク",
     "rarity": "SSR",
-    "bonus_type": "ドリブラー",
-    "bonus_value": 30,
+    "bonuses": [
+      { "type": "ドリブラー", "value": 30 }
+    ],
     "abilities": [
       "躍動するステップ"
     ],
@@ -43,8 +45,9 @@
     "title": "【咆哮のファンソ】",
     "name": "ファン・ヒチャン",
     "rarity": "SR",
-    "bonus_type": "サイドアタッカー",
-    "bonus_value": 30,
+    "bonuses": [
+      { "type": "サイドアタッカー", "value": 30 }
+    ],
     "abilities": [
       "パワフルランナー"
     ],
@@ -61,8 +64,9 @@
     "title": "【ニューエラ・ハードマーカー】",
     "name": "リサンドロ・マルティネス",
     "rarity": "SR",
-    "bonus_type": "ストッパー",
-    "bonus_value": 20,
+    "bonuses": [
+      { "type": "ストッパー", "value": 20 }
+    ],
     "abilities": [
       "冴え渡るインターセプト"
     ],
@@ -79,8 +83,9 @@
     "title": "【規格外のデーモン】",
     "name": "アーリング・ハーランド",
     "rarity": "SSR",
-    "bonus_type": "ストライカー, ST",
-    "bonus_value": 15,
+    "bonuses": [
+      { "type": "ストライカー", "value": 15 }
+    ],
     "abilities": [
       "一撃必殺"
     ],
@@ -99,8 +104,9 @@
     "title": "【引き継がれるセレステの系譜】",
     "name": "ダルウィン・ヌニェス",
     "rarity": "SSR",
-    "bonus_type": "ラインブレイカー, LBK",
-    "bonus_value": 25,
+    "bonuses": [
+      { "type": "ラインブレイカー", "value": 25 }
+    ],
     "abilities": [
       "ムービングスナイパー"
     ],
@@ -119,8 +125,10 @@
     "title": "【パルテノーペイでの復活】",
     "name": "ロメル・ルカク",
     "rarity": "SSR",
-    "bonus_type": "ポストプレーヤー, CF, PST",
-    "bonus_value": 20,
+    "bonuses": [
+      { "type": "CF", "value": 10 },
+      { "type": "ポストプレーヤー", "value": 10 }
+    ],
     "abilities": [
       "ゴールへ導くトラップ"
     ],
@@ -138,8 +146,11 @@
     "title": "【ワールド・ソニー】",
     "name": "ソン・フンミン",
     "rarity": "SSR",
-    "bonus_type": "サイドアタッカー, WF, WM, SAT",
-    "bonus_value": 25,
+    "bonuses": [
+      { "type": "サイドアタッカー", "value": 25 },
+      { "type": "WF", "value": 10 },
+      { "type": "WM", "value": 10 }
+    ],
     "abilities": [
       "裏への飛び出し"
     ],
@@ -156,8 +167,10 @@
     "title": "【青黒のブレイブ・コマンダー】",
     "name": "ハカン・チャルハノール",
     "rarity": "SSR",
-    "bonus_type": "パサー, DM, PAS",
-    "bonus_value": 20,
+    "bonuses": [
+      { "type": "DM", "value": 20 },
+      { "type": "パサー", "value": 20 }
+    ],
     "abilities": [
       "魔術師の弾道"
     ],
@@ -175,8 +188,11 @@
     "title": "【円熟のマエストロ】",
     "name": "ルカ・モドリッチ",
     "rarity": "SSR",
-    "bonus_type": "セントラルMF, DM, AM, CMF",
-    "bonus_value": 20,
+    "bonuses": [
+      { "type": "DM", "value": 20 },
+      { "type": "AM", "value": 20 },
+      { "type": "セントラルMF", "value": 10 }
+    ],
     "abilities": [
       "勝機を生み出すフィード"
     ],
@@ -193,8 +209,10 @@
     "title": "【砲撃隊の統治者】",
     "name": "デクラン・ライス",
     "rarity": "SSR",
-    "bonus_type": "ハードマーカー, DM, HDM",
-    "bonus_value": 25,
+    "bonuses": [
+      { "type": "DM", "value": 25 },
+      { "type": "ハードマーカー", "value": 20 }
+    ],
     "abilities": [
       "ホットラインを断つ動き"
     ],
@@ -212,8 +230,10 @@
     "title": "【ロッソネロ・エクスプレス】",
     "name": "テオ・エルナンデス",
     "rarity": "SSR",
-    "bonus_type": "攻撃的FB, FB, AFB",
-    "bonus_value": 30,
+    "bonuses": [
+      { "type": "攻撃的FB", "value": 30 },
+      { "type": "FB", "value": 10 }
+    ],
     "abilities": [
       "指令のロングフィード"
     ],
@@ -231,8 +251,9 @@
     "title": "【最強を体現する男】",
     "name": "ダニ・カルバハル",
     "rarity": "SSR",
-    "bonus_type": "守備的FB, DFB",
-    "bonus_value": 40,
+    "bonuses": [
+      { "type": "守備的FB", "value": 40 }
+    ],
     "abilities": [
       "熟練のインターセプト"
     ],
@@ -251,8 +272,10 @@
     "title": "【ノースロンドンの装甲列車】",
     "name": "ミッキー・ファン・デ・フェン",
     "rarity": "SSR",
-    "bonus_type": "組立CB, CB, MCB",
-    "bonus_value": 30,
+    "bonuses": [
+      { "type": "組立CB", "value": 30 },
+      { "type": "CB", "value": 10 }
+    ],
     "abilities": [
       "スピードクラッシャー"
     ],
@@ -270,8 +293,10 @@
     "title": "【11年ぶりの歓喜への奮闘】",
     "name": "フィカヨ・トモリ",
     "rarity": "SSR",
-    "bonus_type": "ストッパー, CB, STP",
-    "bonus_value": 20,
+    "bonuses": [
+      { "type": "ストッパー", "value": 20 },
+      { "type": "CB", "value": 10 }
+    ],
     "abilities": [
       "反撃のキッカー"
     ],
@@ -289,8 +314,9 @@
     "title": "【世界最強の道化師】",
     "name": "エミリアーノ・マルティネス",
     "rarity": "SSR",
-    "bonus_type": "オーソドックスGK, OGK",
-    "bonus_value": 30,
+    "bonuses": [
+      { "type": "オーソドックスGK", "value": 30 }
+    ],
     "abilities": [
       "守護のロングキック"
     ],
@@ -309,8 +335,9 @@
     "title": "【反転の速射砲】",
     "name": "ロベルト・サンチェス",
     "rarity": "SSR",
-    "bonus_type": "スイーパーGK, SGK",
-    "bonus_value": 40,
+    "bonuses": [
+      { "type": "スイーパーGK", "value": 40 }
+    ],
     "abilities": [
       "最初の起点"
     ],
@@ -329,8 +356,10 @@
     "title": "【パンプローナの仕事人】",
     "name": "アンテ・ブディミル",
     "rarity": "SR",
-    "bonus_type": "ストライカー, ST",
-    "bonus_value": 25,
+    "bonuses": [
+      { "type": "ストライカー", "value": 15 },
+      { "type": "CF", "value": 10 }
+    ],
     "abilities": [
       "パワフルキッカー"
     ],
