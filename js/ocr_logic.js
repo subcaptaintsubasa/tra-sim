@@ -1,4 +1,5 @@
 // --- OCR関連設定 ---
+// ゲーム画面の座標定義 (r:行, c:列)
 const OCR_GRID_DEFS = [
     { name: "決定力", r: 0, c: 0 }, { name: "ショートパス", r: 0, c: 1 }, { name: "突破力", r: 0, c: 2 }, { name: "タックル", r: 0, c: 3 }, { name: "ジャンプ", r: 0, c: 4 }, { name: "走力", r: 0, c: 5 },
     { name: "キック力", r: 1, c: 0 }, { name: "ロングパス", r: 1, c: 1 }, { name: "キープ力", r: 1, c: 2 }, { name: "パスカット", r: 1, c: 3 }, { name: "コンタクト", r: 1, c: 4 }, { name: "敏捷性", r: 1, c: 5 },
@@ -24,13 +25,11 @@ async function handleOCR(input) {
         const d = imageData.data;
         const grayData = new Uint8Array(cvs.width * cvs.height);
         
-        // グレースケール変換
         for (let i = 0; i < d.length; i += 4) {
             const b = (d[i] + d[i+1] + d[i+2]) / 3;
             grayData[i/4] = b;
         }
 
-        // 1. グリッド(水平線)検出
         const scanL = Math.floor(cvs.width * 0.42), scanR = Math.floor(cvs.width * 0.98), scanW = scanR - scanL;
         const lineHits = [];
         for(let y=0; y < cvs.height; y++) {
@@ -50,7 +49,6 @@ async function handleOCR(input) {
         if(rowYs.length < 3) { statusEl.innerText = "グリッド検出失敗"; return; }
         const targetRows = rowYs.slice(-3);
 
-        // 2. 列位置の確定
         let islands = [];
         const refY = targetRows[0] - Math.floor(80 * scale / 3), refH = Math.floor(60 * scale / 3);
         const hProj = new Array(scanW).fill(0);
@@ -72,7 +70,6 @@ async function handleOCR(input) {
             for(let c=0; c<6; c++) xCoords.push({ x: startX + (c * pitch), w: islands[0].w });
         } else { statusEl.innerText = "列位置特定失敗"; return; }
 
-        // 3. OCRプロセス
         const worker = await Tesseract.createWorker('eng');
         await worker.setParameters({ tessedit_char_whitelist: '0123456789/', tessedit_pageseg_mode: '7' });
 
@@ -119,8 +116,16 @@ async function handleOCR(input) {
                 n = clean.substring(0,3);
             }
 
-            if (n) document.getElementById(`now_${def.name}`).value = n;
-            if (m) document.getElementById(`max_${def.name}`).value = m;
+            if (n) {
+                document.getElementById(`now_${def.name}`).value = n;
+                // GK項目にも同期入力 (案②)
+                if(GK_MAP[def.name]) document.getElementById(`now_${GK_MAP[def.name]}`).value = n;
+            }
+            if (m) {
+                document.getElementById(`max_${def.name}`).value = m;
+                // GK項目にも同期入力 (案②)
+                if(GK_MAP[def.name]) document.getElementById(`max_${GK_MAP[def.name]}`).value = m;
+            }
             statusEl.innerText = `解析中... (${i+1}/17)`;
         }
 

@@ -45,6 +45,7 @@ window.runAutoSim = () => {
     const simPos = document.getElementById('simPos').value;
     const simStyle = document.getElementById('simStyle').value;
     const conditionMod = parseFloat(document.getElementById('conditionMod').value);
+    const isGK = (simPos === 'GK');
 
     // 所持済みカードのみを抽出
     const ownedCards = cardsDB.map((c, idx) => {
@@ -52,10 +53,19 @@ window.runAutoSim = () => {
         const inv = myCards[k];
         if (!inv || !inv.owned) return null;
         
+        // ポジションに応じて不要なステータスを計算対象から除外した値を保持
+        const rawVals = getCardStatsAtLevel(c, parseInt(inv.level), simPos, simStyle, conditionMod);
+        const filteredVals = {};
+        for (let s in rawVals) {
+            if (isGK && DEF_STATS.includes(s)) continue;
+            if (!isGK && GK_STATS.includes(s)) continue;
+            filteredVals[s] = rawVals[s];
+        }
+
         return {
             id: idx,
             original: c,
-            vals: getCardStatsAtLevel(c, parseInt(inv.level), simPos, simStyle, conditionMod)
+            vals: filteredVals
         };
     }).filter(x => x !== null);
 
@@ -64,8 +74,11 @@ window.runAutoSim = () => {
     const targetSkill = document.getElementById('targetSkillInput').value;
     const targetPct = parseInt(document.getElementById('targetPct').value) / 100;
     
+    // ターゲットステータス（Gap）の整理
     const gaps = {};
-    STATS.forEach(s => {
+    const relevantStats = isGK ? STATS.filter(s => !DEF_STATS.includes(s)).concat(GK_STATS) : STATS;
+
+    relevantStats.forEach(s => {
         const now = parseFloat(document.getElementById(`now_${s}`).value) || 0;
         const max = parseFloat(document.getElementById(`max_${s}`).value) || 0;
         gaps[s] = (max > 0) ? Math.max(0, max - now) * targetPct : 999999;
@@ -73,12 +86,15 @@ window.runAutoSim = () => {
 
     const getScore = (sums) => {
         let sc = 0; 
-        STATS.forEach(s => sc += Math.min((sums[s]||0)/10, gaps[s])); 
+        relevantStats.forEach(s => {
+            sc += Math.min((sums[s]||0)/10, gaps[s]);
+        }); 
         return sc;
     };
 
     let candidateRoots = [];
     if (targetSkill) {
+        // スキル保持者を検索
         const skillHolders = ownedCards.filter(c => c.original.abilities && c.original.abilities.includes(targetSkill));
         if (skillHolders.length === 0) return alert(`スキル「${targetSkill}」を持つ所持カードがありません。`);
         
@@ -112,8 +128,7 @@ window.runAutoSim = () => {
             let next = [];
             for(const node of beam) {
                 for(const card of root.pool) {
-                    if (node.idxs.includes(card.id)) continue; 
-
+                    // 同一カードの重複制限を解除 (node.idxs.includes のチェックを削除)
                     const nSums = { ...node.sums };
                     for(const s in card.vals) nSums[s] = (nSums[s]||0) + card.vals[s];
                     
