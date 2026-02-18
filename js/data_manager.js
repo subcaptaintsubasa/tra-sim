@@ -1,0 +1,209 @@
+// --- データ取得・初期化 ---
+async function fetchAllDB() {
+    const ts = Date.now(), base = './data';
+    try {
+        const [c, s, a] = await Promise.all([ 
+            fetch(`${base}/cards.json?t=${ts}`), 
+            fetch(`${base}/skills.json?t=${ts}`), 
+            fetch(`${base}/abilities.json?t=${ts}`) 
+        ]);
+        
+        if(c.ok) cardsDB = await c.json(); 
+        if(s.ok) skillsDB = await s.json(); 
+        if(a.ok) abilitiesDB = await a.json();
+        
+        // UI更新関数の呼び出し（ui_manager.jsで定義）
+        if (typeof renderCardList === 'function') renderCardList(); 
+        if (typeof renderInventory === 'function') renderInventory(); 
+        if (typeof renderSAList === 'function') renderSAList(); 
+        if (typeof updateAutoComplete === 'function') updateAutoComplete(); 
+        if (typeof updateCalc === 'function') updateCalc();
+        
+    } catch(e) { console.error(e); }
+}
+
+// --- インベントリ管理 (Local Storage) ---
+function saveInv() { 
+    localStorage.setItem('tra_my_cards', JSON.stringify(myCards)); 
+}
+
+window.toggleOwn = (key, checked) => {
+    if(!myCards[key]) myCards[key] = { level: 50 };
+    myCards[key].owned = checked;
+    saveInv(); 
+    if (typeof renderInventory === 'function') renderInventory();
+};
+
+window.updateOwnLvl = (key, lvl) => {
+    if(!myCards[key]) myCards[key] = { owned: true };
+    myCards[key].level = lvl;
+    saveInv();
+};
+
+window.invSetAll = (owned) => {
+    cardsDB.forEach(c => {
+        const key = c.name+"_"+c.title;
+        const maxL = c.rarity==='SSR'?50:45;
+        myCards[key] = { owned: owned, level: maxL };
+    });
+    saveInv(); 
+    if (typeof renderInventory === 'function') renderInventory();
+};
+
+// --- GitHub API連携 ---
+async function pushToGH(file, data, msg) {
+    const token = document.getElementById('ghToken').value;
+    const repo = document.getElementById('ghRepo').value;
+    
+    if(!token || !repo) { 
+        alert("GitHub設定が必要です"); 
+        return false; 
+    }
+    
+    const url = `https://api.github.com/repos/${repo}/contents/data/${file}`;
+    try {
+        const g = await fetch(url, { headers:{'Authorization':`token ${token}`} });
+        const sha = g.ok ? (await g.json()).sha : null;
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+        
+        const res = await fetch(url, { 
+            method:'PUT', 
+            headers:{'Authorization':`token ${token}`}, 
+            body: JSON.stringify({ 
+                message: msg, 
+                sha: sha, 
+                content: content 
+            }) 
+        });
+        return res.ok;
+    } catch(e) { 
+        console.error(e); 
+        return false; 
+    }
+}
+
+// --- データ保存ロジック (Card) ---
+async function saveCardToGH() {
+    const name = document.getElementById('editName').value;
+    const title = document.getElementById('editTitle').value; 
+    if(!name) return;
+
+    const stats={}; 
+    document.querySelectorAll('.edit-val').forEach(i => {
+        if(i.value) stats[i.dataset.stat] = parseFloat(i.value);
+    });
+    
+    const bonuses = [];
+    const rows = document.querySelectorAll('#editBonusList > div');
+    rows.forEach(r => {
+        const t = r.querySelector('.edit-b-type').value;
+        const v = parseFloat(r.querySelector('.edit-b-val').value);
+        if(t && v) bonuses.push({ type: t, value: v });
+    });
+
+    const legacyType = bonuses.length > 0 ? bonuses[0].type : "";
+    const legacyVal = bonuses.length > 0 ? bonuses[0].value : 0;
+
+    const nc = { 
+        title, name, 
+        rarity: document.getElementById('editRarity').value, 
+        bonuses: bonuses,
+        bonus_type: legacyType,
+        bonus_value: legacyVal,
+        abilities: [document.getElementById('editAbilityName').value], 
+        stats 
+    };
+
+    const i = cardsDB.findIndex(x => x.name === name && x.title === title); 
+    if(i >= 0) cardsDB[i] = nc; 
+    else cardsDB.push(nc);
+    
+    if(await pushToGH('cards.json', cardsDB, "Update Card")) { 
+        alert("保存成功"); 
+        renderCardList(); 
+        renderInventory(); 
+    }
+}
+
+async function deleteCard(idx) { 
+    if(!confirm("削除しますか？")) return; 
+    cardsDB.splice(idx,1); 
+    await pushToGH('cards.json', cardsDB, "Delete Card"); 
+    renderCardList(); 
+    renderInventory(); 
+}
+
+async function batchRegisterCards() { 
+    try { 
+        const d = JSON.parse(document.getElementById('aiPasteCard').value); 
+        (Array.isArray(d) ? d : [d]).forEach(c => {
+            const i = cardsDB.findIndex(x => x.name === c.name && x.title === c.title); 
+            if(i >= 0) cardsDB[i] = c; 
+            else cardsDB.push(c);
+        }); 
+        await pushToGH('cards.json', cardsDB, "Bulk Update"); 
+        alert("保存成功"); 
+        renderCardList(); 
+        renderInventory(); 
+    } catch(e) { alert("JSONエラー"); } 
+}
+
+// --- データ保存ロジック (Skill/Ability) ---
+window.saveSA = async () => { 
+    const type = document.getElementById('saType').value;
+    const name = document.getElementById('saName').value; 
+    if(!name) return; 
+    
+    const tgts = Array.from(document.querySelectorAll('input[name="sa_tgt"]:checked')).map(c => c.value); 
+    const data = { 
+        name, 
+        value: parseFloat(document.getElementById('saValue').value) || 0, 
+        targets: tgts 
+    }; 
+    
+    if(type === 'skill'){ 
+        data.area = Array.from(document.querySelectorAll('.area-cell')).map(c => c.classList.contains('active') ? 1 : 0); 
+        const i = skillsDB.findIndex(s => s.name === name); 
+        if(i >= 0) skillsDB[i] = data; 
+        else skillsDB.push(data); 
+        await pushToGH('skills.json', skillsDB, "Update Skill"); 
+    } else { 
+        data.condition = document.getElementById('saCondition').value; 
+        const i = abilitiesDB.findIndex(a => a.name === name); 
+        if(i >= 0) abilitiesDB[i] = data; 
+        else abilitiesDB.push(data); 
+        await pushToGH('abilities.json', abilitiesDB, "Update Ability"); 
+    } 
+    alert("保存完了"); 
+    renderSAList(); 
+    updateAutoComplete(); 
+};
+
+window.deleteSA = async (type, name) => { 
+    if(!confirm("削除？")) return; 
+    if(type === 'skill') skillsDB = skillsDB.filter(s => s.name !== name); 
+    else abilitiesDB = abilitiesDB.filter(a => a.name !== name); 
+    await pushToGH(type === 'skill' ? 'skills.json' : 'abilities.json', type === 'skill' ? skillsDB : abilitiesDB, "Delete SA"); 
+    renderSAList(); 
+};
+
+async function batchRegisterSA() { 
+    try { 
+        const d = JSON.parse(document.getElementById('aiPasteSA').value); 
+        if(d.skills) d.skills.forEach(s => {
+            const i = skillsDB.findIndex(x => x.name === s.name); 
+            if(i >= 0) skillsDB[i] = s; 
+            else skillsDB.push(s);
+        }); 
+        if(d.abilities) d.abilities.forEach(a => {
+            const i = abilitiesDB.findIndex(x => x.name === a.name); 
+            if(i >= 0) abilitiesDB[i] = a; 
+            else abilitiesDB.push(a);
+        }); 
+        await pushToGH('skills.json', skillsDB, "Update"); 
+        await pushToGH('abilities.json', abilitiesDB, "Update"); 
+        alert("保存成功"); 
+        renderSAList(); 
+    } catch(e) { alert("JSONエラー"); } 
+}

@@ -1,0 +1,252 @@
+:root { 
+    --primary: #00f2ff; 
+    --accent: #22c55e; 
+    --bg: #0f172a; 
+    --card: #1e293b; 
+    --text: #f1f5f9; 
+    --skill: #fbbf24; 
+    --ability: #a78bfa; 
+    --gk: #f97316; 
+}
+
+body { 
+    font-family: -apple-system, sans-serif; 
+    background: var(--bg); 
+    color: var(--text); 
+    margin: 0; 
+    padding-bottom: 80px; 
+}
+
+nav { 
+    background: #000; 
+    padding: 10px; 
+    display: flex; 
+    gap: 5px; 
+    position: sticky; 
+    top: 0; 
+    z-index: 100; 
+    overflow-x: auto; 
+}
+
+.tab-btn { 
+    flex: 1; 
+    padding: 10px; 
+    border: none; 
+    background: #334155; 
+    color: white; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    white-space: nowrap; 
+    font-size: 0.85rem; 
+}
+
+.tab-btn.active { 
+    background: var(--primary); 
+    color: #000; 
+    font-weight: bold; 
+}
+
+.content { 
+    display: none; 
+    padding: 15px; 
+    max-width: 1000px; 
+    margin: 0 auto; 
+}
+
+.content.active { 
+    display: block; 
+}
+
+.card-box { 
+    background: var(--card); 
+    padding: 15px; 
+    border-radius: 10px; 
+    margin-bottom: 15px; 
+    border: 1px solid #334155; 
+}
+
+input, textarea, select { 
+    background: #000; 
+    border: 1px solid #334155; 
+    color: #fff; 
+    padding: 8px; 
+    border-radius: 6px; 
+    width: 100%; 
+    box-sizing: border-box; 
+}
+
+.btn { 
+    padding: 10px; 
+    border-radius: 6px; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+    margin-top: 5px; 
+    width: 100%; 
+}
+
+.btn-primary { 
+    background: var(--primary); 
+    color: #000; 
+}
+
+.btn-accent { 
+    background: var(--accent); 
+    color: #fff; 
+}
+
+.btn-sm { 
+    width: auto; 
+    padding: 4px 8px; 
+    font-size: 0.75rem; 
+    margin-left: 5px; 
+}
+
+.stat-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+    gap: 8px; 
+    margin-top: 10px; 
+}
+
+.stat-item label { 
+    display: block; 
+    font-size: 0.7rem; 
+    color: #94a3b8; 
+    margin-bottom: 2px; 
+}
+
+.gk-stat { 
+    border-color: var(--gk); 
+}
+
+.gk-stat label { 
+    color: var(--gk); 
+}
+
+.slot-active { 
+    border: 2px solid var(--primary); 
+    background: rgba(0,242,255,0.1); 
+}
+
+.slot-empty { 
+    border: 2px dashed #444; 
+}
+
+.bonus-on { 
+    color: var(--accent); 
+    font-weight: bold; 
+}
+
+.bonus-off { 
+    color: #ef4444; 
+    text-decoration: line-through; 
+    opacity: 0.6; 
+}
+
+.tag { 
+    font-size: 0.65rem; 
+    padding: 2px 6px; 
+    border-radius: 4px; 
+    margin-right: 5px; 
+}
+
+.tag-skill { 
+    background: var(--skill); 
+    color: #000; 
+}
+
+.tag-ability { 
+    background: var(--ability); 
+    color: #fff; 
+}
+
+/* Inventory Styles */
+.inv-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+    gap: 10px; 
+}
+
+.inv-item { 
+    background: #000; 
+    padding: 8px; 
+    border-radius: 6px; 
+    border: 1px solid #333; 
+    position: relative; 
+}
+
+.inv-item.owned { 
+    border-color: var(--primary); 
+    background: rgba(0,242,255,0.05); 
+}
+
+.inv-item.unowned { 
+    opacity: 0.5; 
+}
+
+.inv-check { 
+    position: absolute; 
+    top: 5px; 
+    right: 5px; 
+    transform: scale(1.2); 
+}
+
+/* Area Grid */
+.area-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 3px; 
+    width: 120px; 
+    margin-top: 5px; 
+}
+
+.area-cell { 
+    height: 35px; 
+    background: #444; 
+    cursor: pointer; 
+    border: 1px solid #555; 
+}
+
+.area-cell.active { 
+    background: var(--skill); 
+    border: 1px solid white; 
+}
+
+.list-item {
+    background: #1e293b;
+    margin-bottom: 5px;
+    padding: 8px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #334155;
+}
+
+.btn-edit {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: white;
+    background: #3b82f6;
+}
+
+.sa-result-area {
+    display: flex;
+    gap: 1px;
+    margin-right: 8px;
+    border: 1px solid #555;
+}
+
+.sa-result-cell {
+    width: 6px;
+    height: 6px;
+    background: #333;
+}
+
+.sa-result-cell.active {
+    background: var(--skill);
+}
