@@ -502,3 +502,73 @@ window.renderProfileSelector = () => {
     
     select.value = current;
 };
+
+// --- プロファイル保存/読込モーダル制御 ---
+
+window.openSaveModal = () => {
+    const modal = document.getElementById('profileModal');
+    const title = document.getElementById('profileModalTitle');
+    const content = document.getElementById('profileModalContent');
+    
+    title.innerText = "現在のステータスを保存";
+    content.innerHTML = `
+        <div style="margin-bottom:10px;">
+            <label style="font-size:0.75rem; color:#94a3b8;">保存名 (例: ハーランドLv1)</label>
+            <input type="text" id="modalProfileName" placeholder="名前を入力..." style="margin-top:5px;">
+        </div>
+        <button class="btn btn-accent" onclick="execSaveProfile()">保存する</button>
+    `;
+    
+    modal.style.display = 'flex'; // flexで中央寄せ
+    document.getElementById('modalProfileName').focus();
+};
+
+window.openLoadModal = () => {
+    const modal = document.getElementById('profileModal');
+    const title = document.getElementById('profileModalTitle');
+    const content = document.getElementById('profileModalContent');
+    
+    title.innerText = "保存済みデータの読込";
+    content.innerHTML = `<div id="profileLoadList" style="display:flex; flex-direction:column; gap:5px;"></div>`;
+    
+    const list = document.getElementById('profileLoadList');
+    const keys = Object.keys(profiles || {}).sort();
+    
+    if(keys.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b; font-size:0.8rem;">保存されたデータがありません</div>`;
+    } else {
+        keys.forEach(name => {
+            const row = document.createElement('div');
+            row.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:8px; border-radius:6px; border:1px solid #334155;";
+            row.innerHTML = `
+                <div style="font-weight:bold; font-size:0.9rem; cursor:pointer; flex:1;" onclick="execLoadProfile('${name}')">${name}</div>
+                <button class="btn btn-sm" style="width:auto; background:#ef4444; margin-left:10px;" onclick="execDeleteProfile('${name}')">削除</button>
+            `;
+            list.appendChild(row);
+        });
+    }
+    
+    modal.style.display = 'flex';
+};
+
+window.closeProfileModal = () => {
+    document.getElementById('profileModal').style.display = 'none';
+};
+
+// --- 実処理へのブリッジ ---
+window.execSaveProfile = () => {
+    const name = document.getElementById('modalProfileName').value;
+    if(saveProfile(name)) {
+        closeProfileModal();
+    }
+};
+
+window.execLoadProfile = (name) => {
+    loadProfile(name);
+    closeProfileModal();
+};
+
+window.execDeleteProfile = (name) => {
+    deleteProfile(name);
+    openLoadModal(); // リストを再描画
+};

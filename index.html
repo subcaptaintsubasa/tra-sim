@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>特練シミュレータ Pro v4.1</title>
+    <title>特練シミュレータ Pro v4.2</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -28,21 +28,17 @@
         <!-- OCR & プロファイル管理エリア -->
         <div style="margin-top:10px; border-top:1px solid #334155; padding-top:10px;">
             <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px;">スクリーンショット(16:9)から自動抽出</label>
-            <div style="display:flex; gap:10px; align-items:center;">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <!-- OCRボタン -->
                 <input type="file" id="ocrUpload" accept="image/*" style="display:none;" onchange="handleOCR(this)">
                 <button class="btn" style="background:#3b82f6; width:auto; font-size:0.75rem; padding:5px 15px;" onclick="document.getElementById('ocrUpload').click()">画像を選択</button>
                 <span id="ocrStatus" style="font-size:0.7rem; color:var(--skill);"></span>
-            </div>
-            
-            <!-- 追加機能: プロファイル保存/読込 -->
-            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #334155; display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
-                <label style="font-size:0.7rem; color:#94a3b8; width:100%;">保存済み設定の呼び出し・保存</label>
-                <select id="profileSelect" style="flex:1; min-width:120px;" onchange="loadSelectedProfile()">
-                    <option value="">-- データを選択 --</option>
-                </select>
-                <input type="text" id="profileName" placeholder="保存名(例: ハーランド)" style="flex:1; min-width:120px;">
-                <button class="btn btn-sm btn-accent" style="width:auto; margin:0;" onclick="saveCurrentProfile()">保存</button>
-                <button class="btn btn-sm" style="width:auto; margin:0; background:#ef4444;" onclick="deleteSelectedProfile()">削除</button>
+
+                <!-- スタイリッシュな保存/読込ボタン -->
+                <div style="margin-left: auto; display:flex; gap:5px;">
+                    <button class="btn btn-sm btn-accent" style="width:auto;" onclick="openSaveModal()">💾 保存</button>
+                    <button class="btn btn-sm btn-primary" style="width:auto;" onclick="openLoadModal()">📂 読込</button>
+                </div>
             </div>
         </div>
 
@@ -125,7 +121,6 @@
 
 <!-- カード管理 (Admin) -->
 <div id="admin-card" class="content">
-    <!-- 追加機能: バックアップ -->
     <div class="card-box" style="border:1px solid var(--skill); margin-bottom: 15px;">
         <h4 style="color:var(--skill);">データバックアップ (JSON)</h4>
         <p style="font-size:0.7rem; color:#94a3b8;">ブラウザのキャッシュ消去対策として、以下のテキストをメモ帳等に保存してください。</p>
@@ -153,14 +148,11 @@
             <select id="editRarity"><option>SSR</option><option>SR</option></select>
             <input id="editAbilityName" placeholder="スキル/アビ名" list="skillList">
         </div>
-        
-        <!-- ボーナスUI -->
         <div style="margin-top:10px; border:1px dashed #555; padding:5px;">
             <label style="font-size:0.7rem;">ボーナス条件 (複数可)</label>
             <div id="editBonusList"></div>
             <button class="btn btn-sm" onclick="addBonusRow()">+ 条件追加</button>
         </div>
-
         <div class="stat-grid" id="editStatsGrid"></div>
         <button class="btn btn-accent" onclick="saveCardToGH()">保存</button>
     </div>
@@ -188,18 +180,24 @@
     </div>
 </div>
 
-<!-- モーダル -->
+<!-- モーダル群 -->
 <div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; padding:20px; overflow-y:auto;">
     <div id="modalList"></div><button class="btn" onclick="document.getElementById('cardModal').style.display='none'">閉じる</button>
 </div>
 
+<!-- プロファイル保存/読込モーダル -->
+<div id="profileModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:210; align-items:center; justify-content:center;">
+    <div class="card-box" style="width:90%; max-width:400px; max-height:80vh; overflow-y:auto; border:1px solid #334155;">
+        <h4 id="profileModalTitle" style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">設定</h4>
+        <div id="profileModalContent"></div>
+        <button class="btn" style="background:#334155; margin-top:10px;" onclick="closeProfileModal()">閉じる</button>
+    </div>
+</div>
+
 <div id="admin-status">コマンド入力待機中... (10秒以内に入力)</div>
-
-
 <datalist id="skillList"></datalist>
 <datalist id="styleSuggestions"></datalist>
 
-<!-- JSファイルの読み込み順序が重要です -->
 <script src="js/config.js"></script>
 <script src="js/data_manager.js"></script>
 <script src="js/core_logic.js"></script>

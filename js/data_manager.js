@@ -208,53 +208,54 @@ async function batchRegisterSA() {
     } catch(e) { alert("JSONエラー"); } 
 }
 
-// --- プロファイル管理ロジック ---
+// --- プロファイル管理ロジック (改修版) ---
 
 function saveProfilesToLocal() {
     localStorage.setItem('tra_profiles', JSON.stringify(profiles));
 }
 
-window.saveCurrentProfile = () => {
-    const name = document.getElementById('profileName').value.trim();
-    if (!name) return alert("保存名を入力してください");
+// 名前を受け取って保存し、成功したらtrueを返す
+window.saveProfile = (name) => {
+    const cleanName = (name || "").trim();
+    if (!cleanName) {
+        alert("保存名を入力してください");
+        return false;
+    }
 
     const data = {};
     const allStats = [...STATS, ...GK_STATS];
     allStats.forEach(s => {
-        data[`now_${s}`] = document.getElementById(`now_${s}`).value;
-        data[`max_${s}`] = document.getElementById(`max_${s}`).value;
+        const nEl = document.getElementById(`now_${s}`);
+        const mEl = document.getElementById(`max_${s}`);
+        if(nEl) data[`now_${s}`] = nEl.value;
+        if(mEl) data[`max_${s}`] = mEl.value;
     });
 
-    profiles[name] = data;
+    profiles[cleanName] = data;
     saveProfilesToLocal();
-    renderProfileSelector();
-    alert(`「${name}」を保存しました`);
+    alert(`「${cleanName}」を保存しました`);
+    return true;
 };
 
-window.loadSelectedProfile = () => {
-    const name = document.getElementById('profileSelect').value;
+// 名前を受け取ってロード
+window.loadProfile = (name) => {
     if (!name || !profiles[name]) return;
-
     const data = profiles[name];
     for (let key in data) {
         const el = document.getElementById(key);
         if (el) el.value = data[key];
     }
-    document.getElementById('profileName').value = name;
     if (typeof updateCalc === 'function') updateCalc();
 };
 
-window.deleteSelectedProfile = () => {
-    const name = document.getElementById('profileSelect').value;
+// 名前を受け取って削除
+window.deleteProfile = (name) => {
     if (!name) return;
     if (confirm(`「${name}」のデータを削除しますか？`)) {
         delete profiles[name];
         saveProfilesToLocal();
-        renderProfileSelector();
-        document.getElementById('profileName').value = "";
     }
 };
-
 // --- バックアップ (JSON) ---
 
 window.exportBackup = () => {
