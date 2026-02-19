@@ -358,72 +358,73 @@ body.admin-mode .admin-tab {
     margin-bottom: 15px;
 }
 
-/* ポジションチップ */
+/* --- ポジション選択（タイル形式） --- */
 .pos-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4列でボタン面積を大きく */
+    gap: 4px;
+    margin-bottom: 15px;
 }
 
 .pos-chip {
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #000;
+    padding: 12px 0; /* 高さを出して押しやすく */
+    border-radius: 4px; /* 丸みを抑えてタイル状に */
+    background: #1e293b;
     border: 1px solid #334155;
-    color: #94a3b8;
+    color: #f1f5f9;
     font-size: 0.8rem;
+    font-weight: bold;
+    text-align: center;
     cursor: pointer;
+    transition: 0.2s;
 }
 
-.pos-chip.active[data-group="gk"] { background: #f97316; color: #000; border-color: #fff; }
-.pos-chip.active[data-group="df"] { background: #3b82f6; color: #fff; border-color: #fff; }
-.pos-chip.active[data-group="mf"] { background: #22c55e; color: #fff; border-color: #fff; }
-.pos-chip.active[data-group="fw"] { background: #ef4444; color: #fff; border-color: #fff; }
+/* ポジションごとのアクティブ色（面積が広いので少し暗めに調整） */
+.pos-chip.active[data-group="gk"] { background: #9a4710; border-color: #f97316; }
+.pos-chip.active[data-group="df"] { background: #1e40af; border-color: #3b82f6; }
+.pos-chip.active[data-group="mf"] { background: #166534; border-color: #22c55e; }
+.pos-chip.active[data-group="fw"] { background: #991b1b; border-color: #ef4444; }
 
-/* プレイスタイルカード */
+/* --- プレイスタイル選択（1列リスト形式） --- */
 .style-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: 1fr; /* 1列に変更 */
+    gap: 6px;
     margin-top: 10px;
-    /* 折りたたみ用 */
-    max-height: 300px;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-}
-
-.style-grid.collapsed {
-    max-height: 0;
-    margin-top: 0;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .style-card {
-    background: #000;
+    display: flex; /* 横並びに変更 */
+    align-items: center;
+    background: #1e293b;
     border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 8px;
-    text-align: center;
+    border-radius: 6px;
+    padding: 8px 12px;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 .style-card img {
-    width: 100%;
-    height: auto;
+    width: 32px; /* 画像を小さく固定（粗さ対策） */
+    height: 32px;
+    object-fit: contain;
+    margin-right: 12px; /* 画像と文字の間隔 */
+    background: #0f172a;
     border-radius: 4px;
-    margin-bottom: 4px;
-    background: #222; /* 画像がない場合の仮色 */
+    padding: 2px;
 }
 
 .style-card span {
-    font-size: 0.65rem;
-    display: block;
-    line-height: 1.2;
+    font-size: 0.9rem; /* 文字を少し大きく */
+    font-weight: bold;
+    color: #f1f5f9;
 }
 
 .style-card.active {
     border-color: var(--primary);
-    background: rgba(0, 242, 255, 0.1);
+    background: rgba(0, 242, 255, 0.15);
 }
 
 /* 決定後の表示 */

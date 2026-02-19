@@ -95,6 +95,7 @@ function renderStyleOptions(pos) {
         const iconCode = STYLE_ICONS[s] || 'ST';
         const card = document.createElement('div');
         card.className = 'style-card';
+        // HTML構造を画像→テキストの順に変更
         card.innerHTML = `
             <img src="img/styles/${iconCode}.png" onerror="this.src='https://placehold.jp/24/333333/ffffff/60x40.png?text=${iconCode}'">
             <span>${s}</span>
