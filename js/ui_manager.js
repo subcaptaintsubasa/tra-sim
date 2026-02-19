@@ -1,4 +1,5 @@
 // --- 初期化系 UI構築 ---
+
 function initStatInputs() {
     const area = document.getElementById('statInputArea');
     area.style.gridTemplateColumns = "repeat(6, 1fr)";
@@ -77,19 +78,83 @@ function initEditors() {
     for(let i=0; i<9; i++) areaGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
 }
 
+// --- ターゲット（スキル/アビリティ）選択 UI ---
+
+window.updateAutoComplete = () => {
+    // 1. スキルターゲットコンテナの描画
+    const sContainer = document.getElementById('skillTargetContainer');
+    if (sContainer) {
+        sContainer.innerHTML = '';
+        skillsDB.forEach(s => {
+            const btn = document.createElement('button');
+            const isSelected = selectedTargetSkills.includes(s.name);
+            btn.className = `tag-btn-select ${isSelected ? 'selected-skill' : ''}`;
+            btn.innerText = s.name;
+            btn.onclick = () => toggleTarget('skill', s.name);
+            sContainer.appendChild(btn);
+        });
+    }
+
+    // 2. アビリティターゲットコンテナの描画
+    const aContainer = document.getElementById('abilityTargetContainer');
+    if (aContainer) {
+        aContainer.innerHTML = '';
+        abilitiesDB.forEach(a => {
+            const btn = document.createElement('button');
+            const isSelected = selectedTargetAbilities.includes(a.name);
+            btn.className = `tag-btn-select ${isSelected ? 'selected-ability' : ''}`;
+            btn.innerText = a.name;
+            btn.onclick = () => toggleTarget('ability', a.name);
+            aContainer.appendChild(btn);
+        });
+    }
+
+    // 管理者画面用のdatalist
+    const l = document.getElementById('skillList'); 
+    if (l) {
+        l.innerHTML = ''; 
+        [...skillsDB,...abilitiesDB].forEach(i => l.innerHTML += `<option value="${i.name}">`); 
+    }
+
+    const sSug = document.getElementById('styleSuggestions'); 
+    if(sSug) { 
+        sSug.innerHTML = ''; 
+        Object.values(POS_MAP).flat().forEach(s => sSug.innerHTML += `<option value="${s}">`); 
+        Object.keys(POS_MAP).forEach(p => sSug.innerHTML += `<option value="${p}">`); 
+    }
+};
+
+function toggleTarget(type, name) {
+    if (type === 'skill') {
+        if (selectedTargetSkills.includes(name)) {
+            selectedTargetSkills = selectedTargetSkills.filter(n => n !== name);
+        } else if (selectedTargetSkills.length < 3) {
+            selectedTargetSkills.push(name);
+        }
+    } else {
+        if (selectedTargetAbilities.includes(name)) {
+            selectedTargetAbilities = selectedTargetAbilities.filter(n => n !== name);
+        } else if (selectedTargetAbilities.length < 3) {
+            selectedTargetAbilities.push(name);
+        }
+    }
+    updateAutoComplete();
+    updateCalc();
+}
+
 // --- メイン計算 & 描画トリガー ---
+
 window.updateCalc = () => {
     const condMult = parseFloat(document.getElementById('conditionMod').value);
     const pos = document.getElementById('simPos').value;
     const style = document.getElementById('simStyle').value;
-    const targetSkill = document.getElementById('targetSkillInput').value;
     const isGK = (pos === 'GK');
 
     const totals_x10 = {};
     const saList = new Set();
-    let hasTargetSkill = false;
 
-    selectedSlots.forEach((card, idx) => {
+    // 6スロットを走査
+    selectedSlots.forEach((card) => {
         if (!card) return;
         const key = card.name + "_" + card.title;
         const invData = myCards[key];
@@ -98,26 +163,27 @@ window.updateCalc = () => {
         const vals = getCardStatsAtLevel(card, level, pos, style, condMult);
         
         for(let s in vals) {
-            // ポジションに応じて値を無効化
             if (isGK && DEF_STATS.includes(s)) continue;
             if (!isGK && GK_STATS.includes(s)) continue;
-            
             totals_x10[s] = (totals_x10[s] || 0) + vals[s];
         }
 
         if(card.abilities && card.abilities.length > 0) {
-            card.abilities.forEach(a => {
-                saList.add(a);
-                if(a === targetSkill) hasTargetSkill = true;
-            });
+            card.abilities.forEach(a => saList.add(a));
         }
     });
 
-    renderResults(totals_x10, saList, targetSkill, hasTargetSkill);
+    // 必須項目の充足チェック
+    const missingTargets = [
+        ...selectedTargetSkills.filter(name => !saList.has(name)),
+        ...selectedTargetAbilities.filter(name => !saList.has(name))
+    ];
+
+    renderResults(totals_x10, saList, missingTargets);
     renderSimSlots(pos, style);
 };
 
-function renderResults(totals_x10, saList, targetSkill, hasTargetSkill) {
+function renderResults(totals_x10, saList, missingTargets) {
     const resDiv = document.getElementById('totalResults');
     resDiv.innerHTML = '<h4>特練 上昇値 vs Gap</h4>';
     
@@ -163,16 +229,21 @@ function renderResults(totals_x10, saList, targetSkill, hasTargetSkill) {
         }
     });
 
+    // SA（スキル・アビリティ）結果描画
     const saDiv = document.getElementById('saResults');
     let header = '<h4>予定スキル/アビ</h4>';
-    if(targetSkill && !hasTargetSkill) header += `<div style="color:red; font-size:0.7rem;">⚠ 必須スキル「${targetSkill}」が含まれていません</div>`;
-    else if(targetSkill) header += `<div style="color:var(--accent); font-size:0.7rem;">✔ 必須スキル「${targetSkill}」OK</div>`;
+    
+    if(missingTargets.length > 0) {
+        header += `<div style="color:#ef4444; font-size:0.7rem;">⚠ 不足: ${missingTargets.join(', ')}</div>`;
+    } else if (selectedTargetSkills.length > 0 || selectedTargetAbilities.length > 0) {
+        header += `<div style="color:var(--accent); font-size:0.7rem;">✔ 必須項目を全て充足</div>`;
+    }
     saDiv.innerHTML = header;
 
     saList.forEach(name => {
         const s = skillsDB.find(i=>i.name===name), a = abilitiesDB.find(i=>i.name===name);
-        const isTarget = (name === targetSkill);
-        const hlStyle = isTarget ? 'border:1px solid var(--accent); padding:2px;' : '';
+        const isTarget = selectedTargetSkills.includes(name) || selectedTargetAbilities.includes(name);
+        const hlStyle = isTarget ? 'border:1px solid var(--accent); padding:2px; background:rgba(34,197,94,0.1);' : '';
         
         if(s) {
             let areaH = '<div class="sa-result-area">';
@@ -199,8 +270,11 @@ function renderSimSlots(pos, style) {
     });
 }
 
+// --- 在庫・管理系描画 ---
+
 window.renderInventory = () => {
     const div = document.getElementById('invList');
+    if (!div) return;
     div.innerHTML = '';
     cardsDB.forEach((c, idx) => {
         const key = c.name + "_" + c.title;
@@ -223,39 +297,25 @@ window.renderInventory = () => {
 
 window.renderCardList = () => { 
     const l = document.getElementById('masterList'); 
+    if (!l) return;
     l.innerHTML = ''; 
     cardsDB.forEach((c,idx) => l.innerHTML += `<div class="list-item"><b>${c.name}</b><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadCardToEditor(cardsDB[${idx}])">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteCard(${idx})">削除</button></div></div>`); 
 };
 
 window.renderSAList = () => { 
     const l = document.getElementById('saList'); 
+    if (!l) return;
     l.innerHTML = ''; 
     skillsDB.forEach(s => l.innerHTML += `<div class="list-item"><span><span class="tag tag-skill">S</span>${s.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('skill','${s.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('skill','${s.name}')">削除</button></div></div>`); 
     abilitiesDB.forEach(a => l.innerHTML += `<div class="list-item"><span><span class="tag tag-ability">A</span>${a.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('ability','${a.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('ability','${a.name}')">削除</button></div></div>`); 
-};
-
-window.updateAutoComplete = () => { 
-    const l = document.getElementById('skillList'); 
-    l.innerHTML = ''; 
-    [...skillsDB,...abilitiesDB].forEach(i => l.innerHTML += `<option value="${i.name}">`); 
-    const sSug = document.getElementById('styleSuggestions'); 
-    if(sSug) { 
-        sSug.innerHTML = ''; 
-        Object.values(POS_MAP).flat().forEach(s => sSug.innerHTML += `<option value="${s}">`); 
-        Object.keys(POS_MAP).forEach(p => sSug.innerHTML += `<option value="${p}">`); 
-    }
 };
 
 window.showTab = (id) => { 
     document.querySelectorAll('.content').forEach(c => c.classList.remove('active')); 
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
     document.getElementById(id).classList.add('active'); 
-    if(event && event.target && event.target.classList.contains('tab-btn')) {
-        event.target.classList.add('active');
-    } else {
-        const btn = document.querySelector(`.tab-btn[onclick="showTab('${id}')"]`);
-        if(btn) btn.classList.add('active');
-    }
+    const btn = document.querySelector(`.tab-btn[onclick="showTab('${id}')"]`);
+    if(btn) btn.classList.add('active');
 };
 
 window.toggleDisp = (id) => { 
@@ -268,7 +328,6 @@ window.openModal = (i) => {
     const m = document.getElementById('modalList'); 
     m.innerHTML = '<div class="card-box" onclick="selectSlot(null)">（空）</div>'; 
     cardsDB.forEach((c, idx) => { 
-        // 同一カードの重複選択を制限しないため、selectedSlotsのチェックをしない
         if(myCards[c.name+"_"+c.title]?.owned){ 
             m.innerHTML += `<div class="card-box" onclick="selectSlot(${idx})">${c.title}<br><b>${c.name}</b></div>`; 
         }
@@ -300,12 +359,13 @@ window.loadCardToEditor = (d) => {
     } else if (d.bonus_type) {
         addBonusRow(d.bonus_type, d.bonus_value);
     }
+    showTab('admin-card');
 };
 
 window.addBonusRow = (type='', val='') => {
     const div = document.createElement('div');
     div.style.cssText = "display:flex; gap:5px; margin-bottom:3px;";
-    div.innerHTML = `<input class="edit-b-type" placeholder="条件(CF,ストライカー等)" value="${type}" list="styleSuggestions">
+    div.innerHTML = `<input class="edit-b-type" placeholder="条件(CF等)" value="${type}" list="styleSuggestions">
                      <input class="edit-b-val" type="number" placeholder="%" value="${val}" style="width:60px;">
                      <button class="btn btn-sm" style="background:#ef4444;" onclick="this.parentElement.remove()">×</button>`;
     document.getElementById('editBonusList').appendChild(div);
@@ -326,6 +386,7 @@ window.loadSA = (type, name) => {
         c.classList.remove('active'); 
         if(type === 'skill' && item.area?.[idx]) c.classList.add('active'); 
     }); 
+    showTab('admin-skill');
 };
 
 window.toggleAreaGrid = () => { 

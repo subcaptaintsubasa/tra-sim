@@ -38,3 +38,7 @@ let abilitiesDB = [];
 let myCards = {};
 let selectedSlots = Array(6).fill(null);
 let activeSlotIndex = null;
+
+// 追加：選択されたターゲットを保持
+let selectedTargetSkills = [];
+let selectedTargetAbilities = [];

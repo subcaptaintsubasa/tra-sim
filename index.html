@@ -35,7 +35,7 @@
         <div id="statInputArea" class="stat-grid" style="display:none; margin-top:10px;"></div>
     </div>
 
-    <!-- 2. プレイスタイル & ターゲットスキル選択 -->
+    <!-- 2. プレイスタイル & ターゲット選択 -->
     <div class="card-box" style="border-color: var(--accent);">
         <label style="color:var(--accent); font-weight:bold; font-size:0.8rem;">育成設定</label>
         <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px; margin-top:5px;">
@@ -48,12 +48,16 @@
                 <select id="simStyle" onchange="updateCalc()"></select>
             </div>
         </div>
+        
+        <!-- ここを修正 -->
         <div style="margin-top:10px;">
-            <label style="font-size:0.7rem; color:var(--skill);">習得したいスキル/アビリティ (必須枠として計算)</label>
-            <input id="targetSkillInput" list="skillList" placeholder="指定なし" onchange="updateCalc()">
+            <label style="font-size:0.7rem; color:var(--skill);">必須スキル (最大3つ)</label>
+            <div id="skillTargetContainer" class="tag-selector-grid"></div>
+            
+            <label style="font-size:0.7rem; color:var(--ability); margin-top:8px; display:block;">必須アビリティ (最大3つ)</label>
+            <div id="abilityTargetContainer" class="tag-selector-grid"></div>
         </div>
     </div>
-
     <!-- 3. 特練スロット -->
     <div id="simSlots" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;"></div>
 
