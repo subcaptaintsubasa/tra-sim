@@ -483,3 +483,22 @@ window.toggleAreaGrid = () => {
     const areaCont = document.getElementById('areaContainer');
     if (areaCont) areaCont.style.display = document.getElementById('saType').value === 'skill' ? 'block' : 'none'; 
 };
+
+// プロファイル選択プルダウンの更新
+window.renderProfileSelector = () => {
+    const select = document.getElementById('profileSelect');
+    if (!select) return;
+    
+    // 現在の選択を保持
+    const current = select.value;
+    
+    select.innerHTML = '<option value="">-- 保存済み選手を読込 --</option>';
+    Object.keys(profiles).sort().forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.innerText = name;
+        select.appendChild(opt);
+    });
+    
+    select.value = current;
+};

@@ -68,3 +68,6 @@ let selectedPos = null;
 let selectedStyle = null;
 let selectedTargetSkills = [];
 let selectedTargetAbilities = [];
+
+// --- 既存のコードの下に追加 ---
+let profiles = {}; // 保存された選手プロファイル { "名前": { "now_決定力": 100, ... } }

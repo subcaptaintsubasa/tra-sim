@@ -3,6 +3,9 @@ window.onload = async () => {
     document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
     document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
     myCards = JSON.parse(localStorage.getItem('tra_my_cards') || '{}');
+    // window.onload の最初の方に追加
+profiles = JSON.parse(localStorage.getItem('tra_profiles') || '{}');
+renderProfileSelector();
 
     // UIコンポーネントの構築
     initStatInputs();

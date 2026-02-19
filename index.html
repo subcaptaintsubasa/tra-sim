@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>特練シミュレータ Pro v4.0 (Refactored)</title>
+    <title>特練シミュレータ Pro v4.1</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -24,6 +24,8 @@
             <label style="color:#3b82f6; font-weight:bold;">▼ 育成選手のステータス入力 (現在値 / 最大値)</label>
             <span style="font-size:0.8rem;">開閉</span>
         </div>
+        
+        <!-- OCR & プロファイル管理エリア -->
         <div style="margin-top:10px; border-top:1px solid #334155; padding-top:10px;">
             <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px;">スクリーンショット(16:9)から自動抽出</label>
             <div style="display:flex; gap:10px; align-items:center;">
@@ -31,7 +33,19 @@
                 <button class="btn" style="background:#3b82f6; width:auto; font-size:0.75rem; padding:5px 15px;" onclick="document.getElementById('ocrUpload').click()">画像を選択</button>
                 <span id="ocrStatus" style="font-size:0.7rem; color:var(--skill);"></span>
             </div>
+            
+            <!-- 追加機能: プロファイル保存/読込 -->
+            <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #334155; display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+                <label style="font-size:0.7rem; color:#94a3b8; width:100%;">保存済み設定の呼び出し・保存</label>
+                <select id="profileSelect" style="flex:1; min-width:120px;" onchange="loadSelectedProfile()">
+                    <option value="">-- データを選択 --</option>
+                </select>
+                <input type="text" id="profileName" placeholder="保存名(例: ハーランド)" style="flex:1; min-width:120px;">
+                <button class="btn btn-sm btn-accent" style="width:auto; margin:0;" onclick="saveCurrentProfile()">保存</button>
+                <button class="btn btn-sm" style="width:auto; margin:0; background:#ef4444;" onclick="deleteSelectedProfile()">削除</button>
+            </div>
         </div>
+
         <div id="statInputArea" class="stat-grid" style="display:none; margin-top:10px;"></div>
     </div>
 
@@ -68,15 +82,15 @@
     <!-- 4. 設定 & オート -->
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
         <div class="card-box" style="margin-bottom:0;">
-    <label>コンディション</label>
-    <div class="condition-selector">
-        <button type="button" class="cond-btn active" onclick="changeCondition(1.0, this)">普通</button>
-        <button type="button" class="cond-btn" onclick="changeCondition(1.25, this)">好調</button>
-        <button type="button" class="cond-btn" onclick="changeCondition(1.5, this)">絶好調</button>
-    </div>
-    <!-- 数値を保持するための隠し要素 -->
-    <input type="hidden" id="conditionMod" value="1.0">
-</div>
+            <label>コンディション</label>
+            <div class="condition-selector">
+                <button type="button" class="cond-btn active" onclick="changeCondition(1.0, this)">普通</button>
+                <button type="button" class="cond-btn" onclick="changeCondition(1.25, this)">好調</button>
+                <button type="button" class="cond-btn" onclick="changeCondition(1.5, this)">絶好調</button>
+            </div>
+            <!-- 数値を保持するための隠し要素 -->
+            <input type="hidden" id="conditionMod" value="1.0">
+        </div>
         <div class="card-box" style="margin-bottom:0; border: 2px solid var(--skill);">
             <label style="color:var(--skill); font-weight:bold; font-size:0.8rem;">🤖 最適化オート編成</label>
             <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
@@ -111,6 +125,17 @@
 
 <!-- カード管理 (Admin) -->
 <div id="admin-card" class="content">
+    <!-- 追加機能: バックアップ -->
+    <div class="card-box" style="border:1px solid var(--skill); margin-bottom: 15px;">
+        <h4 style="color:var(--skill);">データバックアップ (JSON)</h4>
+        <p style="font-size:0.7rem; color:#94a3b8;">ブラウザのキャッシュ消去対策として、以下のテキストをメモ帳等に保存してください。</p>
+        <textarea id="backupArea" style="height:80px; font-size:0.7rem; color:#fff; background:#000; border:1px solid #333; width:100%;" placeholder="ここにバックアップデータが出力されます"></textarea>
+        <div style="display:flex; gap:5px; margin-top:5px;">
+            <button class="btn btn-sm btn-primary" onclick="exportBackup()">データ書き出し</button>
+            <button class="btn btn-sm btn-accent" onclick="importBackup()">貼り付けたデータから復元</button>
+        </div>
+    </div>
+
     <div class="card-box">
         <h4>GitHub設定</h4>
         <input type="password" id="ghToken" placeholder="GitHub Token">

@@ -207,3 +207,81 @@ async function batchRegisterSA() {
         renderSAList(); 
     } catch(e) { alert("JSONエラー"); } 
 }
+
+// --- プロファイル管理ロジック ---
+
+function saveProfilesToLocal() {
+    localStorage.setItem('tra_profiles', JSON.stringify(profiles));
+}
+
+window.saveCurrentProfile = () => {
+    const name = document.getElementById('profileName').value.trim();
+    if (!name) return alert("保存名を入力してください");
+
+    const data = {};
+    const allStats = [...STATS, ...GK_STATS];
+    allStats.forEach(s => {
+        data[`now_${s}`] = document.getElementById(`now_${s}`).value;
+        data[`max_${s}`] = document.getElementById(`max_${s}`).value;
+    });
+
+    profiles[name] = data;
+    saveProfilesToLocal();
+    renderProfileSelector();
+    alert(`「${name}」を保存しました`);
+};
+
+window.loadSelectedProfile = () => {
+    const name = document.getElementById('profileSelect').value;
+    if (!name || !profiles[name]) return;
+
+    const data = profiles[name];
+    for (let key in data) {
+        const el = document.getElementById(key);
+        if (el) el.value = data[key];
+    }
+    document.getElementById('profileName').value = name;
+    if (typeof updateCalc === 'function') updateCalc();
+};
+
+window.deleteSelectedProfile = () => {
+    const name = document.getElementById('profileSelect').value;
+    if (!name) return;
+    if (confirm(`「${name}」のデータを削除しますか？`)) {
+        delete profiles[name];
+        saveProfilesToLocal();
+        renderProfileSelector();
+        document.getElementById('profileName').value = "";
+    }
+};
+
+// --- バックアップ (JSON) ---
+
+window.exportBackup = () => {
+    const backup = {
+        profiles: profiles,
+        myCards: myCards,
+        timestamp: new Date().toLocaleString()
+    };
+    document.getElementById('backupArea').value = JSON.stringify(backup);
+    alert("データを書き出しました。テキストエリアの内容をコピーして保存してください。");
+};
+
+window.importBackup = () => {
+    try {
+        const json = document.getElementById('backupArea').value;
+        if (!json) return alert("バックアップデータを貼り付けてください");
+        const data = JSON.parse(json);
+        
+        if (data.profiles) profiles = data.profiles;
+        if (data.myCards) myCards = data.myCards;
+        
+        saveProfilesToLocal();
+        saveInv();
+        renderProfileSelector();
+        renderInventory();
+        alert("復元が完了しました。");
+    } catch (e) {
+        alert("データの形式が正しくありません。");
+    }
+};
