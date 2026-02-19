@@ -2,6 +2,7 @@
 
 function initStatInputs() {
     const area = document.getElementById('statInputArea');
+    if (!area) return;
     area.style.gridTemplateColumns = "repeat(6, 1fr)";
     area.innerHTML = '';
 
@@ -44,18 +45,39 @@ function initStatInputs() {
     }
 }
 
+// --- ポジション/スタイル セレクター (アイコン＆チップ) ---
+
 function initPosSelect() {
-    const sel = document.getElementById('simPos');
-    Object.keys(POS_MAP).forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
-    updateStyleOptions();
+    const grid = document.getElementById('posGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    Object.keys(POS_MAP).forEach(p => {
+        const group = POS_GROUPS[p] || 'df';
+        const chip = document.createElement('div');
+        chip.className = 'pos-chip';
+        chip.innerText = p;
+        chip.dataset.pos = p;
+        chip.dataset.group = group;
+        chip.onclick = () => selectPos(p);
+        grid.appendChild(chip);
+    });
 }
 
-function updateStyleOptions() {
-    const pos = document.getElementById('simPos').value;
-    const styleSel = document.getElementById('simStyle');
-    styleSel.innerHTML = "";
-    (POS_MAP[pos] || []).forEach(s => styleSel.innerHTML += `<option value="${s}">${s}</option>`);
+function selectPos(pos) {
+    selectedPos = pos;
+    selectedStyle = null; // スタイルをリセット
 
+    // チップの見た目更新
+    document.querySelectorAll('.pos-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.pos === pos);
+    });
+
+    // スタイルグリッドを表示
+    const sGrid = document.getElementById('styleGrid');
+    sGrid.classList.remove('collapsed');
+    renderStyleOptions(pos);
+
+    // GKステータスの表示切り替え
     const isGK = (pos === 'GK');
     document.querySelectorAll('.gk-stat').forEach(el => el.style.display = isGK ? 'block' : 'none');
     document.querySelectorAll('.def-stat').forEach(el => el.style.display = isGK ? 'none' : 'block');
@@ -63,25 +85,58 @@ function updateStyleOptions() {
     updateCalc();
 }
 
-function initEditors() {
-    const grid = document.getElementById('editStatsGrid');
-    const allStats = [...new Set([...STATS, ...GK_STATS])];
+function renderStyleOptions(pos) {
+    const grid = document.getElementById('styleGrid');
+    if (!grid) return;
     grid.innerHTML = '';
-    allStats.forEach(s => grid.innerHTML += `<div class="stat-item ${GK_STATS.includes(s)?'gk-stat':''}"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`);
+    const styles = POS_MAP[pos] || [];
     
-    const saTgt = document.getElementById('saTargets');
-    saTgt.innerHTML = '';
-    allStats.forEach(s => saTgt.innerHTML += `<label style="font-size:0.7rem;"><input type="checkbox" value="${s}" name="sa_tgt"> ${s}</label>`);
-    
-    const areaGrid = document.getElementById('saAreaGrid');
-    areaGrid.innerHTML = '';
-    for(let i=0; i<9; i++) areaGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
+    styles.forEach(s => {
+        const iconCode = STYLE_ICONS[s] || 'ST';
+        const card = document.createElement('div');
+        card.className = 'style-card';
+        card.innerHTML = `
+            <img src="img/styles/${iconCode}.png" onerror="this.src='https://placehold.jp/24/333333/ffffff/60x40.png?text=${iconCode}'">
+            <span>${s}</span>
+        `;
+        card.onclick = () => selectStyle(s);
+        grid.appendChild(card);
+    });
 }
 
-// --- ターゲット（スキル/アビリティ）選択 UI ---
+function selectStyle(style) {
+    selectedStyle = style;
+    
+    // スタイルカードの選択状態更新
+    document.querySelectorAll('.style-card').forEach(c => {
+        c.classList.toggle('active', c.querySelector('span').innerText === style);
+    });
+
+    collapseSelection();
+    updateCalc();
+}
+
+function collapseSelection() {
+    if(!selectedPos || !selectedStyle) return;
+    document.getElementById('selectionMain').style.display = 'none';
+    document.getElementById('selectionSummary').style.display = 'flex';
+    document.getElementById('reselectionBtn').style.display = 'inline';
+    
+    const iconCode = STYLE_ICONS[selectedStyle] || 'ST';
+    document.getElementById('summaryText').innerText = `${selectedPos} / ${selectedStyle}`;
+    document.getElementById('summaryIcon').src = `img/styles/${iconCode}.png`;
+}
+
+function expandSelection() {
+    document.getElementById('selectionMain').style.display = 'block';
+    document.getElementById('selectionSummary').style.display = 'none';
+    document.getElementById('reselectionBtn').style.display = 'none';
+}
+
+// --- ターゲット（スキル/アビリティ）ボタン選択 UI ---
 
 window.updateAutoComplete = () => {
-    // 1. スキルターゲットコンテナの描画
+    // 1. スキルターゲットコンテナ
     const sContainer = document.getElementById('skillTargetContainer');
     if (sContainer) {
         sContainer.innerHTML = '';
@@ -95,7 +150,7 @@ window.updateAutoComplete = () => {
         });
     }
 
-    // 2. アビリティターゲットコンテナの描画
+    // 2. アビリティターゲットコンテナ
     const aContainer = document.getElementById('abilityTargetContainer');
     if (aContainer) {
         aContainer.innerHTML = '';
@@ -109,7 +164,7 @@ window.updateAutoComplete = () => {
         });
     }
 
-    // 管理者画面用のdatalist
+    // 管理者画面用のdatalist/自動補完
     const l = document.getElementById('skillList'); 
     if (l) {
         l.innerHTML = ''; 
@@ -146,14 +201,20 @@ function toggleTarget(type, name) {
 
 window.updateCalc = () => {
     const condMult = parseFloat(document.getElementById('conditionMod').value);
-    const pos = document.getElementById('simPos').value;
-    const style = document.getElementById('simStyle').value;
-    const isGK = (pos === 'GK');
+    const pos = selectedPos;
+    const style = selectedStyle;
+    
+    // ポジション/スタイルが未選択の場合は計算しない
+    if (!pos || !style) {
+        renderResults({}, new Set(), []);
+        renderSimSlots(null, null);
+        return;
+    }
 
+    const isGK = (pos === 'GK');
     const totals_x10 = {};
     const saList = new Set();
 
-    // 6スロットを走査
     selectedSlots.forEach((card) => {
         if (!card) return;
         const key = card.name + "_" + card.title;
@@ -173,7 +234,6 @@ window.updateCalc = () => {
         }
     });
 
-    // 必須項目の充足チェック
     const missingTargets = [
         ...selectedTargetSkills.filter(name => !saList.has(name)),
         ...selectedTargetAbilities.filter(name => !saList.has(name))
@@ -185,9 +245,14 @@ window.updateCalc = () => {
 
 function renderResults(totals_x10, saList, missingTargets) {
     const resDiv = document.getElementById('totalResults');
+    if (!resDiv) return;
     resDiv.innerHTML = '<h4>特練 上昇値 vs Gap</h4>';
     
-    const pos = document.getElementById('simPos').value;
+    const pos = selectedPos;
+    if (!pos) {
+        resDiv.innerHTML += '<p style="font-size:0.7rem; color:#64748b;">ポジションとスタイルを選択してください</p>';
+        return;
+    }
     const isGK = (pos === 'GK');
 
     const currentViewStats = STATS.filter(s => !DEF_STATS.includes(s));
@@ -229,8 +294,8 @@ function renderResults(totals_x10, saList, missingTargets) {
         }
     });
 
-    // SA（スキル・アビリティ）結果描画
     const saDiv = document.getElementById('saResults');
+    if (!saDiv) return;
     let header = '<h4>予定スキル/アビ</h4>';
     
     if(missingTargets.length > 0) {
@@ -256,13 +321,16 @@ function renderResults(totals_x10, saList, missingTargets) {
 
 function renderSimSlots(pos, style) {
     const g = document.getElementById('simSlots');
+    if (!g) return;
     g.innerHTML = '';
     selectedSlots.forEach((c, i) => {
         let h = `枠 ${i+1}`;
         if (c) {
             let bVal = 0;
-            if(c.bonus_type === pos || c.bonus_type === style) bVal += (c.bonus_value||0);
-            if(c.bonuses) c.bonuses.forEach(b => { if(b.type===pos || b.type===style) bVal += b.value; });
+            if (pos && style) {
+                if(c.bonus_type === pos || c.bonus_type === style) bVal += (c.bonus_value||0);
+                if(c.bonuses) c.bonuses.forEach(b => { if(b.type===pos || b.type===style) bVal += b.value; });
+            }
             const bDisplay = bVal > 0 ? `<div class="bonus-on" style="font-size:0.6rem;">Bonus +${bVal}%</div>` : `<div class="bonus-off" style="font-size:0.6rem;">No Bonus</div>`;
             h = `<div style="font-weight:bold;font-size:0.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;">${c.name}</div>${bDisplay}`;
         }
@@ -310,17 +378,38 @@ window.renderSAList = () => {
     abilitiesDB.forEach(a => l.innerHTML += `<div class="list-item"><span><span class="tag tag-ability">A</span>${a.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('ability','${a.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('ability','${a.name}')">削除</button></div></div>`); 
 };
 
+window.initEditors = () => {
+    const grid = document.getElementById('editStatsGrid');
+    if (!grid) return;
+    const allStats = [...new Set([...STATS, ...GK_STATS])];
+    grid.innerHTML = '';
+    allStats.forEach(s => grid.innerHTML += `<div class="stat-item ${GK_STATS.includes(s)?'gk-stat':''}"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`);
+    
+    const saTgt = document.getElementById('saTargets');
+    if (saTgt) {
+        saTgt.innerHTML = '';
+        allStats.forEach(s => saTgt.innerHTML += `<label style="font-size:0.7rem;"><input type="checkbox" value="${s}" name="sa_tgt"> ${s}</label>`);
+    }
+    
+    const areaGrid = document.getElementById('saAreaGrid');
+    if (areaGrid) {
+        areaGrid.innerHTML = '';
+        for(let i=0; i<9; i++) areaGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
+    }
+};
+
 window.showTab = (id) => { 
     document.querySelectorAll('.content').forEach(c => c.classList.remove('active')); 
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
-    document.getElementById(id).classList.add('active'); 
+    const targetContent = document.getElementById(id);
+    if (targetContent) targetContent.classList.add('active'); 
     const btn = document.querySelector(`.tab-btn[onclick="showTab('${id}')"]`);
     if(btn) btn.classList.add('active');
 };
 
 window.toggleDisp = (id) => { 
     const e = document.getElementById(id); 
-    e.style.display = e.style.display === 'none' ? 'grid' : 'none'; 
+    if (e) e.style.display = e.style.display === 'none' ? 'grid' : 'none'; 
 };
 
 window.openModal = (i) => { 
@@ -390,5 +479,6 @@ window.loadSA = (type, name) => {
 };
 
 window.toggleAreaGrid = () => { 
-    document.getElementById('areaContainer').style.display = document.getElementById('saType').value === 'skill' ? 'block' : 'none'; 
+    const areaCont = document.getElementById('areaContainer');
+    if (areaCont) areaCont.style.display = document.getElementById('saType').value === 'skill' ? 'block' : 'none'; 
 };

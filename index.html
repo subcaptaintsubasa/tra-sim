@@ -36,24 +36,28 @@
     </div>
 
     <!-- 2. プレイスタイル & ターゲット選択 -->
-    <div class="card-box" style="border-color: var(--accent);">
-        <label style="color:var(--accent); font-weight:bold; font-size:0.8rem;">育成設定</label>
-        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px; margin-top:5px;">
-            <div>
-                <label style="font-size:0.7rem;">ポジション</label>
-                <select id="simPos" onchange="updateStyleOptions()"></select>
-            </div>
-            <div>
-                <label style="font-size:0.7rem;">プレイスタイル</label>
-                <select id="simStyle" onchange="updateCalc()"></select>
-            </div>
+    <div id="selectionArea" class="selector-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label style="color:var(--accent); font-weight:bold; font-size:0.8rem;">育成設定</label>
+            <span id="reselectionBtn" style="font-size:0.7rem; color:var(--primary); display:none;" onclick="expandSelection()">変更する</span>
+        </div>
+
+        <!-- 決定後の要約（最初は隠す） -->
+        <div id="selectionSummary" class="selected-summary" style="display:none;" onclick="expandSelection()">
+            <div id="summaryText" style="font-size:0.85rem; font-weight:bold;"></div>
+            <img id="summaryIcon" src="" style="height:30px; border-radius:4px;">
+        </div>
+
+        <!-- 選択エリア本体 -->
+        <div id="selectionMain">
+            <div id="posGrid" class="pos-grid"></div>
+            <div id="styleGrid" class="style-grid collapsed"></div>
         </div>
         
-        <!-- ここを修正 -->
-        <div style="margin-top:10px;">
+        <!-- ターゲット選択（スキル・アビリティ）はそのまま下に配置 -->
+        <div style="margin-top:10px; border-top: 1px solid #334155; padding-top:10px;">
             <label style="font-size:0.7rem; color:var(--skill);">必須スキル (最大3つ)</label>
             <div id="skillTargetContainer" class="tag-selector-grid"></div>
-            
             <label style="font-size:0.7rem; color:var(--ability); margin-top:8px; display:block;">必須アビリティ (最大3つ)</label>
             <div id="abilityTargetContainer" class="tag-selector-grid"></div>
         </div>

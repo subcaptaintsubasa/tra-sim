@@ -1,16 +1,13 @@
 // --- 定数定義 ---
-// ゲーム内のグリッド配置順（行優先）
 const STATS = [
     "決定力", "ショートパス", "突破力", "タックル", "ジャンプ", "走力",
     "キック力", "ロングパス", "キープ力", "パスカット", "コンタクト", "敏捷性",
     "冷静さ", "キック精度", "ボールタッチ", "マーク", "スタミナ"
 ];
 
-// GK用に入れ替わる項目の定義
 const GK_STATS = ["セービング", "反応速度", "1対1"];
 const DEF_STATS = ["タックル", "パスカット", "マーク"];
 
-// DEF項目とGK項目の対応マップ（UI表示・OCR同期用）
 const GK_MAP = {
     "タックル": "セービング",
     "パスカット": "反応速度",
@@ -31,6 +28,33 @@ const POS_MAP = {
     "CF": ["ポストプレーヤー", "ラインブレイカー", "ストライカー"]
 };
 
+// --- プレイスタイルとアイコンの紐付け ---
+const STYLE_ICONS = {
+    "ストライカー": "ST",
+    "ラインブレイカー": "LBK",
+    "ポストプレーヤー": "PST",
+    "ドリブラー": "DRI",
+    "サイドアタッカー": "SAT",
+    "アタッカー": "ATC",
+    "パサー": "PSR",
+    "セントラルMF": "CMF",
+    "ハードマーカー": "HMC",
+    "攻撃的FB": "OFB",
+    "守備的FB": "DFB",
+    "組立CB": "BCB",
+    "ストッパー": "STP",
+    "スイーパーGK": "SGK",
+    "オーソドックスGK": "OGK"
+};
+
+// ポジションごとのグループ分け
+const POS_GROUPS = {
+    "GK": "gk",
+    "CB": "df", "LB": "df", "RB": "df",
+    "DM": "mf", "AM": "mf", "LM": "mf", "RM": "mf",
+    "LW": "fw", "RW": "fw", "CF": "fw"
+};
+
 // --- グローバル変数 ---
 let cardsDB = [];
 let skillsDB = [];
@@ -39,6 +63,8 @@ let myCards = {};
 let selectedSlots = Array(6).fill(null);
 let activeSlotIndex = null;
 
-// 追加：選択されたターゲットを保持
+// 追加：選択状態を保持する変数
+let selectedPos = null;
+let selectedStyle = null;
 let selectedTargetSkills = [];
 let selectedTargetAbilities = [];
