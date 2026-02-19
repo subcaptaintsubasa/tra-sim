@@ -119,3 +119,20 @@ window.onload = async () => {
         }
     });
 })();
+
+// コンディションボタンを切り替える関数
+function changeCondition(val, btn) {
+    // 1. すべてのコンディションボタンから active クラスを消す
+    document.querySelectorAll('.cond-btn').forEach(b => b.classList.remove('active'));
+    
+    // 2. 押されたボタンに active クラスをつける
+    btn.classList.add('active');
+    
+    // 3. 隠し入力（input type="hidden"）に数値をセットする
+    document.getElementById('conditionMod').value = val;
+    
+    // 4. 再計算を実行する
+    if (typeof updateCalc === 'function') {
+        updateCalc();
+    }
+}

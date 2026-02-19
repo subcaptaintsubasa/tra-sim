@@ -278,3 +278,33 @@ body.admin-mode .admin-tab {
     border: 1px solid #00f2ff;
     pointer-events: none;
 }
+
+/* コンディションボタンのスタイル */
+.condition-selector {
+    display: flex;
+    gap: 2px;
+    background: #000;
+    padding: 2px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    margin-top: 5px;
+}
+
+.cond-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+/* 選択されている時の色 */
+.cond-btn.active {
+    background: var(--accent); /* 緑色 */
+    color: #fff;
+    font-weight: bold;
+}
