@@ -45,7 +45,7 @@ function initStatInputs() {
     }
 }
 
-// --- ポジション/スタイル セレクター (アイコン＆チップ) ---
+// --- ポジション/スタイル セレクター ---
 
 function initPosSelect() {
     const grid = document.getElementById('posGrid');
@@ -64,20 +64,16 @@ function initPosSelect() {
 }
 
 function selectPos(pos) {
+    expandSelection(); // ★ ポジション変更時は必ず開く
     selectedPos = pos;
-    selectedStyle = null; // スタイルをリセット
+    selectedStyle = null; 
 
-    // チップの見た目更新
     document.querySelectorAll('.pos-chip').forEach(c => {
         c.classList.toggle('active', c.dataset.pos === pos);
     });
 
-    // スタイルグリッドを表示
-    const sGrid = document.getElementById('styleGrid');
-    sGrid.classList.remove('collapsed');
     renderStyleOptions(pos);
 
-    // GKステータスの表示切り替え
     const isGK = (pos === 'GK');
     document.querySelectorAll('.gk-stat').forEach(el => el.style.display = isGK ? 'block' : 'none');
     document.querySelectorAll('.def-stat').forEach(el => el.style.display = isGK ? 'none' : 'block');
@@ -95,7 +91,6 @@ function renderStyleOptions(pos) {
         const iconCode = STYLE_ICONS[s] || 'ST';
         const card = document.createElement('div');
         card.className = 'style-card';
-        // HTML構造を画像→テキストの順に変更
         card.innerHTML = `
             <img src="img/styles/${iconCode}.png" onerror="this.src='https://placehold.jp/24/333333/ffffff/60x40.png?text=${iconCode}'">
             <span>${s}</span>
@@ -107,37 +102,42 @@ function renderStyleOptions(pos) {
 
 function selectStyle(style) {
     selectedStyle = style;
-    
-    // スタイルカードの選択状態更新
     document.querySelectorAll('.style-card').forEach(c => {
         c.classList.toggle('active', c.querySelector('span').innerText === style);
     });
+    collapseSelection(); // ★ 選択完了したら閉じる
 
-    collapseSelection();
     updateCalc();
 }
-
-function collapseSelection() {
+window.collapseSelection = () => {
     if(!selectedPos || !selectedStyle) return;
-    document.getElementById('selectionMain').style.display = 'none';
-    document.getElementById('selectionSummary').style.display = 'flex';
-    document.getElementById('reselectionBtn').style.display = 'inline';
     
-    const iconCode = STYLE_ICONS[selectedStyle] || 'ST';
-    document.getElementById('summaryText').innerText = `${selectedPos} / ${selectedStyle}`;
-    document.getElementById('summaryIcon').src = `img/styles/${iconCode}.png`;
-}
+    const selDiv = document.getElementById('posStyleSelection');
+    const sumDiv = document.getElementById('posStyleSummary');
+    if(selDiv) selDiv.style.display = 'none';
+    if(sumDiv) {
+        sumDiv.style.display = 'flex';
+        const iconCode = STYLE_ICONS[selectedStyle] || 'ST';
+        document.getElementById('summaryText').innerText = `${selectedPos} / ${selectedStyle}`;
+        const img = document.getElementById('summaryIcon');
+        img.src = `img/styles/${iconCode}.png`;
+        img.onerror = function() { 
+            this.src = `https://placehold.jp/24/333333/ffffff/60x40.png?text=${iconCode}`; 
+        };
+    }
+};
 
-function expandSelection() {
-    document.getElementById('selectionMain').style.display = 'block';
-    document.getElementById('selectionSummary').style.display = 'none';
-    document.getElementById('reselectionBtn').style.display = 'none';
-}
+// ★ 追加: 再選択（展開）ロジック
+window.expandSelection = () => {
+    const selDiv = document.getElementById('posStyleSelection');
+    const sumDiv = document.getElementById('posStyleSummary');
+    if(selDiv) selDiv.style.display = 'block';
+    if(sumDiv) sumDiv.style.display = 'none';
+};
 
-// --- ターゲット（スキル/アビリティ）ボタン選択 UI ---
+// --- ターゲットボタン選択 UI ---
 
 window.updateAutoComplete = () => {
-    // 1. スキルターゲットコンテナ
     const sContainer = document.getElementById('skillTargetContainer');
     if (sContainer) {
         sContainer.innerHTML = '';
@@ -151,7 +151,6 @@ window.updateAutoComplete = () => {
         });
     }
 
-    // 2. アビリティターゲットコンテナ
     const aContainer = document.getElementById('abilityTargetContainer');
     if (aContainer) {
         aContainer.innerHTML = '';
@@ -165,7 +164,6 @@ window.updateAutoComplete = () => {
         });
     }
 
-    // 管理者画面用のdatalist/自動補完
     const l = document.getElementById('skillList'); 
     if (l) {
         l.innerHTML = ''; 
@@ -205,7 +203,6 @@ window.updateCalc = () => {
     const pos = selectedPos;
     const style = selectedStyle;
     
-    // ポジション/スタイルが未選択の場合は計算しない
     if (!pos || !style) {
         renderResults({}, new Set(), []);
         renderSimSlots(null, null);
@@ -410,7 +407,7 @@ window.showTab = (id) => {
 
 window.toggleDisp = (id) => { 
     const e = document.getElementById(id); 
-    if (e) e.style.display = e.style.display === 'none' ? 'grid' : 'none'; 
+    if (e) e.style.display = e.style.display === 'none' ? 'block' : 'none'; 
 };
 
 window.openModal = (i) => { 
@@ -484,14 +481,10 @@ window.toggleAreaGrid = () => {
     if (areaCont) areaCont.style.display = document.getElementById('saType').value === 'skill' ? 'block' : 'none'; 
 };
 
-// プロファイル選択プルダウンの更新
 window.renderProfileSelector = () => {
     const select = document.getElementById('profileSelect');
     if (!select) return;
-    
-    // 現在の選択を保持
     const current = select.value;
-    
     select.innerHTML = '<option value="">-- 保存済み選手を読込 --</option>';
     Object.keys(profiles).sort().forEach(name => {
         const opt = document.createElement('option');
@@ -499,17 +492,13 @@ window.renderProfileSelector = () => {
         opt.innerText = name;
         select.appendChild(opt);
     });
-    
     select.value = current;
 };
-
-// --- プロファイル保存/読込モーダル制御 ---
 
 window.openSaveModal = () => {
     const modal = document.getElementById('profileModal');
     const title = document.getElementById('profileModalTitle');
     const content = document.getElementById('profileModalContent');
-    
     title.innerText = "現在のステータスを保存";
     content.innerHTML = `
         <div style="margin-bottom:10px;">
@@ -518,8 +507,7 @@ window.openSaveModal = () => {
         </div>
         <button class="btn btn-accent" onclick="execSaveProfile()">保存する</button>
     `;
-    
-    modal.style.display = 'flex'; // flexで中央寄せ
+    modal.style.display = 'flex'; 
     document.getElementById('modalProfileName').focus();
 };
 
@@ -527,13 +515,10 @@ window.openLoadModal = () => {
     const modal = document.getElementById('profileModal');
     const title = document.getElementById('profileModalTitle');
     const content = document.getElementById('profileModalContent');
-    
     title.innerText = "保存済みデータの読込";
     content.innerHTML = `<div id="profileLoadList" style="display:flex; flex-direction:column; gap:5px;"></div>`;
-    
     const list = document.getElementById('profileLoadList');
     const keys = Object.keys(profiles || {}).sort();
-    
     if(keys.length === 0) {
         list.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b; font-size:0.8rem;">保存されたデータがありません</div>`;
     } else {
@@ -547,7 +532,6 @@ window.openLoadModal = () => {
             list.appendChild(row);
         });
     }
-    
     modal.style.display = 'flex';
 };
 
@@ -555,7 +539,6 @@ window.closeProfileModal = () => {
     document.getElementById('profileModal').style.display = 'none';
 };
 
-// --- 実処理へのブリッジ ---
 window.execSaveProfile = () => {
     const name = document.getElementById('modalProfileName').value;
     if(saveProfile(name)) {
@@ -570,5 +553,5 @@ window.execLoadProfile = (name) => {
 
 window.execDeleteProfile = (name) => {
     deleteProfile(name);
-    openLoadModal(); // リストを再描画
+    openLoadModal(); 
 };
