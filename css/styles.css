@@ -250,3 +250,31 @@ input, textarea, select {
 .sa-result-cell.active {
     background: var(--skill);
 }
+
+/* --- 管理者モード用の設定 --- */
+/* 最初は管理者用タブを隠しておく */
+.admin-tab {
+    display: none !important;
+}
+
+/* 管理者モードがONになった時だけ表示する */
+body.admin-mode .admin-tab {
+    display: flex !important;
+}
+
+/* コマンド入力中のメッセージ */
+#admin-status {
+    display: none;
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: #00f2ff; /* var(--primary)の色 */
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    z-index: 1000;
+    border: 1px solid #00f2ff;
+    pointer-events: none;
+}

@@ -12,8 +12,8 @@
 <nav>
     <button class="tab-btn active" onclick="showTab('sim')">シミュレーター</button>
     <button class="tab-btn" onclick="showTab('inventory')">所持カード</button>
-    <button class="tab-btn" onclick="showTab('admin-card')">カード管理</button>
-    <button class="tab-btn" onclick="showTab('admin-skill')">スキル/アビ管理</button>
+    <button class="tab-btn admin-tab" onclick="showTab('admin-card')">カード管理</button>
+    <button class="tab-btn admin-tab" onclick="showTab('admin-skill')">スキル/アビ管理</button>
 </nav>
 
 <!-- シミュレーター -->
@@ -158,6 +158,9 @@
     <div id="modalList"></div><button class="btn" onclick="document.getElementById('cardModal').style.display='none'">閉じる</button>
 </div>
 
+<div id="admin-status">コマンド入力待機中... (10秒以内に入力)</div>
+
+
 <datalist id="skillList"></datalist>
 <datalist id="styleSuggestions"></datalist>
 
@@ -168,5 +171,6 @@
 <script src="js/ocr_logic.js"></script>
 <script src="js/ui_manager.js"></script>
 <script src="js/app.js"></script>
+
 </body>
 </html>
