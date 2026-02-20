@@ -4,7 +4,10 @@
     "name": "フィルジル・ファン・ダイク",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "組立CB", "value": 25 }
+      {
+        "type": "組立CB",
+        "value": 25
+      }
     ],
     "abilities": [
       "インビンシブルフィード"
@@ -25,7 +28,10 @@
     "name": "ジェレミー・ドク",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "ドリブラー", "value": 30 }
+      {
+        "type": "ドリブラー",
+        "value": 30
+      }
     ],
     "abilities": [
       "躍動するステップ"
@@ -46,7 +52,10 @@
     "name": "ファン・ヒチャン",
     "rarity": "SR",
     "bonuses": [
-      { "type": "サイドアタッカー", "value": 30 }
+      {
+        "type": "サイドアタッカー",
+        "value": 30
+      }
     ],
     "abilities": [
       "パワフルランナー"
@@ -65,7 +74,10 @@
     "name": "リサンドロ・マルティネス",
     "rarity": "SR",
     "bonuses": [
-      { "type": "ストッパー", "value": 20 }
+      {
+        "type": "ストッパー",
+        "value": 20
+      }
     ],
     "abilities": [
       "冴え渡るインターセプト"
@@ -84,7 +96,10 @@
     "name": "アーリング・ハーランド",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "ストライカー", "value": 15 }
+      {
+        "type": "ストライカー",
+        "value": 15
+      }
     ],
     "abilities": [
       "一撃必殺"
@@ -105,7 +120,10 @@
     "name": "ダルウィン・ヌニェス",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "ラインブレイカー", "value": 25 }
+      {
+        "type": "ラインブレイカー",
+        "value": 25
+      }
     ],
     "abilities": [
       "ムービングスナイパー"
@@ -126,8 +144,14 @@
     "name": "ロメル・ルカク",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "CF", "value": 10 },
-      { "type": "ポストプレーヤー", "value": 10 }
+      {
+        "type": "CF",
+        "value": 10
+      },
+      {
+        "type": "ポストプレーヤー",
+        "value": 10
+      }
     ],
     "abilities": [
       "ゴールへ導くトラップ"
@@ -147,9 +171,18 @@
     "name": "ソン・フンミン",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "サイドアタッカー", "value": 25 },
-      { "type": "WF", "value": 10 },
-      { "type": "WM", "value": 10 }
+      {
+        "type": "サイドアタッカー",
+        "value": 25
+      },
+      {
+        "type": "WF",
+        "value": 10
+      },
+      {
+        "type": "WM",
+        "value": 10
+      }
     ],
     "abilities": [
       "裏への飛び出し"
@@ -168,20 +201,28 @@
     "name": "ハカン・チャルハノール",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "DM", "value": 20 },
-      { "type": "パサー", "value": 20 }
+      {
+        "type": "DM",
+        "value": 20
+      },
+      {
+        "type": "パサー",
+        "value": 20
+      }
     ],
+    "bonus_type": "DM",
+    "bonus_value": 20,
     "abilities": [
       "魔術師の弾道"
     ],
     "stats": {
-      "キック精度": 10,
-      "ロングパス": 5.3,
       "ショートパス": 2.7,
-      "スタミナ": 2.7,
+      "タックル": 0.7,
+      "ロングパス": 5.3,
       "キープ力": 1.7,
       "パスカット": 1.3,
-      "タックル": 0.7
+      "キック精度": 10,
+      "スタミナ": 2.7
     }
   },
   {
@@ -189,9 +230,18 @@
     "name": "ルカ・モドリッチ",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "DM", "value": 20 },
-      { "type": "AM", "value": 20 },
-      { "type": "セントラルMF", "value": 10 }
+      {
+        "type": "DM",
+        "value": 20
+      },
+      {
+        "type": "AM",
+        "value": 20
+      },
+      {
+        "type": "セントラルMF",
+        "value": 10
+      }
     ],
     "abilities": [
       "勝機を生み出すフィード"
@@ -210,8 +260,14 @@
     "name": "デクラン・ライス",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "DM", "value": 25 },
-      { "type": "ハードマーカー", "value": 20 }
+      {
+        "type": "DM",
+        "value": 25
+      },
+      {
+        "type": "ハードマーカー",
+        "value": 20
+      }
     ],
     "abilities": [
       "ホットラインを断つ動き"
@@ -231,8 +287,14 @@
     "name": "テオ・エルナンデス",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "攻撃的FB", "value": 30 },
-      { "type": "FB", "value": 10 }
+      {
+        "type": "攻撃的FB",
+        "value": 30
+      },
+      {
+        "type": "FB",
+        "value": 10
+      }
     ],
     "abilities": [
       "指令のロングフィード"
@@ -252,7 +314,10 @@
     "name": "ダニ・カルバハル",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "守備的FB", "value": 40 }
+      {
+        "type": "守備的FB",
+        "value": 40
+      }
     ],
     "abilities": [
       "熟練のインターセプト"
@@ -273,8 +338,14 @@
     "name": "ミッキー・ファン・デ・フェン",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "組立CB", "value": 30 },
-      { "type": "CB", "value": 10 }
+      {
+        "type": "組立CB",
+        "value": 30
+      },
+      {
+        "type": "CB",
+        "value": 10
+      }
     ],
     "abilities": [
       "スピードクラッシャー"
@@ -294,8 +365,14 @@
     "name": "フィカヨ・トモリ",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "ストッパー", "value": 20 },
-      { "type": "CB", "value": 10 }
+      {
+        "type": "ストッパー",
+        "value": 20
+      },
+      {
+        "type": "CB",
+        "value": 10
+      }
     ],
     "abilities": [
       "反撃のキッカー"
@@ -315,7 +392,10 @@
     "name": "エミリアーノ・マルティネス",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "オーソドックスGK", "value": 30 }
+      {
+        "type": "オーソドックスGK",
+        "value": 30
+      }
     ],
     "abilities": [
       "守護のロングキック"
@@ -336,7 +416,10 @@
     "name": "ロベルト・サンチェス",
     "rarity": "SSR",
     "bonuses": [
-      { "type": "スイーパーGK", "value": 40 }
+      {
+        "type": "スイーパーGK",
+        "value": 40
+      }
     ],
     "abilities": [
       "最初の起点"
@@ -357,8 +440,14 @@
     "name": "アンテ・ブディミル",
     "rarity": "SR",
     "bonuses": [
-      { "type": "ストライカー", "value": 15 },
-      { "type": "CF", "value": 10 }
+      {
+        "type": "ストライカー",
+        "value": 15
+      },
+      {
+        "type": "CF",
+        "value": 10
+      }
     ],
     "abilities": [
       "パワフルキッカー"
