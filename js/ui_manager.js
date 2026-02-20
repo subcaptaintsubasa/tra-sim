@@ -634,16 +634,20 @@ window.renderInventory = () => {
         
         const isOwned = item.owned;
         
-        // カード要素作成
+                const imgPath = `img/cards/${item.name}_${item.title}.png`;
+        
         const el = document.createElement('div');
         el.className = `inv-card ${isOwned ? 'owned' : 'unowned'}`;
         if (isBulkMode && isOwned) el.classList.add('bulk-selected');
 
-        // 画像 (なければプレースホルダー)
-        // ※実際には img/cards/{name}_{title}.png などを想定
-        // ここではプレースホルダーを表示
+        // imgタグを作成し、onerrorイベントで読み込み失敗時(画像未登録時)の表示を切り替える
         el.innerHTML = `
-            <div class="inv-card-placeholder">${item.name}<br><span style="font-size:0.6rem">${item.title}</span></div>
+            <img src="${imgPath}" class="inv-card-img" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" 
+                 alt="${item.name}">
+            <div class="inv-card-placeholder" style="display:none;">
+                ${item.name}<br><span style="font-size:0.6rem">${item.title}</span>
+            </div>
             <div class="badge-rarity ${item.rarity}">${item.rarity}</div>
             ${isOwned ? `<div class="badge-level">Lv.${invData.level}</div>` : ''}
         `;
@@ -788,6 +792,15 @@ window.openDetailModal = (idx) => {
     document.getElementById('dmName').innerText = card.name;
     document.getElementById('dmRarityBadge').className = `tag badge-rarity ${card.rarity}`;
     document.getElementById('dmRarityBadge').innerText = card.rarity;
+    
+        const imgContainer = document.getElementById('dmCardImage');
+    const imgPath = `img/cards/${card.name}_${card.title}.png`;
+
+    // 既存の "NO IMAGE" テキスト等をクリアして img タグを挿入
+    imgContainer.innerHTML = `
+        <img src="${imgPath}" style="width:100%; height:100%; object-fit:cover;" 
+             onerror="this.style.display='none'; this.parentElement.innerText='NO IMAGE';">
+    `;
     
     // 所持スイッチ
     const check = document.getElementById('dmOwnedCheck');
