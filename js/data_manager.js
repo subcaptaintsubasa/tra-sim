@@ -307,3 +307,43 @@ window.uploadCardImage = async () => {
     };
     reader.readAsDataURL(file);
 };
+
+window.batchRegisterSA = async () => {
+    try {
+        const json = document.getElementById('aiPasteSA').value;
+        if (!json) return alert("JSONデータを入力してください");
+        
+        const data = JSON.parse(json);
+        const list = Array.isArray(data) ? data : [data];
+        
+        let sCount = 0, aCount = 0;
+        
+        list.forEach(item => {
+            if (!item.name) return;
+
+            // 判定ロジック: "area" プロパティがあればスキル、なければアビリティとして処理
+            if (item.area && Array.isArray(item.area)) {
+                // スキルとして登録
+                const i = skillsDB.findIndex(x => x.name === item.name);
+                if (i >= 0) skillsDB[i] = item; else skillsDB.push(item);
+                sCount++;
+            } else {
+                // アビリティとして登録
+                const i = abilitiesDB.findIndex(x => x.name === item.name);
+                if (i >= 0) abilitiesDB[i] = item; else abilitiesDB.push(item);
+                aCount++;
+            }
+        });
+
+        // GitHubへ保存（変更があったDBのみ更新）
+        if (sCount > 0) await pushToGH('skills.json', skillsDB, "Bulk SA Update (Skills)");
+        if (aCount > 0) await pushToGH('abilities.json', abilitiesDB, "Bulk SA Update (Abilities)");
+        
+        alert(`保存完了 (Skill: ${sCount}件, Ability: ${aCount}件)`);
+        renderSAList();
+        updateAutoComplete();
+    } catch (e) {
+        console.error(e);
+        alert("JSONエラー: 形式が正しくありません\n" + e.message);
+    }
+};
