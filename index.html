@@ -160,7 +160,21 @@
     </div>
     <div class="card-box" id="cardEditor" style="border:2px solid var(--primary);">
         <h4>個別編集</h4>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;"><input id="editName" placeholder="選手名"><input id="editTitle" placeholder="【称号】"></div>
+        <!-- 画像アップロード機能を追加 -->
+        <div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed #333;">
+            <label style="font-size:0.75rem; color:#94a3b8;">カード画像 (GitHubへアップロード)</label>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <input type="file" id="cardImgUpload" accept="image/*" style="font-size:0.8rem;">
+                <button class="btn btn-sm btn-primary" onclick="uploadCardImage()">Upload</button>
+            </div>
+            <p id="imgUploadStatus" style="font-size:0.7rem; color:var(--accent); margin-top:2px;"></p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+            <input id="editName" placeholder="選手名">
+            <input id="editTitle" placeholder="【称号】">
+        </div>
+        
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
             <select id="editRarity"><option>SSR</option><option>SR</option></select>
             <input id="editAbilityName" placeholder="スキル/アビ名" list="skillList">
@@ -246,6 +260,40 @@
         </div>
     </div>
 </div>
+
+<!-- スキル/アビリティ詳細モーダル (共通利用) -->
+<div id="saModal" class="modal-overlay" style="display:none; z-index:1100;">
+    <div class="modal-content" style="max-width:350px;">
+        <div class="modal-header">
+            <h4 id="saModalTitle">スキル名</h4>
+            <button class="btn-close" onclick="closeSaModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+                <span id="saModalType" class="tag">S</span>
+                <span id="saModalValue" style="font-size:1.2rem; font-weight:bold; color:var(--primary);"></span>
+            </div>
+            
+            <div class="card-box" style="margin-bottom:10px;">
+                <label style="font-size:0.7rem; color:#94a3b8;">効果対象</label>
+                <div id="saModalTargets" style="font-weight:bold;"></div>
+            </div>
+
+            <!-- アビリティ用条件 -->
+            <div id="saModalConditionBox" class="card-box" style="display:none; margin-bottom:10px;">
+                <label style="font-size:0.7rem; color:#94a3b8;">発動条件</label>
+                <div id="saModalCondition"></div>
+            </div>
+
+            <!-- スキル用エリア -->
+            <div id="saModalAreaBox" class="card-box" style="display:none; text-align:center;">
+                <label style="font-size:0.7rem; color:#94a3b8;">発動エリア</label>
+                <div class="area-grid" id="saModalAreaGrid" style="margin:5px auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- プロファイル保存/読込モーダル -->
 <div id="profileModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:210; align-items:center; justify-content:center;">

@@ -647,3 +647,27 @@ body.admin-mode .admin-tab {
     border-radius: 4px;
 }
 .sa-row:hover { background: #334155; }
+
+/* モーダルのZ-index階層管理 */
+#cardModal { z-index: 1050; }   /* スロット選択 */
+#detailModal { z-index: 1060; } /* カード詳細 */
+#saModal { z-index: 1100; }     /* スキル詳細 (最前面) */
+
+/* スキル詳細モーダル内のエリアグリッド調整 */
+#saModalAreaGrid {
+    width: 90px;
+    gap: 2px;
+}
+#saModalAreaGrid .area-cell {
+    height: 25px;
+    cursor: default; /* 閲覧用なのでポインタなし */
+}
+
+/* シミュレータ結果欄でクリック可能であることを示すスタイル */
+.clickable-sa {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.clickable-sa:hover {
+    background: rgba(255, 255, 255, 0.1);
+}

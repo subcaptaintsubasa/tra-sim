@@ -50,7 +50,7 @@ window.invSetAll = (owned) => {
 };
 
 // --- GitHub API連携 ---
-async function pushToGH(file, data, msg) {
+async function pushToGH(file, data, msg, rawContent = null) {
     const token = document.getElementById('ghToken').value;
     const repo = document.getElementById('ghRepo').value;
     
@@ -59,16 +59,39 @@ async function pushToGH(file, data, msg) {
         return false; 
     }
     
-    const url = `https://api.github.com/repos/${repo}/contents/data/${file}`;
+    // pathの調整: 通常は data/ だが、../ で始まる場合はルートからのパスとして扱う
+    let path = `data/${file}`;
+    if (file.startsWith('../')) {
+        path = file.replace('../', '');
+    }
+
+    const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+    
     try {
+        // 1. 既存ファイルのSHAを取得 (上書き用)
         const g = await fetch(url, { headers:{'Authorization':`token ${token}`} });
         const sha = g.ok ? (await g.json()).sha : null;
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+        
+        // 2. コンテンツの準備
+        // rawContent(Base64文字列)があればそれを優先、なければdata(JSON)をエンコード
+        const content = rawContent 
+            ? rawContent 
+            : btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+            
+        // 3. PUTリクエスト
         const res = await fetch(url, { 
             method:'PUT', 
-            headers:{'Authorization':`token ${token}`}, 
-            body: JSON.stringify({ message: msg, sha: sha, content: content }) 
+            headers:{
+                'Authorization':`token ${token}`,
+                'Content-Type': 'application/json'
+            }, 
+            body: JSON.stringify({ 
+                message: msg, 
+                sha: sha, 
+                content: content 
+            }) 
         });
+        
         return res.ok;
     } catch(e) { 
         console.error(e); 
@@ -231,4 +254,56 @@ window.importBackup = () => {
         renderInventory();
         alert("復元完了。");
     } catch (e) { alert("JSONエラー"); }
+};
+
+// --- 画像アップロード機能 (Admin用) ---
+
+window.uploadCardImage = async () => {
+    const input = document.getElementById('cardImgUpload');
+    const status = document.getElementById('imgUploadStatus');
+    const name = document.getElementById('editName').value;
+    const title = document.getElementById('editTitle').value;
+
+    if (!input.files || !input.files[0]) {
+        alert("画像ファイルを選択してください");
+        return;
+    }
+    if (!name || !title) {
+        alert("ファイル名を生成するため、先に「選手名」と「称号」を入力してください");
+        return;
+    }
+
+    const file = input.files[0];
+    const fileName = `${name}_${title}.png`; // ファイル名を自動生成
+    status.innerText = "エンコード中...";
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            // DataURL形式 (data:image/png;base64,.....) からBase64部分だけ抽出
+            const contentBase64 = e.target.result.split(',')[1];
+            
+            status.innerText = "アップロード中...";
+            
+            // GitHub APIへ送信
+            // 画像は 'img/cards/' フォルダに保存
+            const success = await pushToGH(
+                `../img/cards/${fileName}`, // dataフォルダの一つ上(root)のimg/cardsへ
+                null, // data引数はJSON用なのでnull
+                `Add image: ${fileName}`,
+                contentBase64 // 第4引数としてコンテンツを直接渡すよう pushToGH を拡張する必要あり
+            );
+
+            if (success) {
+                status.innerText = "アップロード成功！";
+                alert(`画像を保存しました: img/cards/${fileName}`);
+            } else {
+                status.innerText = "アップロード失敗";
+            }
+        } catch (err) {
+            console.error(err);
+            status.innerText = "エラー発生";
+        }
+    };
+    reader.readAsDataURL(file);
 };

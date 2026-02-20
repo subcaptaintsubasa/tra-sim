@@ -306,17 +306,30 @@ function renderResults(totals_x10, saList, missingTargets) {
     saList.forEach(name => {
         const s = skillsDB.find(i=>i.name===name), a = abilitiesDB.find(i=>i.name===name);
         const isTarget = selectedTargetSkills.includes(name) || selectedTargetAbilities.includes(name);
-        const hlStyle = isTarget ? 'border:1px solid var(--accent); padding:2px; background:rgba(34,197,94,0.1);' : '';
+        const hlStyle = isTarget ? 'border:1px solid var(--accent); background:rgba(34,197,94,0.1);' : '';
         
+        // onclick="openSaModal('${name}')" と class="clickable-sa" を追加
         if(s) {
             let areaH = '<div class="sa-result-area">';
             (s.area || Array(9).fill(0)).forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
-            saDiv.innerHTML += `<div style="display:flex; align-items:center; margin-bottom:5px; width:100%; ${hlStyle}">${areaH}<div style="flex:1; min-width:0; white-space:nowrap;"><span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small></div></div>`;
+            areaH += '</div>';
+            
+            saDiv.innerHTML += `
+            <div class="clickable-sa" onclick="openSaModal('${name}')" style="display:flex; align-items:center; margin-bottom:5px; width:100%; padding:4px; border-radius:4px; ${hlStyle}">
+                ${areaH}
+                <div style="flex:1; min-width:0; white-space:nowrap;">
+                    <span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small>
+                </div>
+            </div>`;
         }
-        if(a) saDiv.innerHTML += `<div style="margin-bottom:5px; width:100%; white-space:nowrap; ${hlStyle}"><span class="tag tag-ability">A</span><b>${name}</b><br><small>${a.condition || ''}</small></div>`;
+        if(a) {
+            saDiv.innerHTML += `
+            <div class="clickable-sa" onclick="openSaModal('${name}')" style="margin-bottom:5px; width:100%; white-space:nowrap; padding:4px; border-radius:4px; ${hlStyle}">
+                <span class="tag tag-ability">A</span><b>${name}</b><br><small>${a.condition || ''}</small>
+            </div>`;
+        }
     });
 }
-
 function renderSimSlots(pos, style) {
     const g = document.getElementById('simSlots');
     if (!g) return;
@@ -886,29 +899,30 @@ function renderDetailSkills(card) {
     const list = document.getElementById('dmSkillList');
     list.innerHTML = '';
     
-    if (card.abilities) {
+    if (card.abilities && card.abilities.length > 0) {
         card.abilities.forEach(name => {
-            // データ検索
             const skill = skillsDB.find(s => s.name === name);
-            const ability = abilitiesDB.find(a => a.name === name);
             
             const row = document.createElement('div');
-            row.className = 'sa-row';
+            // クリック可能に見えるクラスとイベントを追加
+            row.className = 'sa-row clickable-sa';
+            row.style.padding = "8px";
+            row.style.borderBottom = "1px solid #334155";
             
-            let html = `<div><span class="tag ${skill ? 'tag-skill' : 'tag-ability'}">${skill?'S':'A'}</span> <b>${name}</b></div>`;
+            row.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <div>
+                        <span class="tag ${skill ? 'tag-skill' : 'tag-ability'}">${skill?'S':'A'}</span>
+                        <span style="font-weight:bold;">${name}</span>
+                    </div>
+                    <span style="font-size:0.8rem; color:#94a3b8;">▶ 詳細</span>
+                </div>
+            `;
             
-            // 詳細情報 (隠しておいてクリックで展開)
-            let detailHtml = '';
-            if (skill) {
-                detailHtml = `<div class="sa-detail-box">効果値: ${skill.value}%<br>対象: ${skill.targets.join(', ')}</div>`;
-            } else if (ability) {
-                detailHtml = `<div class="sa-detail-box">条件: ${ability.condition}<br>効果: ${ability.targets.join(', ')} +${ability.value}</div>`;
-            }
-            
-            row.innerHTML = html + detailHtml;
-            row.onclick = () => {
-                const box = row.querySelector('.sa-detail-box');
-                if(box) box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+            // タップでモーダル展開
+            row.onclick = (e) => {
+                e.stopPropagation(); // 親要素への伝播を防ぐ
+                openSaModal(name);
             };
             
             list.appendChild(row);
@@ -917,3 +931,57 @@ function renderDetailSkills(card) {
         list.innerHTML = '<span style="font-size:0.8rem; color:#666;">なし</span>';
     }
 }
+
+window.openSaModal = (name) => {
+    // データベースから検索
+    const skill = skillsDB.find(s => s.name === name);
+    const ability = abilitiesDB.find(a => a.name === name);
+    const target = skill || ability;
+
+    if (!target) return; // データがない場合は何もしない
+
+    const isSkill = !!skill;
+
+    // タイトルと種別
+    document.getElementById('saModalTitle').innerText = name;
+    const typeEl = document.getElementById('saModalType');
+    typeEl.className = `tag ${isSkill ? 'tag-skill' : 'tag-ability'}`;
+    typeEl.innerText = isSkill ? 'SKILL' : 'ABILITY';
+
+    // 数値
+    document.getElementById('saModalValue').innerText = 
+        (target.value ? target.value : '0') + (isSkill ? '%' : '');
+
+    // 対象ステータス
+    document.getElementById('saModalTargets').innerText = 
+        (target.targets && target.targets.length > 0) ? target.targets.join(', ') : 'なし';
+
+    // 条件 (アビリティのみ)
+    const condBox = document.getElementById('saModalConditionBox');
+    if (!isSkill && target.condition) {
+        condBox.style.display = 'block';
+        document.getElementById('saModalCondition').innerText = target.condition;
+    } else {
+        condBox.style.display = 'none';
+    }
+
+    // エリア (スキルのみ)
+    const areaBox = document.getElementById('saModalAreaBox');
+    if (isSkill && target.area) {
+        areaBox.style.display = 'block';
+        const grid = document.getElementById('saModalAreaGrid');
+        grid.innerHTML = '';
+        target.area.forEach(isActive => {
+            grid.innerHTML += `<div class="area-cell ${isActive ? 'active' : ''}"></div>`;
+        });
+    } else {
+        areaBox.style.display = 'none';
+    }
+
+    // 表示
+    document.getElementById('saModal').style.display = 'flex';
+};
+
+window.closeSaModal = () => {
+    document.getElementById('saModal').style.display = 'none';
+};
