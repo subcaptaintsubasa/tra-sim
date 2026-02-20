@@ -107,20 +107,34 @@
     </div>
 </div>
 
-<!-- 所持カード管理 -->
+<!-- 所持カード管理 (Inventory) -->
 <div id="inventory" class="content">
     <div class="card-box">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h4>My Cards (所持状況 & レベル)</h4>
-            <div>
-                <button class="btn btn-sm btn-primary" onclick="invSetAll(true)">全所持</button>
-                <button class="btn btn-sm" onclick="invSetAll(false)">全解除</button>
+        <!-- ツールバー -->
+        <div class="inv-toolbar">
+            <div class="inv-toolbar-row">
+                <button class="btn btn-sm" id="sortToggleBtn" onclick="toggleSortMode()">並び順: レアリティ</button>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="groupByOwnedCheck" onchange="renderInventory()" checked>
+                    所持優先
+                </label>
+            </div>
+            <div class="inv-toolbar-row">
+                <button class="btn btn-sm btn-primary" id="btnBulkStart" onclick="startBulkMode()">一括選択モード</button>
+                <div id="bulkActions" style="display:none; gap:5px;">
+                    <button class="btn btn-sm btn-accent" onclick="commitBulkMode()">確定</button>
+                    <button class="btn btn-sm" style="background:#ef4444;" onclick="cancelBulkMode()">キャンセル</button>
+                    <button class="btn btn-sm" onclick="bulkSelectAll(true)">全選択</button>
+                    <button class="btn btn-sm" onclick="bulkSelectAll(false)">全解除</button>
+                </div>
             </div>
         </div>
-        <p style="font-size:0.75rem; color:#94a3b8;">チェックを入れたカードのみシミュレータで使用します。レベルを指定するとステータスが変動します。</p>
-        <div id="invList" class="inv-grid" style="margin-top:10px;"></div>
+
+        <!-- グリッド表示エリア -->
+        <div id="invGrid" class="inv-card-grid"></div>
     </div>
 </div>
+
 
 <!-- カード管理 (Admin) -->
 <div id="admin-card" class="content">
@@ -186,6 +200,51 @@
 <!-- モーダル群 -->
 <div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; padding:20px; overflow-y:auto;">
     <div id="modalList"></div><button class="btn" onclick="document.getElementById('cardModal').style.display='none'">閉じる</button>
+</div>
+
+<!-- 詳細確認モーダル (新規追加) -->
+<div id="detailModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 id="dmTitle">カード詳細</h4>
+            <button class="btn-close" onclick="closeDetailModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <!-- 基本情報 -->
+            <div class="dm-info-row">
+                <div id="dmCardImage" class="dm-img-placeholder">NO IMAGE</div>
+                <div class="dm-basic-info">
+                    <div id="dmName" class="dm-name">選手名</div>
+                    <div id="dmRarityBadge" class="tag">SSR</div>
+                    <div class="dm-switch-row">
+                        <label>所持状況:</label>
+                        <input type="checkbox" id="dmOwnedCheck" onchange="updateDmOwnership()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- レベル設定 -->
+            <div class="dm-section">
+                <label>レベル設定: <span id="dmLevelVal" style="font-weight:bold; color:var(--primary);">50</span></label>
+                <div class="dm-level-presets" id="dmLevelPresets">
+                    <!-- JSでボタン生成 -->
+                </div>
+                <input type="range" id="dmLevelSlider" min="1" max="50" step="1" oninput="updateDmLevelFromSlider(this.value)">
+            </div>
+
+            <!-- ステータスプレビュー -->
+            <div class="dm-section">
+                <label>ステータス (Lv.<span id="dmStatLv">50</span>)</label>
+                <div id="dmStatsGrid" class="stat-grid"></div>
+            </div>
+
+            <!-- スキル・アビリティ -->
+            <div class="dm-section">
+                <label>スキル / アビリティ</label>
+                <div id="dmSkillList"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- プロファイル保存/読込モーダル -->

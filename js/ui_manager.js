@@ -555,3 +555,365 @@ window.execDeleteProfile = (name) => {
     deleteProfile(name);
     openLoadModal(); 
 };
+
+// --- Global Variables for Inventory ---
+let invSortType = 'rarity'; // 'rarity' or 'name'
+let isBulkMode = false;
+let tempMyCards = {}; // 一括編集用の一時データ
+let longPressTimer = null;
+let isLongPress = false;
+let currentDetailCard = null; // 現在モーダルで表示中のカード情報
+
+// --- ツールバー操作 ---
+function toggleSortMode() {
+    invSortType = (invSortType === 'rarity') ? 'name' : 'rarity';
+    document.getElementById('sortToggleBtn').innerText = 
+        `並び順: ${invSortType === 'rarity' ? 'レアリティ' : '名前'}`;
+    renderInventory();
+}
+
+// --- ソートロジック ---
+function getSortedCards() {
+    const groupByOwned = document.getElementById('groupByOwnedCheck').checked;
+    
+    // インデックス付きのオブジェクト配列を作成
+    let list = cardsDB.map((c, idx) => {
+        const key = c.name + "_" + c.title;
+        const owned = isBulkMode 
+            ? (tempMyCards[key]?.owned || false)
+            : (myCards[key]?.owned || false);
+        return { ...c, idx, owned, key };
+    });
+
+    list.sort((a, b) => {
+        // 1. 所持優先 (GroupByOwnedがONの場合)
+        if (groupByOwned) {
+            if (a.owned !== b.owned) return b.owned - a.owned; // true(=1)が先
+        }
+
+        // 2. 指定されたソート順
+        if (invSortType === 'rarity') {
+            // SSR -> SR
+            if (a.rarity !== b.rarity) return a.rarity === 'SSR' ? -1 : 1;
+            // 同じレアリティなら名前順
+            return a.name.localeCompare(b.name, 'ja');
+        } else {
+            // 名前順
+            return a.name.localeCompare(b.name, 'ja');
+        }
+    });
+    return list;
+}
+
+// --- メイン描画関数 (renderInventory) ---
+window.renderInventory = () => {
+    const grid = document.getElementById('invGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const list = getSortedCards();
+
+    list.forEach(item => {
+        // データの取得
+        const invData = isBulkMode 
+            ? (tempMyCards[item.key] || { level: (item.rarity==='SSR'?50:45) }) 
+            : (myCards[item.key] || { level: (item.rarity==='SSR'?50:45) });
+        
+        const isOwned = item.owned;
+        
+        // カード要素作成
+        const el = document.createElement('div');
+        el.className = `inv-card ${isOwned ? 'owned' : 'unowned'}`;
+        if (isBulkMode && isOwned) el.classList.add('bulk-selected');
+
+        // 画像 (なければプレースホルダー)
+        // ※実際には img/cards/{name}_{title}.png などを想定
+        // ここではプレースホルダーを表示
+        el.innerHTML = `
+            <div class="inv-card-placeholder">${item.name}<br><span style="font-size:0.6rem">${item.title}</span></div>
+            <div class="badge-rarity ${item.rarity}">${item.rarity}</div>
+            ${isOwned ? `<div class="badge-level">Lv.${invData.level}</div>` : ''}
+        `;
+
+        // イベントリスナー (長押し vs タップ)
+        addPressEvents(el, item);
+
+        grid.appendChild(el);
+    });
+};
+
+// --- タップ/長押し判定ロジック ---
+function addPressEvents(element, item) {
+    const startPress = (e) => {
+        // 右クリック等は無視
+        if (e.type === 'mousedown' && e.button !== 0) return;
+        
+        isLongPress = false;
+        longPressTimer = setTimeout(() => {
+            isLongPress = true;
+            // 長押しアクション実行
+            handleLongPress(item);
+        }, 500); // 0.5秒で長押し認定
+    };
+
+    const endPress = (e) => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+        // 長押しでなかった場合のみ、タップ処理
+        if (!isLongPress) {
+            handleTap(item);
+        }
+        isLongPress = false; // リセット
+    };
+
+    const cancelPress = () => {
+        if (longPressTimer) clearTimeout(longPressTimer);
+        isLongPress = false;
+    };
+
+    // マウス・タッチ両対応
+    element.addEventListener('mousedown', startPress);
+    element.addEventListener('touchstart', startPress, {passive: true});
+    
+    element.addEventListener('mouseup', endPress);
+    element.addEventListener('touchend', endPress);
+    
+    element.addEventListener('mouseleave', cancelPress);
+    element.addEventListener('touchmove', cancelPress); // 指が動いたらキャンセル
+}
+
+// アクション分岐
+function handleTap(item) {
+    if (isBulkMode) {
+        // 一括モード: 選択トグル (データ更新)
+        toggleTempOwnership(item.key);
+    } else {
+        // 通常モード: 詳細モーダル
+        openDetailModal(item.idx);
+    }
+}
+
+function handleLongPress(item) {
+    // どちらのモードでも詳細モーダルを開く
+    // (バイブレーション等のフィードバックがあると良い)
+    if (navigator.vibrate) navigator.vibrate(30);
+    openDetailModal(item.idx);
+}
+
+
+// --- 一括選択モード制御 ---
+window.startBulkMode = () => {
+    isBulkMode = true;
+    // myCardsのディープコピーを作成
+    tempMyCards = JSON.parse(JSON.stringify(myCards));
+    
+    document.getElementById('bulkActions').style.display = 'flex';
+    document.getElementById('btnBulkStart').style.display = 'none';
+    
+    // グリッド再描画 (スタイル変更のため)
+    renderInventory();
+};
+
+window.commitBulkMode = () => {
+    // 変更を本番データに反映
+    myCards = JSON.parse(JSON.stringify(tempMyCards));
+    saveInv(); // LocalStorageへ保存
+    
+    // シミュレーション再計算
+    if (typeof updateCalc === 'function') updateCalc();
+    
+    endBulkMode();
+};
+
+window.cancelBulkMode = () => {
+    tempMyCards = {}; // 破棄
+    endBulkMode();
+};
+
+function endBulkMode() {
+    isBulkMode = false;
+    document.getElementById('bulkActions').style.display = 'none';
+    document.getElementById('btnBulkStart').style.display = 'block';
+    renderInventory();
+}
+
+function toggleTempOwnership(key) {
+    if (!tempMyCards[key]) tempMyCards[key] = { level: 50, owned: false }; // 初期化
+    tempMyCards[key].owned = !tempMyCards[key].owned;
+    
+    // 再描画 (全体再描画は重い可能性があるが、グリッド数が少なければOK。
+    // パフォーマンス問題が出る場合はDOM要素を直接操作する)
+    renderInventory(); 
+}
+
+window.bulkSelectAll = (toState) => {
+    cardsDB.forEach(c => {
+        const key = c.name + "_" + c.title;
+        if (!tempMyCards[key]) tempMyCards[key] = { level: (c.rarity==='SSR'?50:45) };
+        tempMyCards[key].owned = toState;
+    });
+    renderInventory();
+};
+
+
+// --- 詳細モーダル制御 ---
+window.openDetailModal = (idx) => {
+    const card = cardsDB[idx];
+    if (!card) return;
+    
+    const key = card.name + "_" + card.title;
+    // モードに応じて参照先を変える
+    const sourceData = isBulkMode ? tempMyCards : myCards;
+    const invData = sourceData[key] || { owned: false, level: (card.rarity==='SSR'?50:45) };
+    
+    currentDetailCard = { ...card, key, invData }; // 状態保持
+
+    // UI反映
+    document.getElementById('dmTitle').innerText = card.title;
+    document.getElementById('dmName').innerText = card.name;
+    document.getElementById('dmRarityBadge').className = `tag badge-rarity ${card.rarity}`;
+    document.getElementById('dmRarityBadge').innerText = card.rarity;
+    
+    // 所持スイッチ
+    const check = document.getElementById('dmOwnedCheck');
+    check.checked = invData.owned;
+    
+    // レベル設定ボタン生成
+    renderLevelPresets(card.rarity, invData.level);
+    
+    // ステータス & スキル描画
+    updateDetailStats();
+    renderDetailSkills(card);
+
+    // モーダル表示
+    document.getElementById('detailModal').style.display = 'flex';
+};
+
+window.closeDetailModal = () => {
+    document.getElementById('detailModal').style.display = 'none';
+    currentDetailCard = null;
+    // 閉じた後にグリッドを更新 (レベル変更などを反映)
+    renderInventory();
+    if (!isBulkMode) {
+        saveInv(); // 通常モードなら即保存
+        if (typeof updateCalc === 'function') updateCalc();
+    }
+};
+
+function renderLevelPresets(rarity, currentLevel) {
+    const presets = (rarity === 'SSR') 
+        ? [1, 30, 35, 40, 45, 50] 
+        : [1, 25, 30, 35, 40, 45];
+    
+    const container = document.getElementById('dmLevelPresets');
+    container.innerHTML = '';
+    
+    presets.forEach(lvl => {
+        const btn = document.createElement('button');
+        btn.className = `preset-btn ${parseInt(currentLevel) === lvl ? 'active' : ''}`;
+        btn.innerText = `Lv.${lvl}`;
+        btn.onclick = () => setDetailLevel(lvl);
+        container.appendChild(btn);
+    });
+
+    // スライダー同期
+    const slider = document.getElementById('dmLevelSlider');
+    slider.max = (rarity === 'SSR') ? 50 : 45;
+    slider.value = currentLevel;
+    document.getElementById('dmLevelVal').innerText = currentLevel;
+}
+
+window.updateDmLevelFromSlider = (val) => {
+    setDetailLevel(parseInt(val));
+};
+
+function setDetailLevel(lvl) {
+    if (!currentDetailCard) return;
+    currentDetailCard.invData.level = lvl;
+    
+    // データ更新
+    const sourceData = isBulkMode ? tempMyCards : myCards;
+    if (!sourceData[currentDetailCard.key]) {
+        sourceData[currentDetailCard.key] = { owned: false };
+    }
+    sourceData[currentDetailCard.key].level = lvl;
+
+    // UI更新
+    document.getElementById('dmLevelVal').innerText = lvl;
+    renderLevelPresets(currentDetailCard.rarity, lvl); // ボタンのアクティブ切り替え
+    updateDetailStats(); // ステータス数値更新
+}
+
+window.updateDmOwnership = () => {
+    if (!currentDetailCard) return;
+    const isOwned = document.getElementById('dmOwnedCheck').checked;
+    currentDetailCard.invData.owned = isOwned;
+    
+    const sourceData = isBulkMode ? tempMyCards : myCards;
+    if (!sourceData[currentDetailCard.key]) {
+        sourceData[currentDetailCard.key] = { level: 50 }; // 新規ならデフォルト
+    }
+    sourceData[currentDetailCard.key].owned = isOwned;
+};
+
+function updateDetailStats() {
+    if (!currentDetailCard) return;
+    // ステータス計算 (既存ロジック流用)
+    // モーダル内ではポジション補正なしの素ステータスを表示するか、
+    // 現在選択中のポジションがあればそれを適用するか。
+    // ここでは「素ステータス」を表示する方針で実装します。
+    
+    const lvl = currentDetailCard.invData.level;
+    document.getElementById('dmStatLv').innerText = lvl;
+    
+    // ポジション指定なしで計算 (ボーナスなし)
+    const stats = getCardStatsAtLevel(currentDetailCard, lvl, null, null, 1.0);
+    
+    const grid = document.getElementById('dmStatsGrid');
+    grid.innerHTML = '';
+    
+    for (let [key, val] of Object.entries(stats)) {
+        const div = document.createElement('div');
+        div.style.cssText = "background:#0f172a; padding:4px; border-radius:4px; text-align:center;";
+        div.innerHTML = `<div style="font-size:0.6rem; color:#94a3b8;">${key}</div><div style="font-weight:bold;">${(val/10).toFixed(1)}</div>`;
+        grid.appendChild(div);
+    }
+}
+
+function renderDetailSkills(card) {
+    const list = document.getElementById('dmSkillList');
+    list.innerHTML = '';
+    
+    if (card.abilities) {
+        card.abilities.forEach(name => {
+            // データ検索
+            const skill = skillsDB.find(s => s.name === name);
+            const ability = abilitiesDB.find(a => a.name === name);
+            
+            const row = document.createElement('div');
+            row.className = 'sa-row';
+            
+            let html = `<div><span class="tag ${skill ? 'tag-skill' : 'tag-ability'}">${skill?'S':'A'}</span> <b>${name}</b></div>`;
+            
+            // 詳細情報 (隠しておいてクリックで展開)
+            let detailHtml = '';
+            if (skill) {
+                detailHtml = `<div class="sa-detail-box">効果値: ${skill.value}%<br>対象: ${skill.targets.join(', ')}</div>`;
+            } else if (ability) {
+                detailHtml = `<div class="sa-detail-box">条件: ${ability.condition}<br>効果: ${ability.targets.join(', ')} +${ability.value}</div>`;
+            }
+            
+            row.innerHTML = html + detailHtml;
+            row.onclick = () => {
+                const box = row.querySelector('.sa-detail-box');
+                if(box) box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+            };
+            
+            list.appendChild(row);
+        });
+    } else {
+        list.innerHTML = '<span style="font-size:0.8rem; color:#666;">なし</span>';
+    }
+}

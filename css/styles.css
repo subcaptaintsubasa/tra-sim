@@ -437,3 +437,213 @@ body.admin-mode .admin-tab {
     border-radius: 6px;
     cursor: pointer;
 }
+
+/* --- Inventory New Styles --- */
+.inv-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #334155;
+}
+.inv-toolbar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.checkbox-label {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+/* Card Grid */
+.inv-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* 小さめのカード */
+    gap: 8px;
+}
+
+.inv-card {
+    position: relative;
+    aspect-ratio: 3/4;
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.2s;
+    user-select: none; /* 長押し時のテキスト選択防止 */
+}
+
+.inv-card.owned {
+    border-color: var(--primary);
+    background: #0f172a;
+}
+.inv-card.unowned {
+    opacity: 0.6;
+    filter: grayscale(100%);
+    border-style: dashed;
+}
+.inv-card.bulk-selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    transform: scale(0.95);
+}
+
+/* Card Content */
+.inv-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.inv-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 2px;
+    color: #64748b;
+    background: #000;
+}
+
+.badge-rarity {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    font-weight: bold;
+}
+.badge-rarity.SSR { color: var(--skill); border: 1px solid var(--skill); }
+.badge-rarity.SR { color: #fff; border: 1px solid #fff; }
+
+.badge-level {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 1px 5px;
+    border-top-left-radius: 4px;
+}
+
+/* Detail Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: var(--card);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    display: flex;
+    flex-direction: column;
+}
+.modal-header {
+    padding: 15px;
+    border-bottom: 1px solid #334155;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-body {
+    padding: 15px;
+    overflow-y: auto;
+}
+.btn-close {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.dm-info-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.dm-img-placeholder {
+    width: 80px;
+    height: 110px;
+    background: #000;
+    border: 1px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: #666;
+}
+.dm-basic-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+}
+.dm-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--primary);
+}
+.dm-level-presets {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin: 5px 0;
+}
+.preset-btn {
+    background: #334155;
+    border: 1px solid #475569;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+.preset-btn.active {
+    background: var(--primary);
+    color: #000;
+    font-weight: bold;
+}
+.dm-section {
+    margin-top: 15px;
+    border-top: 1px dashed #334155;
+    padding-top: 10px;
+}
+
+/* スキル詳細展開用 */
+.sa-detail-box {
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    margin-top: 4px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    display: none;
+}
+.sa-row {
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+.sa-row:hover { background: #334155; }
