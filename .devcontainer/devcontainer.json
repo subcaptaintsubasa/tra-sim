@@ -1,0 +1,11 @@
+{
+  "name": "tra-sim",
+  "postStartCommand": "docker compose up -d",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "nginx",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}
