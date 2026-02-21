@@ -445,12 +445,16 @@ window.loadCardToEditor = (d) => {
     if(!d) {
         document.querySelectorAll('.edit-val').forEach(i => i.value = '');
         document.getElementById('editBonusList').innerHTML = '';
+        document.getElementById('editGrowth').value = "6"; // 新規作成時はデフォルト6倍
         return;
     }
     document.getElementById('editName').value = d.name;
     document.getElementById('editTitle').value = d.title;
     document.getElementById('editRarity').value = d.rarity;
-    document.getElementById('editAbilityName').value = d.abilities[0] || '';
+    
+    document.getElementById('editGrowth').value = d.growth_rate || "6";
+
+    document.getElementById('editAbilityName').value = d.abilities ? d.abilities[0] : '';
     document.querySelectorAll('.edit-val').forEach(i => i.value = d.stats[i.dataset.stat] || '');
     const bList = document.getElementById('editBonusList');
     bList.innerHTML = '';

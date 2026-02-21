@@ -99,7 +99,6 @@ async function pushToGH(file, data, msg, rawContent = null) {
     }
 }
 
-// --- カード保存 ---
 async function saveCardToGH() {
     const name = document.getElementById('editName').value;
     const title = document.getElementById('editTitle').value; 
@@ -117,11 +116,20 @@ async function saveCardToGH() {
     });
     const legacyType = bonuses.length > 0 ? bonuses[0].type : "";
     const legacyVal = bonuses.length > 0 ? bonuses[0].value : 0;
+
+    const growthRate = parseInt(document.getElementById('editGrowth').value);
+
     const nc = { 
         title, name, rarity: document.getElementById('editRarity').value, 
         bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
-        abilities: [document.getElementById('editAbilityName').value], stats 
+        abilities: [document.getElementById('editAbilityName').value], stats,
+        growth_rate: growthRate // 一旦セット
     };
+
+    if (growthRate === 6) {
+        delete nc.growth_rate;
+    }
+
     const i = cardsDB.findIndex(x => x.name === name && x.title === title); 
     if(i >= 0) cardsDB[i] = nc; else cardsDB.push(nc);
     if(await pushToGH('cards.json', cardsDB, "Update Card")) { 

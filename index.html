@@ -160,7 +160,7 @@
     </div>
     <div class="card-box" id="cardEditor" style="border:2px solid var(--primary);">
         <h4>個別編集</h4>
-        <!-- 画像アップロード機能を追加 -->
+        <!-- 画像アップロード機能 -->
         <div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed #333;">
             <label style="font-size:0.75rem; color:#94a3b8;">カード画像 (GitHubへアップロード)</label>
             <div style="display:flex; gap:5px; margin-top:5px;">
@@ -177,8 +177,17 @@
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
             <select id="editRarity"><option>SSR</option><option>SR</option></select>
+            <!-- ★ 追加: 成長タイプ選択 -->
+            <select id="editGrowth">
+                <option value="6">成長: 通常(6倍)</option>
+                <option value="3" style="color:#fbbf24;">成長: 3倍</option>
+            </select>
+        </div>
+        
+        <div style="margin-top:5px;">
             <input id="editAbilityName" placeholder="スキル/アビ名" list="skillList">
         </div>
+
         <div style="margin-top:10px; border:1px dashed #555; padding:5px;">
             <label style="font-size:0.7rem;">ボーナス条件 (複数可)</label>
             <div id="editBonusList"></div>
@@ -187,6 +196,7 @@
         <div class="stat-grid" id="editStatsGrid"></div>
         <button class="btn btn-accent" onclick="saveCardToGH()">保存</button>
     </div>
+
     <div id="masterList"></div>
 </div>
 

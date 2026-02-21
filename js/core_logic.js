@@ -1,11 +1,10 @@
 // --- core_logic.js ---
 
-/**
- * カードの特定レベルにおけるステータスを算出
- */
 function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult) {
     const maxLevel = card.rarity === 'SSR' ? 50 : 45;
     const useLevel = Math.max(1, Math.min(maxLevel, level));
+    
+    const growthRate = card.growth_rate || 6;
     
     let bonusTotal = 0;
     if (card.bonus_type) {
@@ -29,7 +28,8 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
         if (!d1) continue;
 
         const d1_int = Math.round(d1 * 10);
-        const N = Math.round(d1 * 6);
+        
+        const N = Math.round(d1 * growthRate);
         
         const growthMax = (N * 10 - d1_int);
         const growthCurrent = Math.floor(growthMax * (useLevel - 1) / (maxLevel - 1));
