@@ -7,18 +7,22 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
     const growthRate = card.growth_rate || 6;
     
     let bonusTotal = 0;
-    if (card.bonus_type) {
-        if (card.bonus_type === targetPos || card.bonus_type === targetStyle) {
-            bonusTotal += (card.bonus_value || 0);
-        }
-    }
-    if (card.bonuses && Array.isArray(card.bonuses)) {
+
+    // --- 修正箇所 START ---
+    // bonuses配列（新形式）がある場合はそちらを優先し、bonus_type（旧形式）は無視する
+    if (card.bonuses && Array.isArray(card.bonuses) && card.bonuses.length > 0) {
         card.bonuses.forEach(b => {
             if (b.type === targetPos || b.type === targetStyle) {
                 bonusTotal += b.value;
             }
         });
+    } else if (card.bonus_type) {
+        // 新形式がない場合のみ旧形式を参照
+        if (card.bonus_type === targetPos || card.bonus_type === targetStyle) {
+            bonusTotal += (card.bonus_value || 0);
+        }
     }
+    // --- 修正箇所 END ---
     
     const bonusMult = 1 + (bonusTotal / 100);
     const result = {};

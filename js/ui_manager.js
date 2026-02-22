@@ -338,10 +338,19 @@ function renderSimSlots(pos, style) {
         let h = `枠 ${i+1}`;
         if (c) {
             let bVal = 0;
+            // --- 修正箇所 START ---
             if (pos && style) {
-                if(c.bonus_type === pos || c.bonus_type === style) bVal += (c.bonus_value||0);
-                if(c.bonuses) c.bonuses.forEach(b => { if(b.type===pos || b.type===style) bVal += b.value; });
+                // 配列(bonuses)優先、無ければ単体(bonus_type)を使用
+                if (c.bonuses && Array.isArray(c.bonuses) && c.bonuses.length > 0) {
+                    c.bonuses.forEach(b => { 
+                        if(b.type===pos || b.type===style) bVal += b.value; 
+                    });
+                } else if (c.bonus_type) {
+                    if(c.bonus_type === pos || c.bonus_type === style) bVal += (c.bonus_value||0);
+                }
             }
+            // --- 修正箇所 END ---
+
             const bDisplay = bVal > 0 ? `<div class="bonus-on" style="font-size:0.6rem;">Bonus +${bVal}%</div>` : `<div class="bonus-off" style="font-size:0.6rem;">No Bonus</div>`;
             h = `<div style="font-weight:bold;font-size:0.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;">${c.name}</div>${bDisplay}`;
         }
