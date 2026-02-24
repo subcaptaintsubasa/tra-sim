@@ -2,8 +2,11 @@
     --primary: #00f2ff; 
     --accent: #22c55e; 
     --bg: #0f172a; 
-    --card: #1e293b; 
+    --header-bg: #1e293b;
+    --card-bg: #1e293b;
     --text: #f1f5f9; 
+    --tray-bg: #0f172a;
+    --border: #334155;
     --skill: #fbbf24; 
     --ability: #a78bfa; 
     --gk: #f97316; 
@@ -14,660 +17,166 @@ body {
     background: var(--bg); 
     color: var(--text); 
     margin: 0; 
-    padding-bottom: 80px; 
+    padding-top: 60px; /* Header height */
+    padding-bottom: 120px; /* Tray height space */
 }
 
-nav { 
-    background: #000; 
-    padding: 10px; 
-    display: flex; 
-    gap: 5px; 
-    position: sticky; 
-    top: 0; 
-    z-index: 100; 
-    overflow-x: auto; 
-}
-
-.tab-btn { 
-    flex: 1; 
-    padding: 10px; 
-    border: none; 
-    background: #334155; 
-    color: white; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    white-space: nowrap; 
-    font-size: 0.85rem; 
-}
-
-.tab-btn.active { 
-    background: var(--primary); 
-    color: #000; 
-    font-weight: bold; 
-}
-
-.content { 
-    display: none; 
-    padding: 15px; 
-    max-width: 1000px; 
-    margin: 0 auto; 
-}
-
-.content.active { 
-    display: block; 
-}
-
-.card-box { 
-    background: var(--card); 
-    padding: 15px; 
-    border-radius: 10px; 
-    margin-bottom: 15px; 
-    border: 1px solid #334155; 
-}
-
-input, textarea, select { 
-    background: #000; 
-    border: 1px solid #334155; 
-    color: #fff; 
-    padding: 8px; 
-    border-radius: 6px; 
-    width: 100%; 
-    box-sizing: border-box; 
-}
-
-.btn { 
-    padding: 10px; 
-    border-radius: 6px; 
-    border: none; 
-    cursor: pointer; 
-    font-weight: bold; 
-    margin-top: 5px; 
-    width: 100%; 
-}
-
-.btn-primary { 
-    background: var(--primary); 
-    color: #000; 
-}
-
-.btn-accent { 
-    background: var(--accent); 
-    color: #fff; 
-}
-
-.btn-sm { 
-    width: auto; 
-    padding: 4px 8px; 
-    font-size: 0.75rem; 
-    margin-left: 5px; 
-}
-
-.stat-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
-    gap: 8px; 
-    margin-top: 10px; 
-}
-
-.stat-item label { 
-    display: block; 
-    font-size: 0.7rem; 
-    color: #94a3b8; 
-    margin-bottom: 2px; 
-}
-
-.gk-stat { 
-    border-color: var(--gk); 
-}
-
-.gk-stat label { 
-    color: var(--gk); 
-}
-
-.slot-active { 
-    border: 2px solid var(--primary); 
-    background: rgba(0,242,255,0.1); 
-}
-
-.slot-empty { 
-    border: 2px dashed #444; 
-}
-
-.bonus-on { 
-    color: var(--accent); 
-    font-weight: bold; 
-}
-
-.bonus-off { 
-    color: #ef4444; 
-    text-decoration: line-through; 
-    opacity: 0.6; 
-}
-
-.tag { 
-    font-size: 0.65rem; 
-    padding: 2px 6px; 
-    border-radius: 4px; 
-    margin-right: 5px; 
-}
-
-.tag-skill { 
-    background: var(--skill); 
-    color: #000; 
-}
-
-.tag-ability { 
-    background: var(--ability); 
-    color: #fff; 
-}
-
-/* Inventory Styles */
-.inv-grid { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
-    gap: 10px; 
-}
-
-.inv-item { 
-    background: #000; 
-    padding: 8px; 
-    border-radius: 6px; 
-    border: 1px solid #333; 
-    position: relative; 
-}
-
-.inv-item.owned { 
-    border-color: var(--primary); 
-    background: rgba(0,242,255,0.05); 
-}
-
-.inv-item.unowned { 
-    opacity: 0.5; 
-}
-
-.inv-check { 
-    position: absolute; 
-    top: 5px; 
-    right: 5px; 
-    transform: scale(1.2); 
-}
-
-/* Area Grid */
-.area-grid { 
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 3px; 
-    width: 120px; 
-    margin-top: 5px; 
-}
-
-.area-cell { 
-    height: 35px; 
-    background: #444; 
-    cursor: pointer; 
-    border: 1px solid #555; 
-}
-
-.area-cell.active { 
-    background: var(--skill); 
-    border: 1px solid white; 
-}
-
-.list-item {
-    background: #1e293b;
-    margin-bottom: 5px;
-    padding: 8px;
-    border-radius: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid #334155;
-}
-
-.btn-edit {
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.7rem;
-    color: white;
-    background: #3b82f6;
-}
-
-.sa-result-area {
-    display: flex;
-    gap: 1px;
-    margin-right: 8px;
-    border: 1px solid #555;
-}
-
-.sa-result-cell {
-    width: 6px;
-    height: 6px;
-    background: #333;
-}
-
-.sa-result-cell.active {
-    background: var(--skill);
-}
-
-/* --- 管理者モード用の設定 --- */
-/* 最初は管理者用タブを隠しておく */
-.admin-tab {
-    display: none !important;
-}
-
-/* 管理者モードがONになった時だけ表示する */
-body.admin-mode .admin-tab {
-    display: flex !important;
-}
-
-/* コマンド入力中のメッセージ */
-#admin-status {
-    display: none;
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: #00f2ff; /* var(--primary)の色 */
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 0.8rem;
+/* Header */
+.app-header {
+    position: fixed; top: 0; left: 0; width: 100%;
+    height: 60px;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px; box-sizing: border-box;
     z-index: 1000;
-    border: 1px solid #00f2ff;
-    pointer-events: none;
+}
+.search-bar {
+    flex: 1; margin: 0 10px; position: relative;
+}
+.search-bar input {
+    width: 100%; background: #0f172a; border: 1px solid var(--border);
+    padding: 8px 10px 8px 35px; border-radius: 20px; color: #fff;
+    box-sizing: border-box;
+}
+.search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: #64748b; font-size: 0.8rem;
+}
+.icon-btn {
+    background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; padding: 5px 10px;
 }
 
-/* コンディションボタンのスタイル */
-.condition-selector {
-    display: flex;
-    gap: 2px;
-    background: #000;
-    padding: 2px;
-    border-radius: 8px;
-    border: 1px solid #334155;
-    margin-top: 5px;
+/* Drawer */
+.drawer-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1100; display: none;
 }
-
-.cond-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    padding: 8px 0;
-    font-size: 0.75rem;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: 0.2s;
+.app-drawer {
+    position: fixed; top: 0; left: -250px; width: 250px; height: 100%;
+    background: var(--header-bg); z-index: 1200;
+    transition: left 0.3s ease; box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    padding-top: 20px;
 }
-
-/* 選択されている時の色 */
-.cond-btn.active {
-    background: var(--accent); /* 緑色 */
-    color: #fff;
-    font-weight: bold;
+.app-drawer.open { left: 0; }
+.drawer-overlay.open { display: block; }
+.drawer-header {
+    padding: 0 20px 20px; font-weight: bold; color: var(--primary); border-bottom: 1px solid var(--border);
 }
-
-/* --- スキル/アビリティ選択ボタン用 --- */
-.tag-selector-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 5px;
-    max-height: 120px;
-    overflow-y: auto;
-    padding: 5px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 6px;
+.drawer-item {
+    display: block; padding: 15px 20px; color: #fff; text-decoration: none;
+    border-bottom: 1px solid #334155; transition: background 0.2s; cursor: pointer;
 }
+.drawer-item:hover, .drawer-item.active { background: rgba(0, 242, 255, 0.1); color: var(--primary); }
+.drawer-item i { margin-right: 10px; width: 20px; text-align: center; }
 
-.tag-btn-select {
-    font-size: 0.7rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #334155;
-    background: #1e293b;
-    color: #f1f5f9;
-    cursor: pointer;
-    transition: 0.2s;
-}
+/* Views */
+.view-content { display: none; padding: 15px; max-width: 1200px; margin: 0 auto; }
+.view-content.active { display: block; }
 
-/* スキル選択時 */
-.tag-btn-select.selected-skill {
-    background: var(--skill) !important;
-    color: #000 !important;
-    border-color: #fff;
-    font-weight: bold;
-}
-
-/* アビリティ選択時 */
-.tag-btn-select.selected-ability {
-    background: var(--ability) !important;
-    color: #fff !important;
-    border-color: #fff;
-    font-weight: bold;
-}
-
-/* --- ポジション/スタイル選択用 --- */
-.selector-container {
-    background: var(--card);
-    border: 1px solid #334155;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 15px;
-}
-
-/* --- ポジション選択（タイル形式） --- */
-.pos-grid {
+/* Database Grid */
+.card-grid-visual {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4列でボタン面積を大きく */
-    gap: 4px;
-    margin-bottom: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px; padding-bottom: 20px;
 }
-
-.pos-chip {
-    padding: 12px 0; /* 高さを出して押しやすく */
-    border-radius: 4px; /* 丸みを抑えてタイル状に */
-    background: #1e293b;
-    border: 1px solid #334155;
-    color: #f1f5f9;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-align: center;
-    cursor: pointer;
-    transition: 0.2s;
+.db-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden; position: relative;
+    cursor: pointer; transition: transform 0.1s;
 }
+.db-card:active { transform: scale(0.98); }
+.db-card.fav { border-color: #ec4899; box-shadow: 0 0 5px rgba(236, 72, 153, 0.3); }
+.db-card-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; background: #000; display: block; }
+.db-info { padding: 5px; font-size: 0.75rem; }
+.db-name { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.db-badges { display: flex; gap: 3px; margin-top: 3px; flex-wrap: wrap; }
+.badge { padding: 1px 4px; border-radius: 3px; font-size: 0.6rem; font-weight: bold; }
+.badge.SSR { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; }
+.badge.SR { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid #999; }
+.fav-icon {
+    position: absolute; top: 5px; right: 5px;
+    color: #ec4899; font-size: 1rem; filter: drop-shadow(0 0 2px #000);
+    display: none;
+}
+.db-card.fav .fav-icon { display: block; }
 
-/* ポジションごとのアクティブ色（面積が広いので少し暗めに調整） */
+/* Bottom Tray */
+.tray-container {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: var(--tray-bg); border-top: 1px solid var(--primary);
+    z-index: 900; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+    transform: translateY(calc(100% - 30px)); /* Handle only visible */
+    transition: transform 0.3s ease;
+}
+.tray-container.open { transform: translateY(0); }
+.tray-handle {
+    height: 30px; background: rgba(0, 242, 255, 0.1);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 15px; cursor: pointer; color: var(--primary); font-size: 0.8rem;
+}
+.tray-content { padding: 10px; display: flex; gap: 10px; overflow-x: auto; align-items: center; height: 80px;}
+.tray-list { display: flex; gap: 5px; flex: 1; min-height: 50px; border: 1px dashed #444; border-radius: 6px; padding: 5px; align-items: center; }
+.tray-item { position: relative; cursor: pointer; }
+.tray-item img { width: 50px; height: 65px; border-radius: 4px; object-fit: cover; border: 1px solid #555; }
+.tray-placeholder { color:#666; font-size:0.8rem; margin: auto; }
+
+/* Modal & Common */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); z-index: 1000;
+    display: flex; justify-content: center; align-items: center;
+}
+.modal-content {
+    background: var(--card-bg); width: 90%; max-width: 500px; max-height: 90vh;
+    border-radius: 10px; border: 1px solid #334155; display: flex; flex-direction: column;
+}
+.modal-header {
+    padding: 15px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;
+}
+.modal-body { padding: 15px; overflow-y: auto; }
+.modal-footer {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 15px; border-top: 1px solid #333;
+}
+.btn-close { background: transparent; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+
+/* Buttons */
+.btn { padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; width: 100%; box-sizing: border-box; }
+.btn-sm { width: auto; padding: 4px 8px; font-size: 0.75rem; }
+.btn-primary { background: var(--primary); color: #000; }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-icon { background: #334155; padding: 10px; flex: 1; border-radius: 6px; border: none; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem; }
+.btn-icon.active { background: #ec4899; color: white; }
+.btn-icon i { font-size: 1.2rem; }
+
+/* Sim/Form Elements */
+.card-box { background: var(--card-bg); padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; }
+input, textarea, select { background: #000; border: 1px solid #334155; color: #fff; padding: 8px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-top: 10px; }
+.tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
+.tag-skill { background: var(--skill); color: #000; }
+.tag-ability { background: var(--ability); color: #fff; }
+
+/* UI Parts from previous styles */
+.condition-selector { display: flex; gap: 2px; background: #000; padding: 2px; border-radius: 8px; border: 1px solid #334155; margin-top: 5px; }
+.cond-btn { flex: 1; background: transparent; border: none; color: #94a3b8; padding: 8px 0; font-size: 0.75rem; cursor: pointer; border-radius: 6px; transition: 0.2s; }
+.cond-btn.active { background: var(--accent); color: #fff; font-weight: bold; }
+.pos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 15px; }
+.pos-chip { padding: 12px 0; border-radius: 4px; background: #1e293b; border: 1px solid #334155; color: #f1f5f9; font-size: 0.8rem; font-weight: bold; text-align: center; cursor: pointer; transition: 0.2s; }
 .pos-chip.active[data-group="gk"] { background: #9a4710; border-color: #f97316; }
 .pos-chip.active[data-group="df"] { background: #1e40af; border-color: #3b82f6; }
 .pos-chip.active[data-group="mf"] { background: #166534; border-color: #22c55e; }
 .pos-chip.active[data-group="fw"] { background: #991b1b; border-color: #ef4444; }
-
-/* --- プレイスタイル選択（1列リスト形式） --- */
-.style-grid {
-    display: grid;
-    grid-template-columns: 1fr; /* 1列に変更 */
-    gap: 6px;
-    margin-top: 10px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.style-card {
-    display: flex; /* 横並びに変更 */
-    align-items: center;
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 6px;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.style-card img {
-    width: 32px; /* 画像を小さく固定（粗さ対策） */
-    height: 32px;
-    object-fit: contain;
-    margin-right: 12px; /* 画像と文字の間隔 */
-    background: #0f172a;
-    border-radius: 4px;
-    padding: 2px;
-}
-
-.style-card span {
-    font-size: 0.9rem; /* 文字を少し大きく */
-    font-weight: bold;
-    color: #f1f5f9;
-}
-
-.style-card.active {
-    border-color: var(--primary);
-    background: rgba(0, 242, 255, 0.15);
-}
-
-/* 決定後の表示 */
-.selected-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 5px 10px;
-    background: rgba(0,0,0,0.3);
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-/* --- Inventory New Styles --- */
-.inv-toolbar {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #334155;
-}
-.inv-toolbar-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.checkbox-label {
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-}
-
-/* Card Grid */
-.inv-card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* 小さめのカード */
-    gap: 8px;
-}
-
-.inv-card {
-    position: relative;
-    aspect-ratio: 3/4;
-    background: #1e293b;
-    border: 2px solid #334155;
-    border-radius: 6px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.1s, border-color 0.2s;
-    user-select: none; /* 長押し時のテキスト選択防止 */
-}
-
-.inv-card.owned {
-    border-color: var(--primary);
-    background: #0f172a;
-}
-.inv-card.unowned {
-    opacity: 0.6;
-    filter: grayscale(100%);
-    border-style: dashed;
-}
-.inv-card.bulk-selected {
-    border-color: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-    transform: scale(0.95);
-}
-
-/* Card Content */
-.inv-card-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.inv-card-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    text-align: center;
-    padding: 2px;
-    color: #64748b;
-    background: #000;
-}
-
-.badge-rarity {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    font-size: 0.6rem;
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-    font-weight: bold;
-}
-.badge-rarity.SSR { color: var(--skill); border: 1px solid var(--skill); }
-.badge-rarity.SR { color: #fff; border: 1px solid #fff; }
-
-.badge-level {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-    font-size: 0.7rem;
-    padding: 1px 5px;
-    border-top-left-radius: 4px;
-}
-
-/* Detail Modal Styles */
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.modal-content {
-    background: var(--card);
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    border-radius: 10px;
-    border: 1px solid #334155;
-    display: flex;
-    flex-direction: column;
-}
-.modal-header {
-    padding: 15px;
-    border-bottom: 1px solid #334155;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.modal-body {
-    padding: 15px;
-    overflow-y: auto;
-}
-.btn-close {
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-.dm-info-row {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-.dm-img-placeholder {
-    width: 80px;
-    height: 110px;
-    background: #000;
-    border: 1px solid #444;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    color: #666;
-}
-.dm-basic-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 5px;
-}
-.dm-name {
-    font-weight: bold;
-    font-size: 1.1rem;
-    color: var(--primary);
-}
-.dm-level-presets {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-    margin: 5px 0;
-}
-.preset-btn {
-    background: #334155;
-    border: 1px solid #475569;
-    color: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-}
-.preset-btn.active {
-    background: var(--primary);
-    color: #000;
-    font-weight: bold;
-}
-.dm-section {
-    margin-top: 15px;
-    border-top: 1px dashed #334155;
-    padding-top: 10px;
-}
-
-/* スキル詳細展開用 */
-.sa-detail-box {
-    background: rgba(0,0,0,0.3);
-    padding: 8px;
-    margin-top: 4px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    display: none;
-}
-.sa-row {
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-}
-.sa-row:hover { background: #334155; }
-
-/* モーダルのZ-index階層管理 */
-#cardModal { z-index: 1050; }   /* スロット選択 */
-#detailModal { z-index: 1060; } /* カード詳細 */
-#saModal { z-index: 1100; }     /* スキル詳細 (最前面) */
-
-/* スキル詳細モーダル内のエリアグリッド調整 */
-#saModalAreaGrid {
-    width: 90px;
-    gap: 2px;
-}
-#saModalAreaGrid .area-cell {
-    height: 25px;
-    cursor: default; /* 閲覧用なのでポインタなし */
-}
-
-/* シミュレータ結果欄でクリック可能であることを示すスタイル */
-.clickable-sa {
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.clickable-sa:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
+.style-grid { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 10px; max-height: 400px; overflow-y: auto; }
+.style-card { display: flex; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: 0.2s; }
+.style-card.active { border-color: var(--primary); background: rgba(0, 242, 255, 0.15); }
+.style-card img { width: 32px; height: 32px; object-fit: contain; margin-right: 12px; background: #0f172a; border-radius: 4px; padding: 2px; }
+.slot-active { border: 2px solid var(--primary); background: rgba(0,242,255,0.1); }
+.slot-empty { border: 2px dashed #444; }
+.list-item { background: #1e293b; margin-bottom: 5px; padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+.btn-edit { padding: 4px 8px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.7rem; color: white; background: #3b82f6; }
+.area-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; width: 120px; margin-top: 5px; }
+.area-cell { height: 35px; background: #444; cursor: pointer; border: 1px solid #555; }
+.area-cell.active { background: var(--skill); border: 1px solid white; }
+#admin-status { display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: #00f2ff; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; z-index: 1000; border: 1px solid #00f2ff; pointer-events: none; }
