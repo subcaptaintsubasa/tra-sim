@@ -10,15 +10,18 @@
 </head>
 <body>
 
-<!-- ▼▼ ヘッダー (修正: フィルタボタンのリンク) ▼▼ -->
+<!-- ▼▼ ヘッダー (修正: ツール類をdivで囲む) ▼▼ -->
 <header class="app-header">
     <button class="icon-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></button>
-    <div class="search-bar">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" id="globalSearch" placeholder="名前・称号で検索..." oninput="filterDatabase()">
+    
+    <!-- 検索バーとフィルタボタンをグループ化 (表示制御のため) -->
+    <div class="header-tools">
+        <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="globalSearch" placeholder="名前・称号..." oninput="filterDatabase()">
+        </div>
+        <button class="icon-btn" onclick="openFilterModal()"><i class="fa-solid fa-filter"></i></button>
     </div>
-    <!-- 修正箇所: onclickを openFilterModal() に変更 -->
-    <button class="icon-btn" onclick="openFilterModal()"><i class="fa-solid fa-filter"></i></button>
 </header>
 
 <!-- ドロワーメニュー -->
@@ -31,11 +34,11 @@
     <a href="#" class="drawer-item" onclick="switchView('admin-skill')"><i class="fa-solid fa-wand-magic-sparkles"></i> スキル管理</a>
 </nav>
 
-<!-- メインコンテンツエリア -->
+<!-- メインコンテンツ -->
 <main id="mainContainer">
-    
-    <!-- 1. データベース (HOME) -->
+    <!-- 1. データベース -->
     <div id="view-database" class="view-content active">
+        <div id="activeFilters" style="margin-bottom:10px; display:flex; gap:5px; flex-wrap:wrap;"></div>
         <div id="dbGrid" class="card-grid-visual"></div>
     </div>
 
@@ -112,6 +115,7 @@
 
     <!-- 3. カード管理 -->
     <div id="view-admin-card" class="view-content">
+        <!-- 既存のAdmin内容... -->
         <div class="card-box" style="border:1px solid var(--skill); margin-bottom: 15px;">
             <h4 style="color:var(--skill);">データバックアップ</h4>
             <textarea id="backupArea" style="height:80px; font-size:0.7rem; color:#fff; background:#000; border:1px solid #333; width:100%;" placeholder="ここにバックアップデータが出力されます"></textarea>
@@ -178,59 +182,109 @@
             <div id="saList"></div>
         </div>
     </div>
-
 </main>
 
-<!-- ▼▼ 下部比較トレイ (修正: 比較実行ボタンのリンク) ▼▼ -->
+<!-- 下部比較トレイ -->
 <div id="compareTray" class="tray-container">
     <div class="tray-handle" onclick="toggleTray()">
         <span id="trayCount">比較リスト (0)</span>
         <i class="fa-solid fa-chevron-up"></i>
     </div>
     <div class="tray-content">
-        <div id="trayList" class="tray-list">
-            <div class="tray-placeholder">カードをドロップ</div>
-        </div>
-        <!-- 修正箇所: onclickを runComparison() に変更 -->
+        <div id="trayList" class="tray-list"><div class="tray-placeholder">カードをドロップ</div></div>
         <button class="btn btn-sm btn-accent" onclick="runComparison()">比較実行</button>
         <button class="btn btn-sm" style="background:#ef4444;" onclick="clearTray()">クリア</button>
     </div>
 </div>
 
-<!-- 詳細フィルタモーダル -->
+<!-- 詳細フィルタモーダル (修正: 詳細なチェックボックスを配置) -->
 <div id="filterModal" class="modal-overlay" style="display:none;">
-    <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-content" style="max-width: 450px;">
         <div class="modal-header">
             <h4>詳細フィルタ</h4>
             <button class="btn-close" onclick="closeFilterModal()">×</button>
         </div>
         <div class="modal-body">
-            <div class="filter-section">
-                <label>レアリティ</label>
-                <div class="filter-chips">
-                    <div class="chip-check"><input type="checkbox" id="fil_rar_SSR" checked><label for="fil_rar_SSR">SSR</label></div>
-                    <div class="chip-check"><input type="checkbox" id="fil_rar_SR" checked><label for="fil_rar_SR">SR</label></div>
+            <!-- レアリティ -->
+            <div class="filter-group">
+                <div class="filter-group-title">レアリティ</div>
+                <div class="filter-grid-compact">
+                    <div class="chk-btn"><input type="checkbox" id="f_rar_SSR" checked><label for="f_rar_SSR">SSR</label></div>
+                    <div class="chk-btn"><input type="checkbox" id="f_rar_SR" checked><label for="f_rar_SR">SR</label></div>
                 </div>
             </div>
-            <div class="filter-section">
-                <label>ポジション適性</label>
-                <div class="filter-chips">
-                    <div class="chip-check"><input type="checkbox" id="fil_pos_FW"><label for="fil_pos_FW">FW</label></div>
-                    <div class="chip-check"><input type="checkbox" id="fil_pos_MF"><label for="fil_pos_MF">MF</label></div>
-                    <div class="chip-check"><input type="checkbox" id="fil_pos_DF"><label for="fil_pos_DF">DF</label></div>
-                    <div class="chip-check"><input type="checkbox" id="fil_pos_GK"><label for="fil_pos_GK">GK</label></div>
+            
+            <!-- ポジションボーナス (CF, ST, WG...) -->
+            <div class="filter-group">
+                <div class="filter-group-title">ポジション適性 (ボーナス所持)</div>
+                <div class="filter-grid-compact">
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="CF" id="fp_cf"><label for="fp_cf">CF</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="ST" id="fp_st"><label for="fp_st">ST</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="WG" id="fp_wg"><label for="fp_wg">WG</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="AM" id="fp_am"><label for="fp_am">AM(OMF)</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="CM" id="fp_cm"><label for="fp_cm">CM(CMF)</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="DM" id="fp_dm"><label for="fp_dm">DM(DMF)</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="SM" id="fp_sm"><label for="fp_sm">SM(L/R)</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="SB" id="fp_sb"><label for="fp_sb">SB(FB)</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="CB" id="fp_cb"><label for="fp_cb">CB</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="GK" id="fp_gk"><label for="fp_gk">GK</label></div>
                 </div>
             </div>
-            <div style="margin-top:15px; font-size:0.8rem; color:#aaa;">※ 名前検索はヘッダーのバーで行えます</div>
+
+            <!-- プレースタイルボーナス -->
+            <div class="filter-group">
+                <div class="filter-group-title">プレースタイル (ボーナス所持)</div>
+                <div class="filter-grid-compact" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ストライカー" id="fs_st"><label for="fs_st">ストライカー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ラインブレイカー" id="fs_lb"><label for="fs_lb">ラインブレイカー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ポストプレーヤー" id="fs_ps"><label for="fs_ps">ポストプレーヤー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ドリブラー" id="fs_dr"><label for="fs_dr">ドリブラー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="サイドアタッカー" id="fs_sa"><label for="fs_sa">サイドアタッカー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="アタッカー" id="fs_at"><label for="fs_at">アタッカー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="パサー" id="fs_pa"><label for="fs_pa">パサー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="セントラルMF" id="fs_cm"><label for="fs_cm">セントラルMF</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ハードマーカー" id="fs_hm"><label for="fs_hm">ハードマーカー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="守備的FB" id="fs_dfb"><label for="fs_dfb">守備的FB</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="攻撃的FB" id="fs_afb"><label for="fs_afb">攻撃的FB</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="組立CB" id="fs_mcb"><label for="fs_mcb">組立CB</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ストッパー" id="fs_stp"><label for="fs_stp">ストッパー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="GK" id="fs_gks"><label for="fs_gks">GK全般</label></div>
+                </div>
+            </div>
+
+            <!-- ステータスパラメータ (伸ばせる能力) -->
+            <div class="filter-group">
+                <div class="filter-group-title">
+                    <span>強化パラメータ (OR検索 / 降順ソート)</span>
+                    <button class="btn btn-sm" style="width:auto; font-size:0.6rem;" onclick="document.querySelectorAll('input[name=f_prm]').forEach(c=>c.checked=false)">クリア</button>
+                </div>
+                <div class="filter-grid-params">
+                    <!-- 生成が面倒なので主要なものを配置、またはJSで生成も可だが今回はHTMLで -->
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="決定力" id="fprm_1"><label for="fprm_1">決定力</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ショートパス" id="fprm_2"><label for="fprm_2">Sパス</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="突破力" id="fprm_3"><label for="fprm_3">突破力</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="タックル" id="fprm_4"><label for="fprm_4">タックル</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="走力" id="fprm_5"><label for="fprm_5">走力</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キック力" id="fprm_6"><label for="fprm_6">キック力</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ロングパス" id="fprm_7"><label for="fprm_7">Lパス</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キープ力" id="fprm_8"><label for="fprm_8">キープ力</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="パスカット" id="fprm_9"><label for="fprm_9">Pカット</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="コンタクト" id="fprm_10"><label for="fprm_10">コンタクト</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="敏捷性" id="fprm_11"><label for="fprm_11">敏捷性</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="冷静さ" id="fprm_12"><label for="fprm_12">冷静さ</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="マーク" id="fprm_13"><label for="fprm_13">マーク</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="セービング" id="fprm_14"><label for="fprm_14">セービング</label></div>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn" style="background:#444;" onclick="resetFilters()">リセット</button>
-            <button class="btn btn-primary" onclick="applyFilters()">適用する</button>
+            <button class="btn btn-primary" onclick="applyFilters()">この条件で検索</button>
         </div>
     </div>
 </div>
 
-<!-- 比較画面モーダル -->
+<!-- 比較画面モーダル (維持) -->
 <div id="comparisonModal" class="modal-overlay" style="display:none;">
     <div class="modal-content" style="max-width: 95%; height: 90vh;">
         <div class="modal-header">
@@ -247,7 +301,7 @@
     </div>
 </div>
 
-<!-- カード詳細モーダル -->
+<!-- カード詳細モーダル (維持) -->
 <div id="cardDetailModal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
         <div class="modal-header">
@@ -263,7 +317,7 @@
     </div>
 </div>
 
-<!-- 既存モーダル群 -->
+<!-- 既存モーダル群 (略) -->
 <div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; padding:20px; overflow-y:auto;">
     <div id="modalList"></div><button class="btn" onclick="document.getElementById('cardModal').style.display='none'">閉じる</button>
 </div>

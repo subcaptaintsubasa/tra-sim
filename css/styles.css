@@ -230,3 +230,56 @@ input, textarea, select { background: #000; border: 1px solid #334155; color: #f
 .comp-val { font-family: monospace; font-size: 0.9rem; }
 .comp-win { color: var(--primary); font-weight: bold; background: rgba(0,242,255,0.1); }
 .comp-best { color: #fbbf24; font-weight: bold; text-decoration: underline; } /* 全体ベスト */
+
+/* --- Phase 2.5 追加・修正スタイル --- */
+
+/* Viewごとの表示制御 */
+/* 図鑑(database)ビュー以外では、特定のUIを隠す */
+body:not([data-view="database"]) .header-tools,
+body:not([data-view="database"]) #compareTray {
+    display: none !important;
+}
+
+/* Header Tools (検索バーとボタンをまとめるコンテナ) */
+.header-tools {
+    display: flex; flex: 1; align-items: center; margin: 0 10px;
+    gap: 10px;
+}
+
+/* Detailed Filter Modal Layout */
+.filter-group {
+    margin-bottom: 15px; border-bottom: 1px dashed #334155; padding-bottom: 10px;
+}
+.filter-group-title {
+    font-size: 0.8rem; color: var(--primary); font-weight: bold; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.filter-grid-compact {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;
+}
+.filter-grid-params {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+}
+
+/* フィルタ用チェックボックスの見た目 */
+.chk-btn { position: relative; }
+.chk-btn input { position: absolute; opacity: 0; width: 0; height: 0; }
+.chk-btn label {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; padding: 6px 0; background: #334155; border: 1px solid #475569;
+    border-radius: 4px; font-size: 0.7rem; color: #ccc; cursor: pointer; text-align: center;
+    transition: 0.1s; user-select: none;
+}
+.chk-btn input:checked + label {
+    background: rgba(0, 242, 255, 0.15); color: var(--primary); 
+    border-color: var(--primary); font-weight: bold;
+}
+/* パラメータ選択時は色が違うと分かりやすい */
+.chk-btn.param input:checked + label {
+    background: rgba(34, 197, 94, 0.15); color: var(--accent); border-color: var(--accent);
+}
+
+/* トレイが非表示の時の下部余白調整 */
+body:not([data-view="database"]) {
+    padding-bottom: 20px; /* トレイがないので少し詰める */
+}
