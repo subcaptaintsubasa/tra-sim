@@ -180,3 +180,53 @@ input, textarea, select { background: #000; border: 1px solid #334155; color: #f
 .area-cell { height: 35px; background: #444; cursor: pointer; border: 1px solid #555; }
 .area-cell.active { background: var(--skill); border: 1px solid white; }
 #admin-status { display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: #00f2ff; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; z-index: 1000; border: 1px solid #00f2ff; pointer-events: none; }
+
+/* --- Phase 2 追加スタイル --- */
+
+/* Filter Chips */
+.filter-section { margin-bottom: 15px; }
+.filter-section label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-check { position: relative; }
+.chip-check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.chip-check label {
+    display: inline-block; padding: 6px 12px; background: #334155; 
+    border-radius: 20px; font-size: 0.8rem; color: #ccc; cursor: pointer; 
+    transition: 0.2s; border: 1px solid transparent;
+}
+.chip-check input:checked + label {
+    background: rgba(0, 242, 255, 0.2); color: var(--primary); 
+    border-color: var(--primary); font-weight: bold;
+}
+
+/* Comparison Table */
+.comp-table-wrapper { overflow-x: auto; }
+.comp-table {
+    width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;
+    white-space: nowrap;
+}
+.comp-table th, .comp-table td {
+    padding: 8px 5px; border-bottom: 1px solid #334155; border-right: 1px solid #334155;
+}
+.comp-table th:first-child, .comp-table td:first-child {
+    position: sticky; left: 0; background: #1e293b; z-index: 10;
+    border-right: 2px solid #475569; font-weight: bold; color: #94a3b8;
+    min-width: 80px; text-align: left; padding-left: 10px;
+}
+.comp-table thead th {
+    position: sticky; top: 0; background: #0f172a; z-index: 20;
+    border-bottom: 2px solid #475569; padding-top: 10px; padding-bottom: 10px;
+}
+.comp-table thead th:first-child { z-index: 30; background: #0f172a; }
+
+/* Comparison Header Card */
+.comp-card-header img {
+    width: 50px; height: 65px; object-fit: cover; border-radius: 4px; border: 1px solid #555;
+    margin-bottom: 5px;
+}
+.comp-card-name { font-size: 0.7rem; font-weight: bold; white-space: normal; line-height: 1.2; }
+
+/* Comparison Highlight */
+.comp-val { font-family: monospace; font-size: 0.9rem; }
+.comp-win { color: var(--primary); font-weight: bold; background: rgba(0,242,255,0.1); }
+.comp-best { color: #fbbf24; font-weight: bold; text-decoration: underline; } /* 全体ベスト */
