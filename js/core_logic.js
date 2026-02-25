@@ -1,30 +1,26 @@
-// --- START OF FILE tra-sim-main/js/core_logic.js ---
-
 function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult) {
     const maxLevel = card.rarity === 'SSR' ? 50 : 45;
     const useLevel = Math.max(1, Math.min(maxLevel, level));
-    
     const growthRate = card.growth_rate || 6;
     
     let bonusTotal = 0;
 
-    // ★修正: ターゲットとなるポジションボーナス群を定義
-    // targetPosが "LW" なら、["LW", "WF", "WG"] が対象になる
+    // ★修正: ターゲットポジションに対応するボーナス群を取得
+    // targetPos="LM" なら validPosBonuses=["LM", "WM", "SM"] となる
     let validPosBonuses = [targetPos];
     if (targetPos && typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[targetPos]) {
         validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[targetPos]);
     }
 
-    // bonuses配列（新形式）がある場合はそちらを優先
+    // ボーナス計算
     if (card.bonuses && Array.isArray(card.bonuses) && card.bonuses.length > 0) {
         card.bonuses.forEach(b => {
-            // ポジション一致 または スタイル一致
+            // 定義されたポジション群、またはスタイルが一致すれば加算
             if (validPosBonuses.includes(b.type) || b.type === targetStyle) {
                 bonusTotal += b.value;
             }
         });
     } else if (card.bonus_type) {
-        // 旧形式
         if (validPosBonuses.includes(card.bonus_type) || card.bonus_type === targetStyle) {
             bonusTotal += (card.bonus_value || 0);
         }
@@ -42,14 +38,12 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
         const growthMax = (N * 10 - d1_int);
         const growthCurrent = Math.floor(growthMax * (useLevel - 1) / (maxLevel - 1));
         const vBase_x10 = d1_int + growthCurrent;
-        
         const val_x10 = Math.round(vBase_x10 * conditionMult * bonusMult);
         
         result[s] = val_x10;
     }
     return result;
 }
-
 // --- オート編成 (最適化アルゴリズム) ---
 window.runAutoSim = () => {
     if(cardsDB.length === 0) return alert("カードデータがありません。");

@@ -1,13 +1,12 @@
 // --- Global State ---
 let currentView = 'database';
-// フィルタ状態の構造を変更 (pos/style分離、パラメータロジック追加)
 let dbFilter = { 
     text: '', 
     rarity: { SSR: true, SR: true }, 
-    pos: [],   // ポジション (Formal Names: CF, LW...)
-    style: [], // プレースタイル
-    params: [], // Stats
-    paramLogic: 'OR' // 'AND' or 'OR'
+    pos: [], 
+    style: [], 
+    params: [], 
+    paramLogic: 'OR' 
 };
 let compareTray = []; 
 
@@ -59,6 +58,8 @@ window.switchView = (viewId) => {
 
 // --- Database Logic ---
 
+// --- Database Logic ---
+
 window.renderDatabase = () => {
     const grid = document.getElementById('dbGrid');
     if(!grid) return;
@@ -80,82 +81,61 @@ window.renderDatabase = () => {
         ).join('');
     }
 
-    // 1. フィルタリング
     const list = cardsDB.map((card, idx) => {
         const key = card.name + "_" + card.title;
         const userData = myCards[key] || {};
         const isFav = !!userData.favorite;
         const isOwned = !!userData.owned;
         
-        // Text Search
+        // 1. Text
         if (dbFilter.text) {
             const search = dbFilter.text.toLowerCase();
             if (!card.name.toLowerCase().includes(search) && 
                 !card.title.toLowerCase().includes(search)) return null;
         }
 
-        // Rarity
+        // 2. Rarity
         if (!dbFilter.rarity[card.rarity]) return null;
 
-        // Position Filter (Strict + Mapping)
-        // ユーザーが選択した「LW」などは、カードが「LW」または「WF」などのボーナスを持っていればOK
+        // 3. Position Filter (Strict + Mapping)
         if (dbFilter.pos.length > 0) {
-            // カードが持つボーナスリスト抽出
             const cBonuses = [];
             if(card.bonuses) card.bonuses.forEach(b => cBonuses.push(b.type));
             if(card.bonus_type) cBonuses.push(card.bonus_type);
-            // GK特例: セービングがあればGKタグ扱いとする場合もあるが、ここではボーナス所持を厳密に見る
 
-            // 選択されたポジションのいずれかを満たすか
             const hit = dbFilter.pos.some(selectedP => {
-                // 検索対象となるボーナス文字列群 (例: LW -> [LW, WF, WG])
                 let targetBonuses = [selectedP];
-                // config.js で定義されたマッピングを使用
+                // マッピング定義を使って包含関係を解決
                 if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[selectedP]) {
                     targetBonuses = targetBonuses.concat(POS_BONUS_MAPPING[selectedP]);
                 }
-                // カードのボーナスといずれかが一致するか
                 return cBonuses.some(cb => targetBonuses.includes(cb));
             });
             if (!hit) return null;
         }
 
-        // Style Filter (Strict)
+        // 4. Style Filter
         if (dbFilter.style.length > 0) {
             const cBonuses = [];
             if(card.bonuses) card.bonuses.forEach(b => cBonuses.push(b.type));
             if(card.bonus_type) cBonuses.push(card.bonus_type);
 
-            // 選択されたスタイルのいずれかを持っているか
             const hit = dbFilter.style.some(s => cBonuses.includes(s));
             if (!hit) return null;
         }
 
-        // Params Filter (AND/OR Logic)
+        // 5. Params Filter (GK分離 & AND/OR)
         let paramScore = 0;
         if (dbFilter.params.length > 0) {
-            // 素ステータス(Max)で判定
+            // 素ステータス取得
             const stats = getCardStatsAtLevel(card, (card.rarity==='SSR'?50:45), null, null, 1.0);
             
-            // このカードがGKかどうか判定（ボーナスまたはステータスで簡易判定）
-            const isGK = card.bonuses?.some(b => b.type.includes('GK')) 
-                      || card.bonus_type?.includes('GK') 
-                      || (stats["セービング"] && stats["セービング"] > 0);
-
-            // チェックされたパラメータについてループ
-            // GK対応: "タックル"がチェックされていたら、GKの場合は"セービング"の値を見る (config.jsのGK_MAP使用)
             let matchCount = 0;
             
+            // 選択されたパラメータ名(HTMLのvalue)と一致するstatsキーがあるか直接確認する
+            // GK統合ロジック(GK_MAP)は廃止し、"セービング"を選べばstats["セービング"]を見るようにする
             dbFilter.params.forEach(p => {
-                let val = 0;
-                // 通常ステータス
-                if (stats[p]) val = stats[p];
-                
-                // GKマッピング対応 (守備項目がGK項目に変わる)
-                if (isGK && typeof GK_MAP !== 'undefined' && GK_MAP[p]) {
-                    if (stats[GK_MAP[p]]) val = stats[GK_MAP[p]];
-                }
-
+                const val = stats[p] || 0;
                 if (val > 0) {
                     matchCount++;
                     paramScore += val;
@@ -163,10 +143,8 @@ window.renderDatabase = () => {
             });
 
             if (dbFilter.paramLogic === 'AND') {
-                // 全て満たす必要がある
                 if (matchCount < dbFilter.params.length) return null;
             } else {
-                // OR: 1つでも満たせばOK
                 if (matchCount === 0) return null;
             }
         }
@@ -174,20 +152,17 @@ window.renderDatabase = () => {
         return { original: card, idx, key, isFav, isOwned, paramScore };
     }).filter(item => item !== null);
     
-    // 2. ソート
+    // Sort
     list.sort((a, b) => {
-        // パラメータ検索時は、そのスコア順を最優先
         if (dbFilter.params.length > 0) {
             if (b.paramScore !== a.paramScore) return b.paramScore - a.paramScore;
         }
-        
-        // 通常ソート
         if (a.isFav !== b.isFav) return b.isFav - a.isFav;
         if (a.original.rarity !== b.original.rarity) return a.original.rarity === 'SSR' ? -1 : 1;
         return a.original.name.localeCompare(b.original.name, 'ja');
     });
     
-    // 3. 描画
+    // Render
     list.forEach(item => {
         const c = item.original;
         const imgPath = `img/cards/${c.name}_${c.title}.png`;
@@ -210,7 +185,6 @@ window.renderDatabase = () => {
         grid.appendChild(el);
     });
 };
-
 window.filterDatabase = () => {
     dbFilter.text = document.getElementById('globalSearch').value;
     renderDatabase();

@@ -16,23 +16,22 @@ const GK_MAP = {
     "マーク": "1対1"
 };
 
-// 正式名称でのポジション定義とプレースタイルの候補
+// 正式名称でのポジション定義
 const POS_MAP = {
     "GK": ["スイーパーGK", "オーソドックスGK"],
     "CB": ["組立CB", "ストッパー"],
     "LB": ["守備的FB", "攻撃的FB"],
     "RB": ["守備的FB", "攻撃的FB"],
-    "DM": ["ハードマーカー", "セントラルMF", "パサー"], // DMF -> DM
-    "AM": ["セントラルMF", "パサー", "アタッカー"],     // OMF -> AM
+    "DM": ["ハードマーカー", "セントラルMF", "パサー"],
+    "AM": ["セントラルMF", "パサー", "アタッカー"],
     "LM": ["ドリブラー", "サイドアタッカー"],
     "RM": ["ドリブラー", "サイドアタッカー"],
-    "LW": ["ドリブラー", "サイドアタッカー", "ストライカー"], // WG -> LW/RW
+    "LW": ["ドリブラー", "サイドアタッカー", "ストライカー"],
     "RW": ["ドリブラー", "サイドアタッカー", "ストライカー"],
     "CF": ["ポストプレーヤー", "ラインブレイカー", "ストライカー"]
 };
 
-// ★追加: ポジション選択時、有効となるボーナス名称の紐づけ
-// 例: LWを選択した場合、ボーナスが「LW」「WF」「WG」のいずれかであれば有効とする
+// ポジション選択時、有効となるボーナス名称の包含定義
 const POS_BONUS_MAPPING = {
     "LW": ["WF", "WG"],
     "RW": ["WF", "WG"],
@@ -40,10 +39,10 @@ const POS_BONUS_MAPPING = {
     "RM": ["WM", "SM"],
     "LB": ["FB", "SB"],
     "RB": ["FB", "SB"],
-    "CF": ["FW"], // 稀なケース用
+    "CF": ["FW"],
     "AM": ["OMF"],
     "DM": ["DMF"],
-    "CM": ["CMF"] // 一応定義
+    "CM": ["CMF"]
 };
 
 // --- プレイスタイルとアイコンの紐付け ---
@@ -71,6 +70,16 @@ const POS_GROUPS = {
     "CB": "df", "LB": "df", "RB": "df",
     "DM": "mf", "AM": "mf", "LM": "mf", "RM": "mf", "CM": "mf",
     "LW": "fw", "RW": "fw", "CF": "fw", "ST": "fw"
+};
+
+// --- Google Drive API Configuration ---
+// GCPコンソールで取得した値を設定してください
+const GDRIVE_CONFIG = {
+    CLIENT_ID: '902045291413-obsbvg5h2mumi43fvanj8qrekedb3ute.apps.googleusercontent.com', 
+    API_KEY: 'AIzaSyDSaGnBZwFFc4dOUSL9mMrI0v_lbSrP9aE',     
+    SCOPES: 'https://www.googleapis.com/auth/drive.file',
+    DISCOVERY_DOCS: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+    BACKUP_FILE_NAME: 'tra_sim_backup.json'
 };
 
 // --- グローバル変数 ---

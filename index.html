@@ -4,17 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>特練図鑑 & Sim</title>
+    <!-- Google API Scripts -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <!-- OCR Lib -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-<!-- ▼▼ ヘッダー (修正: ツール類をdivで囲む) ▼▼ -->
+<!-- ▼▼ ヘッダー ▼▼ -->
 <header class="app-header">
     <button class="icon-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></button>
     
-    <!-- 検索バーとフィルタボタンをグループ化 (表示制御のため) -->
     <div class="header-tools">
         <div class="search-bar">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -113,29 +117,71 @@
         </div>
     </div>
 
-    <!-- 3. カード管理 -->
+    <!-- 3. データ管理 (Admin & User Backup) -->
     <div id="view-admin-card" class="view-content">
-        <!-- 既存のAdmin内容... -->
-        <div class="card-box" style="border:1px solid var(--skill); margin-bottom: 15px;">
-            <h4 style="color:var(--skill);">データバックアップ</h4>
-            <textarea id="backupArea" style="height:80px; font-size:0.7rem; color:#fff; background:#000; border:1px solid #333; width:100%;" placeholder="ここにバックアップデータが出力されます"></textarea>
-            <div style="display:flex; gap:5px; margin-top:5px;">
-                <button class="btn btn-sm btn-primary" onclick="exportBackup()">データ書き出し</button>
-                <button class="btn btn-sm btn-accent" onclick="importBackup()">復元</button>
+        
+        <!-- ▼▼ Google Drive Backup UI ▼▼ -->
+        <div class="card-box" style="border:2px solid var(--accent); margin-bottom: 20px;">
+            <h4 style="color:var(--accent); margin-top:0; border-bottom:1px dashed #334155; padding-bottom:5px;">
+                <i class="fa-brands fa-google-drive"></i> クラウドバックアップ
+            </h4>
+            <p style="font-size:0.75rem; color:#ccc; margin:10px 0;">
+                所持カードや育成データをGoogle Driveに保存・復元します。<br>
+                機種変更時や、複数端末でのデータ共有にご利用ください。
+            </p>
+
+            <!-- 未ログイン時 -->
+            <button id="gDriveAuthBtn" class="btn" style="background:#fff; color:#333; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:10px;" onclick="handleAuthClick()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" alt="Google">
+                Googleでログイン
+            </button>
+
+            <!-- ログイン後 -->
+            <div id="gDriveActions" style="display:none; flex-direction:column; gap:8px;">
+                <div style="font-size:0.7rem; color:#22c55e; display:flex; align-items:center; gap:5px;">
+                    <i class="fa-solid fa-circle-check"></i> アカウント連携済み
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <button class="btn btn-accent" onclick="saveToDrive()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> ドライブに保存
+                    </button>
+                    <button class="btn btn-primary" onclick="restoreFromDrive()">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> ドライブから復元
+                    </button>
+                </div>
+                <button class="btn btn-sm" style="background:#ef4444; width:auto; align-self:flex-end;" onclick="handleSignoutClick()">ログアウト</button>
             </div>
+            
+            <div id="driveStatus" style="font-size:0.75rem; font-weight:bold; color:#fbbf24; margin-top:8px; min-height:1.2em;"></div>
         </div>
-        <div class="card-box">
-            <h4>GitHub設定</h4>
+        <!-- ▲▲ Google Drive Backup UI ▲▲ -->
+
+        <!-- GitHub Admin UI (管理者用) -->
+        <div class="card-box" style="border:1px solid #475569;">
+            <h4 style="color:#64748b;">管理者設定 (マスターデータ更新用)</h4>
             <input type="password" id="ghToken" placeholder="GitHub Token">
             <input type="text" id="ghRepo" placeholder="user/repo" style="margin-top:5px;">
         </div>
-        <div class="card-box">
-            <h4>JSON一括登録</h4>
+
+        <!-- 手動バックアップ (JSON) -->
+        <div class="card-box" style="margin-top:10px;">
+            <h4 style="color:#94a3b8;">手動バックアップ (JSONテキスト)</h4>
+            <textarea id="backupArea" style="height:60px; font-size:0.7rem; color:#fff; background:#000; border:1px solid #333; width:100%;" placeholder="ここにデータが出力されます"></textarea>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <button class="btn btn-sm btn-primary" onclick="exportBackup()">書き出し</button>
+                <button class="btn btn-sm btn-accent" onclick="importBackup()">読み込み</button>
+            </div>
+        </div>
+
+        <div class="card-box" style="margin-top:20px;">
+            <h4>JSON一括登録 (Card)</h4>
             <textarea id="aiPasteCard" placeholder="カードデータを貼り付け" style="height:60px;"></textarea>
             <button class="btn btn-accent" onclick="batchRegisterCards()">一括保存</button>
         </div>
-        <div class="card-box" id="cardEditor" style="border:2px solid var(--primary);">
-            <h4>個別編集</h4>
+        
+        <div class="card-box" id="cardEditor" style="margin-top:10px; border:1px dashed #334155;">
+            <h4>個別カード編集</h4>
+            <!-- 個別編集フォーム内容はそのまま維持 -->
             <div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed #333;">
                 <label style="font-size:0.75rem; color:#94a3b8;">カード画像</label>
                 <div style="display:flex; gap:5px; margin-top:5px;">
@@ -197,8 +243,6 @@
     </div>
 </div>
 
-<!-- index.html の モーダル部分のみ抜粋して修正 -->
-
 <!-- 詳細フィルタモーダル -->
 <div id="filterModal" class="modal-overlay" style="display:none;">
     <div class="modal-content" style="max-width: 500px; max-height:90vh;">
@@ -219,7 +263,6 @@
             <!-- ポジションボーナス (正式名称11種) -->
             <div class="filter-group">
                 <div class="filter-group-title">ポジション適性 (ボーナス所持)</div>
-                <!-- グリッドを4列程度にして見やすく -->
                 <div class="filter-grid-compact" style="grid-template-columns: repeat(4, 1fr);">
                     <div class="chk-btn"><input type="checkbox" name="f_pos" value="CF" id="fp_cf"><label for="fp_cf">CF</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_pos" value="LW" id="fp_lw"><label for="fp_lw">LW</label></div>
@@ -233,25 +276,21 @@
                     <div class="chk-btn"><input type="checkbox" name="f_pos" value="CB" id="fp_cb"><label for="fp_cb">CB</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_pos" value="GK" id="fp_gk"><label for="fp_gk">GK</label></div>
                 </div>
-                <div style="font-size:0.6rem; color:#64748b; margin-top:2px;">※LW選択時はWFボーナス所持者も検索対象になります</div>
             </div>
 
             <!-- プレースタイルボーナス -->
             <div class="filter-group">
                 <div class="filter-group-title">プレースタイル (ボーナス所持)</div>
                 <div class="filter-grid-compact" style="grid-template-columns: repeat(3, 1fr);">
-                    <!-- FW系 -->
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="ストライカー" id="fs_st"><label for="fs_st">ストライカー</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="ラインブレイカー" id="fs_lb"><label for="fs_lb">Lブレイカー</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="ポストプレーヤー" id="fs_ps"><label for="fs_ps">ポストP</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="ドリブラー" id="fs_dr"><label for="fs_dr">ドリブラー</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="サイドアタッカー" id="fs_sa"><label for="fs_sa">Sアタッカー</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="アタッカー" id="fs_at"><label for="fs_at">アタッカー</label></div>
-                    <!-- MF系 -->
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="パサー" id="fs_pa"><label for="fs_pa">パサー</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="セントラルMF" id="fs_cm"><label for="fs_cm">セントラルMF</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="ハードマーカー" id="fs_hm"><label for="fs_hm">Hマーカー</label></div>
-                    <!-- DF/GK系 -->
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="攻撃的FB" id="fs_afb"><label for="fs_afb">攻撃的FB</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="守備的FB" id="fs_dfb"><label for="fs_dfb">守備的FB</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="組立CB" id="fs_mcb"><label for="fs_mcb">組立CB</label></div>
@@ -261,12 +300,11 @@
                 </div>
             </div>
 
-            <!-- ステータスパラメータ (ゲーム画面準拠レイアウト + GK併記) -->
+            <!-- ステータスパラメータ (7列グリッド) -->
             <div class="filter-group">
                 <div class="filter-group-title">
                     <span>強化パラメータ</span>
                     <div style="display:flex; align-items:center; gap:5px;">
-                        <!-- AND/OR 切替 -->
                         <div style="background:#0f172a; border-radius:4px; padding:2px; display:flex;">
                             <label style="font-size:0.65rem; padding:2px 6px; cursor:pointer;"><input type="radio" name="f_logic" value="OR" checked> OR</label>
                             <label style="font-size:0.65rem; padding:2px 6px; cursor:pointer;"><input type="radio" name="f_logic" value="AND"> AND</label>
@@ -274,38 +312,28 @@
                         <button class="btn btn-sm" style="width:auto; font-size:0.6rem;" onclick="document.querySelectorAll('input[name=f_prm]').forEach(c=>c.checked=false)">クリア</button>
                     </div>
                 </div>
-                <!-- 6列グリッド (ゲーム画面配置) -->
-                <div class="filter-grid-params" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:3px;">
-                    <!-- 1段目 -->
+                <div class="filter-grid-params" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:3px;">
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="決定力" id="fprm_sho"><label for="fprm_sho">決定</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ショートパス" id="fprm_pas"><label for="fprm_pas">Sパス</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="突破力" id="fprm_drb"><label for="fprm_drb">突破</label></div>
-                    <div class="chk-btn param">
-                        <input type="checkbox" name="f_prm" value="タックル" id="fprm_tac">
-                        <label for="fprm_tac" style="font-size:0.6rem; flex-direction:column; line-height:1;">TAC<br><span style="color:var(--gk)">SAV</span></label>
-                    </div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="タックル" id="fprm_tac"><label for="fprm_tac">TAC</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="セービング" id="fprm_sav"><label for="fprm_sav" style="color:var(--gk)">SAV</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ジャンプ" id="fprm_jmp"><label for="fprm_jmp">跳躍</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="走力" id="fprm_spd"><label for="fprm_spd">走力</label></div>
 
-                    <!-- 2段目 -->
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キック力" id="fprm_pow"><label for="fprm_pow">K力</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ロングパス" id="fprm_lpa"><label for="fprm_lpa">Lパス</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キープ力" id="fprm_kep"><label for="fprm_kep">キー</label></div>
-                    <div class="chk-btn param">
-                        <input type="checkbox" name="f_prm" value="パスカット" id="fprm_cut">
-                        <label for="fprm_cut" style="font-size:0.6rem; flex-direction:column; line-height:1;">CUT<br><span style="color:var(--gk)">REF</span></label>
-                    </div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="パスカット" id="fprm_cut"><label for="fprm_cut">CUT</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="反応速度" id="fprm_ref"><label for="fprm_ref" style="color:var(--gk)">REF</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="コンタクト" id="fprm_phy"><label for="fprm_phy">コン</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="敏捷性" id="fprm_agi"><label for="fprm_agi">敏捷</label></div>
 
-                    <!-- 3段目 -->
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="冷静さ" id="fprm_men"><label for="fprm_men">冷静</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キック精度" id="fprm_acc"><label for="fprm_acc">K精</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ボールタッチ" id="fprm_tch"><label for="fprm_tch">Bタ</label></div>
-                    <div class="chk-btn param">
-                        <input type="checkbox" name="f_prm" value="マーク" id="fprm_mar">
-                        <label for="fprm_mar" style="font-size:0.6rem; flex-direction:column; line-height:1;">MRK<br><span style="color:var(--gk)">1v1</span></label>
-                    </div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="マーク" id="fprm_mar"><label for="fprm_mar">MRK</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="1対1" id="fprm_1v1"><label for="fprm_1v1" style="color:var(--gk)">1v1</label></div>
                     <div class="chk-btn param"><input type="checkbox" name="f_prm" value="スタミナ" id="fprm_sta"><label for="fprm_sta">スタ</label></div>
                     <div class="chk-btn param" style="visibility:hidden;"></div>
                 </div>
@@ -319,30 +347,20 @@
     </div>
 </div>
 
-<!-- 比較画面モーダル (維持) -->
+<!-- 既存モーダル群 -->
 <div id="comparisonModal" class="modal-overlay" style="display:none;">
     <div class="modal-content" style="max-width: 95%; height: 90vh;">
-        <div class="modal-header">
-            <h4>選手比較</h4>
-            <button class="btn-close" onclick="document.getElementById('comparisonModal').style.display='none'">×</button>
-        </div>
+        <div class="modal-header"><h4>選手比較</h4><button class="btn-close" onclick="document.getElementById('comparisonModal').style.display='none'">×</button></div>
         <div style="padding:10px; border-bottom:1px solid #333; background:#1e293b;">
             <label style="font-size:0.8rem;">比較レベル統一: <span id="compLevelVal" style="color:var(--primary); font-weight:bold;">50</span></label>
             <input type="range" id="compLevelSlider" min="1" max="50" value="50" style="margin-top:5px;" oninput="updateComparisonTable(this.value)">
         </div>
-        <div class="modal-body" style="padding:0;">
-            <div class="comp-table-wrapper"><table class="comp-table" id="compTable"></table></div>
-        </div>
+        <div class="modal-body" style="padding:0;"><div class="comp-table-wrapper"><table class="comp-table" id="compTable"></table></div></div>
     </div>
 </div>
-
-<!-- カード詳細モーダル (維持) -->
 <div id="cardDetailModal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
-        <div class="modal-header">
-            <h4 id="cdmTitle">Card Title</h4>
-            <button class="btn-close" onclick="closeCardDetailModal()">×</button>
-        </div>
+        <div class="modal-header"><h4 id="cdmTitle">Card Title</h4><button class="btn-close" onclick="closeCardDetailModal()">×</button></div>
         <div class="modal-body" id="cdmBody"></div>
         <div class="modal-footer">
             <button class="btn btn-icon" id="btnFav" onclick="toggleDetailFav()"><i class="fa-regular fa-heart"></i> お気に入り</button>
@@ -351,8 +369,6 @@
         </div>
     </div>
 </div>
-
-<!-- 既存モーダル群 (略) -->
 <div id="cardModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; padding:20px; overflow-y:auto;">
     <div id="modalList"></div><button class="btn" onclick="document.getElementById('cardModal').style.display='none'">閉じる</button>
 </div>
@@ -375,11 +391,12 @@
     </div>
 </div>
 
-<div id="admin-status">コマンド入力待機中... (10秒以内に入力)</div>
+<div id="admin-status">コマンド入力待機中...</div>
 <datalist id="skillList"></datalist>
 <datalist id="styleSuggestions"></datalist>
 
 <script src="js/config.js"></script>
+<script src="js/drive_sync.js"></script> <!-- 新規 -->
 <script src="js/data_manager.js"></script>
 <script src="js/core_logic.js"></script>
 <script src="js/ocr_logic.js"></script>
