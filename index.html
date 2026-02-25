@@ -34,8 +34,20 @@
     <div class="drawer-header">MENU</div>
     <a href="#" class="drawer-item active" onclick="switchView('database')"><i class="fa-solid fa-book"></i> 選手図鑑 (DB)</a>
     <a href="#" class="drawer-item" onclick="switchView('sim')"><i class="fa-solid fa-calculator"></i> シミュレータ</a>
-    <a href="#" class="drawer-item" onclick="switchView('admin-card')"><i class="fa-solid fa-database"></i> データ管理</a>
-    <a href="#" class="drawer-item" onclick="switchView('admin-skill')"><i class="fa-solid fa-wand-magic-sparkles"></i> スキル管理</a>
+    
+    <!-- 一般ユーザー向けバックアップ -->
+    <a href="#" class="drawer-item" onclick="switchView('backup')"><i class="fa-solid fa-cloud"></i> データバックアップ</a>
+
+    <!-- 開発者向け (初期非表示) -->
+    <div id="adminLinks" style="display:none; border-top:1px solid #334155; margin-top:10px; padding-top:10px;">
+        <div style="padding:0 20px 10px; font-size:0.7rem; color:#64748b;">DEVELOPER</div>
+        <a href="#" class="drawer-item" onclick="switchView('admin-card')"><i class="fa-solid fa-database"></i> データ管理 (Card)</a>
+        <a href="#" class="drawer-item" onclick="switchView('admin-skill')"><i class="fa-solid fa-wand-magic-sparkles"></i> スキル管理</a>
+        <a href="#" class="drawer-item" onclick="logoutDev()"><i class="fa-solid fa-right-from-bracket"></i> ログアウト</a>
+    </div>
+
+    <!-- 開発者ログインボタン -->
+    <a href="#" id="devLoginBtn" class="drawer-item" onclick="openDevModal()"><i class="fa-solid fa-terminal"></i> 開発者オプション</a>
 </nav>
 
 <!-- メインコンテンツ -->
@@ -117,10 +129,9 @@
         </div>
     </div>
 
-    <!-- 3. データ管理 (Admin & User Backup) -->
-    <div id="view-admin-card" class="view-content">
-        
-        <!-- ▼▼ Google Drive Backup UI ▼▼ -->
+    <!-- 3. データバックアップ (Adminから移動) -->
+    <div id="view-backup" class="view-content">
+        <!-- Google Drive Backup UI -->
         <div class="card-box" style="border:2px solid var(--accent); margin-bottom: 20px;">
             <h4 style="color:var(--accent); margin-top:0; border-bottom:1px dashed #334155; padding-bottom:5px;">
                 <i class="fa-brands fa-google-drive"></i> クラウドバックアップ
@@ -154,14 +165,6 @@
             
             <div id="driveStatus" style="font-size:0.75rem; font-weight:bold; color:#fbbf24; margin-top:8px; min-height:1.2em;"></div>
         </div>
-        <!-- ▲▲ Google Drive Backup UI ▲▲ -->
-
-        <!-- GitHub Admin UI (管理者用) -->
-        <div class="card-box" style="border:1px solid #475569;">
-            <h4 style="color:#64748b;">管理者設定 (マスターデータ更新用)</h4>
-            <input type="password" id="ghToken" placeholder="GitHub Token">
-            <input type="text" id="ghRepo" placeholder="user/repo" style="margin-top:5px;">
-        </div>
 
         <!-- 手動バックアップ (JSON) -->
         <div class="card-box" style="margin-top:10px;">
@@ -172,8 +175,16 @@
                 <button class="btn btn-sm btn-accent" onclick="importBackup()">読み込み</button>
             </div>
         </div>
+    </div>
 
-        <div class="card-box" style="margin-top:20px;">
+    <!-- 4. データ管理 (Admin) - 開発者限定 -->
+    <div id="view-admin-card" class="view-content">
+        <div class="card-box" style="margin-bottom:20px; background:rgba(239, 68, 68, 0.1); border:1px solid #ef4444;">
+            <h4 style="color:#ef4444; margin:0;"><i class="fa-solid fa-triangle-exclamation"></i> 開発者モード</h4>
+            <p style="font-size:0.7rem; color:#ccc;">ここではマスターデータの編集・削除が行われます。変更は即座にGitHubへ反映されます。</p>
+        </div>
+
+        <div class="card-box">
             <h4>JSON一括登録 (Card)</h4>
             <textarea id="aiPasteCard" placeholder="カードデータを貼り付け" style="height:60px;"></textarea>
             <button class="btn btn-accent" onclick="batchRegisterCards()">一括保存</button>
@@ -181,7 +192,6 @@
         
         <div class="card-box" id="cardEditor" style="margin-top:10px; border:1px dashed #334155;">
             <h4>個別カード編集</h4>
-            <!-- 個別編集フォーム内容はそのまま維持 -->
             <div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed #333;">
                 <label style="font-size:0.75rem; color:#94a3b8;">カード画像</label>
                 <div style="display:flex; gap:5px; margin-top:5px;">
@@ -210,7 +220,7 @@
         <div id="masterList"></div>
     </div>
 
-    <!-- 4. スキル管理 -->
+    <!-- 5. スキル管理 (Admin) - 開発者限定 -->
     <div id="view-admin-skill" class="view-content">
         <div class="card-box" id="saEditor" style="border:2px solid var(--primary)">
             <h4>スキル/アビリティ編集</h4>
@@ -259,8 +269,7 @@
                     <div class="chk-btn"><input type="checkbox" id="f_rar_SR" checked><label for="f_rar_SR">SR</label></div>
                 </div>
             </div>
-            
-            <!-- ポジションボーナス (正式名称11種) -->
+            <!-- ポジションボーナス -->
             <div class="filter-group">
                 <div class="filter-group-title">ポジション適性 (ボーナス所持)</div>
                 <div class="filter-grid-compact" style="grid-template-columns: repeat(4, 1fr);">
@@ -277,7 +286,6 @@
                     <div class="chk-btn"><input type="checkbox" name="f_pos" value="GK" id="fp_gk"><label for="fp_gk">GK</label></div>
                 </div>
             </div>
-
             <!-- プレースタイルボーナス -->
             <div class="filter-group">
                 <div class="filter-group-title">プレースタイル (ボーナス所持)</div>
@@ -299,8 +307,7 @@
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="オーソドックスGK" id="fs_ogk"><label for="fs_ogk">オーソドGK</label></div>
                 </div>
             </div>
-
-            <!-- ステータスパラメータ (7列グリッド) -->
+            <!-- ステータスパラメータ -->
             <div class="filter-group">
                 <div class="filter-group-title">
                     <span>強化パラメータ</span>
@@ -391,12 +398,31 @@
     </div>
 </div>
 
+<!-- 開発者ログインモーダル -->
+<div id="devAuthModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width:400px;">
+        <div class="modal-header">
+            <h4>開発者認証</h4>
+            <button class="btn-close" onclick="document.getElementById('devAuthModal').style.display='none'">×</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:0.8rem; color:#ccc;">GitHub Personal Access Token (Key) を入力してください。</p>
+            <input type="password" id="devAuthToken" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:10px;">
+            <input type="text" id="devAuthRepo" placeholder="username/repository" style="margin-bottom:10px;">
+            <div style="font-size:0.7rem; color:#94a3b8;">※認証情報はブラウザに保存され、次回以降は自動ログインされます。</div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="submitDevAuth()">ログイン</button>
+        </div>
+    </div>
+</div>
+
 <div id="admin-status">コマンド入力待機中...</div>
 <datalist id="skillList"></datalist>
 <datalist id="styleSuggestions"></datalist>
 
 <script src="js/config.js"></script>
-<script src="js/drive_sync.js"></script> <!-- 新規 -->
+<script src="js/drive_sync.js"></script>
 <script src="js/data_manager.js"></script>
 <script src="js/core_logic.js"></script>
 <script src="js/ocr_logic.js"></script>

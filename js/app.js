@@ -11,8 +11,8 @@ let dbFilter = {
 let compareTray = []; 
 
 window.onload = async () => {
-    document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
-    document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
+    // 開発者情報のロードはdata_managerでlocalStorage参照する形に変更したため、DOMへの代入は不要だが
+    // モーダル入力欄の再表示用に取得してもよい (checkDevLoginで実施)
     
     myCards = JSON.parse(localStorage.getItem('tra_my_cards') || '{}');
     profiles = JSON.parse(localStorage.getItem('tra_profiles') || '{}');
@@ -24,7 +24,10 @@ window.onload = async () => {
     
     await fetchAllDB();
     
-    // 初期View設定 (表示制御のため)
+    // 開発者自動ログインチェック
+    checkDevLogin();
+
+    // 初期View設定
     switchView('database'); 
     
     updateTrayUI();
@@ -39,7 +42,9 @@ window.switchView = (viewId) => {
     // コンテンツ切り替え
     document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
-    document.getElementById(`view-${viewId}`).classList.add('active');
+    
+    const target = document.getElementById(`view-${viewId}`);
+    if (target) target.classList.add('active');
     
     // ドロワー閉じる
     document.getElementById('appDrawer').classList.remove('open');
@@ -54,9 +59,73 @@ window.switchView = (viewId) => {
     if(viewId === 'sim' && typeof updateCalc === 'function') updateCalc();
     if(viewId === 'admin-card' && typeof renderCardList === 'function') renderCardList();
     if(viewId === 'admin-skill' && typeof renderSAList === 'function') renderSAList();
+    // backupは静的表示のため特になし
 };
 
-// --- Database Logic ---
+// --- 開発者ログイン管理ロジック ---
+
+window.openDevModal = () => {
+    // 既に保存されている場合は自動ログインを試みる（または再確認表示）
+    const t = localStorage.getItem('gh_token');
+    const r = localStorage.getItem('gh_repo');
+    if (t && r) {
+        unlockDevMenu();
+        alert("既にログイン済みです");
+        return;
+    }
+    document.getElementById('devAuthModal').style.display = 'flex';
+};
+
+window.submitDevAuth = () => {
+    const t = document.getElementById('devAuthToken').value.trim();
+    const r = document.getElementById('devAuthRepo').value.trim();
+    
+    if (!t || !r) {
+        alert("Tokenとリポジトリ名を入力してください");
+        return;
+    }
+    
+    // 保存
+    localStorage.setItem('gh_token', t);
+    localStorage.setItem('gh_repo', r);
+    
+    unlockDevMenu();
+    document.getElementById('devAuthModal').style.display = 'none';
+    alert("開発者モードを有効化しました");
+};
+
+window.logoutDev = () => {
+    if(!confirm("開発者モードからログアウトしますか？")) return;
+    localStorage.removeItem('gh_token');
+    localStorage.removeItem('gh_repo');
+    
+    // メニューを隠す
+    document.getElementById('adminLinks').style.display = 'none';
+    document.getElementById('devLoginBtn').style.display = 'block';
+    
+    // もしAdmin画面にいたらTOPへ戻す
+    if(currentView.startsWith('admin')) {
+        switchView('database');
+    }
+};
+
+function checkDevLogin() {
+    const t = localStorage.getItem('gh_token');
+    if (t) {
+        unlockDevMenu();
+    }
+}
+
+function unlockDevMenu() {
+    document.getElementById('adminLinks').style.display = 'block';
+    document.getElementById('devLoginBtn').style.display = 'none';
+    
+    // モーダルの入力欄にも一応セットしておく
+    const t = localStorage.getItem('gh_token') || '';
+    const r = localStorage.getItem('gh_repo') || '';
+    if(document.getElementById('devAuthToken')) document.getElementById('devAuthToken').value = t;
+    if(document.getElementById('devAuthRepo')) document.getElementById('devAuthRepo').value = r;
+}
 
 // --- Database Logic ---
 
@@ -97,7 +166,7 @@ window.renderDatabase = () => {
         // 2. Rarity
         if (!dbFilter.rarity[card.rarity]) return null;
 
-        // 3. Position Filter (Strict + Mapping)
+        // 3. Position Filter
         if (dbFilter.pos.length > 0) {
             const cBonuses = [];
             if(card.bonuses) card.bonuses.forEach(b => cBonuses.push(b.type));
@@ -105,7 +174,6 @@ window.renderDatabase = () => {
 
             const hit = dbFilter.pos.some(selectedP => {
                 let targetBonuses = [selectedP];
-                // マッピング定義を使って包含関係を解決
                 if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[selectedP]) {
                     targetBonuses = targetBonuses.concat(POS_BONUS_MAPPING[selectedP]);
                 }
@@ -124,16 +192,11 @@ window.renderDatabase = () => {
             if (!hit) return null;
         }
 
-        // 5. Params Filter (GK分離 & AND/OR)
+        // 5. Params Filter
         let paramScore = 0;
         if (dbFilter.params.length > 0) {
-            // 素ステータス取得
             const stats = getCardStatsAtLevel(card, (card.rarity==='SSR'?50:45), null, null, 1.0);
-            
             let matchCount = 0;
-            
-            // 選択されたパラメータ名(HTMLのvalue)と一致するstatsキーがあるか直接確認する
-            // GK統合ロジック(GK_MAP)は廃止し、"セービング"を選べばstats["セービング"]を見るようにする
             dbFilter.params.forEach(p => {
                 const val = stats[p] || 0;
                 if (val > 0) {
@@ -191,26 +254,18 @@ window.filterDatabase = () => {
 };
 
 window.openFilterModal = () => {
-    // UI反映
     document.getElementById('f_rar_SSR').checked = dbFilter.rarity.SSR;
     document.getElementById('f_rar_SR').checked = dbFilter.rarity.SR;
     
-    // Pos Checkboxes
     document.querySelectorAll('input[name="f_pos"]').forEach(el => {
         el.checked = dbFilter.pos.includes(el.value);
     });
-    
-    // Style Checkboxes
     document.querySelectorAll('input[name="f_sty"]').forEach(el => {
         el.checked = dbFilter.style.includes(el.value);
     });
-    
-    // Param Checkboxes
     document.querySelectorAll('input[name="f_prm"]').forEach(el => {
         el.checked = dbFilter.params.includes(el.value);
     });
-
-    // Param Logic Radio
     const radio = document.querySelector(`input[name="f_logic"][value="${dbFilter.paramLogic}"]`);
     if(radio) radio.checked = true;
     
@@ -222,32 +277,21 @@ window.closeFilterModal = () => {
 };
 
 window.applyFilters = () => {
-    // Rarity
     dbFilter.rarity.SSR = document.getElementById('f_rar_SSR').checked;
     dbFilter.rarity.SR = document.getElementById('f_rar_SR').checked;
     
-    // Pos
     const newPos = [];
-    document.querySelectorAll('input[name="f_pos"]:checked').forEach(el => {
-        newPos.push(el.value);
-    });
+    document.querySelectorAll('input[name="f_pos"]:checked').forEach(el => newPos.push(el.value));
     dbFilter.pos = newPos;
 
-    // Style
     const newStyle = [];
-    document.querySelectorAll('input[name="f_sty"]:checked').forEach(el => {
-        newStyle.push(el.value);
-    });
+    document.querySelectorAll('input[name="f_sty"]:checked').forEach(el => newStyle.push(el.value));
     dbFilter.style = newStyle;
     
-    // Params
     const newParams = [];
-    document.querySelectorAll('input[name="f_prm"]:checked').forEach(el => {
-        newParams.push(el.value);
-    });
+    document.querySelectorAll('input[name="f_prm"]:checked').forEach(el => newParams.push(el.value));
     dbFilter.params = newParams;
 
-    // Logic
     const logicEl = document.querySelector('input[name="f_logic"]:checked');
     dbFilter.paramLogic = logicEl ? logicEl.value : 'OR';
     
@@ -266,7 +310,6 @@ window.resetFilters = () => {
     };
     document.getElementById('globalSearch').value = '';
     
-    // UI Reset (Modal open state)
     document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
     document.getElementById('f_rar_SSR').checked = true;
     document.getElementById('f_rar_SR').checked = true;
@@ -423,8 +466,6 @@ window.clearTray = () => {
     updateTrayUI();
 };
 
-// --- Comparison Execution ---
-
 window.runComparison = () => {
     if(compareTray.length < 1) return alert("比較するカードを選択してください");
     document.getElementById('compLevelSlider').value = 50;
@@ -452,9 +493,7 @@ window.updateComparisonTable = (level) => {
     thead += `</tr></thead>`;
     table.innerHTML += thead;
     
-    // GKが含まれているか判定
     const hasGK = compareTray.some(c => c.bonuses?.some(b => b.type.includes('GK')) || c.bonus_type?.includes('GK'));
-    // GK用ステータスを含むリストを作成
     const allStats = [...new Set([...STATS, ...(hasGK ? GK_STATS : [])])];
     
     const cardStats = compareTray.map(c => getCardStatsAtLevel(c, level, null, null, 1.0));

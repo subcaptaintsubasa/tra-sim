@@ -51,15 +51,15 @@ window.invSetAll = (owned) => {
 
 // --- GitHub API連携 ---
 async function pushToGH(file, data, msg, rawContent = null) {
-    const token = document.getElementById('ghToken').value;
-    const repo = document.getElementById('ghRepo').value;
+    // 変更: 画面入力ではなくlocalStorageから取得
+    const token = localStorage.getItem('gh_token');
+    const repo = localStorage.getItem('gh_repo');
     
     if(!token || !repo) { 
-        alert("GitHub設定が必要です"); 
+        alert("開発者認証がされていません。メニューの「開発者オプション」からログインしてください。"); 
         return false; 
     }
     
-    // pathの調整: 通常は data/ だが、../ で始まる場合はルートからのパスとして扱う
     let path = `data/${file}`;
     if (file.startsWith('../')) {
         path = file.replace('../', '');
@@ -68,17 +68,20 @@ async function pushToGH(file, data, msg, rawContent = null) {
     const url = `https://api.github.com/repos/${repo}/contents/${path}`;
     
     try {
-        // 1. 既存ファイルのSHAを取得 (上書き用)
         const g = await fetch(url, { headers:{'Authorization':`token ${token}`} });
+        
+        // 認証エラーチェック
+        if (g.status === 401 || g.status === 403) {
+            alert("GitHub認証に失敗しました。トークンを確認してください。");
+            return false;
+        }
+
         const sha = g.ok ? (await g.json()).sha : null;
         
-        // 2. コンテンツの準備
-        // rawContent(Base64文字列)があればそれを優先、なければdata(JSON)をエンコード
         const content = rawContent 
             ? rawContent 
             : btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
             
-        // 3. PUTリクエスト
         const res = await fetch(url, { 
             method:'PUT', 
             headers:{
@@ -92,9 +95,15 @@ async function pushToGH(file, data, msg, rawContent = null) {
             }) 
         });
         
-        return res.ok;
+        if (!res.ok) {
+            const errJson = await res.json();
+            throw new Error(errJson.message || "Update Failed");
+        }
+        
+        return true;
     } catch(e) { 
         console.error(e); 
+        alert("エラーが発生しました: " + e.message);
         return false; 
     }
 }
@@ -123,7 +132,7 @@ async function saveCardToGH() {
         title, name, rarity: document.getElementById('editRarity').value, 
         bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
         abilities: [document.getElementById('editAbilityName').value], stats,
-        growth_rate: growthRate // 一旦セット
+        growth_rate: growthRate
     };
 
     if (growthRate === 6) {
@@ -198,8 +207,8 @@ window.saveProfile = (name) => {
     }
 
     const data = {
-        pos: selectedPos,     // ポジションを保存
-        style: selectedStyle  // スタイルを保存
+        pos: selectedPos,
+        style: selectedStyle
     };
     const allStats = [...STATS, ...GK_STATS];
     allStats.forEach(s => {
@@ -219,7 +228,6 @@ window.loadProfile = (name) => {
     if (!name || !profiles[name]) return;
     const data = profiles[name];
 
-    // ポジションとスタイルを復元
     if (data.pos) {
         selectPos(data.pos);
         if (data.style) {
@@ -227,7 +235,6 @@ window.loadProfile = (name) => {
         }
     }
 
-    // ステータス数値を復元
     for (let key in data) {
         if (key === 'pos' || key === 'style') continue;
         const el = document.getElementById(key);
@@ -282,24 +289,21 @@ window.uploadCardImage = async () => {
     }
 
     const file = input.files[0];
-    const fileName = `${name}_${title}.png`; // ファイル名を自動生成
+    const fileName = `${name}_${title}.png`;
     status.innerText = "エンコード中...";
 
     const reader = new FileReader();
     reader.onload = async function(e) {
         try {
-            // DataURL形式 (data:image/png;base64,.....) からBase64部分だけ抽出
             const contentBase64 = e.target.result.split(',')[1];
             
             status.innerText = "アップロード中...";
             
-            // GitHub APIへ送信
-            // 画像は 'img/cards/' フォルダに保存
             const success = await pushToGH(
-                `../img/cards/${fileName}`, // dataフォルダの一つ上(root)のimg/cardsへ
-                null, // data引数はJSON用なのでnull
+                `../img/cards/${fileName}`,
+                null,
                 `Add image: ${fileName}`,
-                contentBase64 // 第4引数としてコンテンツを直接渡すよう pushToGH を拡張する必要あり
+                contentBase64
             );
 
             if (success) {
@@ -329,21 +333,17 @@ window.batchRegisterSA = async () => {
         list.forEach(item => {
             if (!item.name) return;
 
-            // 判定ロジック: "area" プロパティがあればスキル、なければアビリティとして処理
             if (item.area && Array.isArray(item.area)) {
-                // スキルとして登録
                 const i = skillsDB.findIndex(x => x.name === item.name);
                 if (i >= 0) skillsDB[i] = item; else skillsDB.push(item);
                 sCount++;
             } else {
-                // アビリティとして登録
                 const i = abilitiesDB.findIndex(x => x.name === item.name);
                 if (i >= 0) abilitiesDB[i] = item; else abilitiesDB.push(item);
                 aCount++;
             }
         });
 
-        // GitHubへ保存（変更があったDBのみ更新）
         if (sCount > 0) await pushToGH('skills.json', skillsDB, "Bulk SA Update (Skills)");
         if (aCount > 0) await pushToGH('abilities.json', abilitiesDB, "Bulk SA Update (Abilities)");
         
