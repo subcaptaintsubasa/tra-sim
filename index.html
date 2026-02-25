@@ -197,9 +197,11 @@
     </div>
 </div>
 
-<!-- 詳細フィルタモーダル (修正: 詳細なチェックボックスを配置) -->
+<!-- index.html の モーダル部分のみ抜粋して修正 -->
+
+<!-- 詳細フィルタモーダル -->
 <div id="filterModal" class="modal-overlay" style="display:none;">
-    <div class="modal-content" style="max-width: 450px;">
+    <div class="modal-content" style="max-width: 500px; max-height:90vh;">
         <div class="modal-header">
             <h4>詳細フィルタ</h4>
             <button class="btn-close" onclick="closeFilterModal()">×</button>
@@ -214,67 +216,100 @@
                 </div>
             </div>
             
-            <!-- ポジションボーナス (CF, ST, WG...) -->
+            <!-- ポジションボーナス (正式名称11種) -->
             <div class="filter-group">
                 <div class="filter-group-title">ポジション適性 (ボーナス所持)</div>
-                <div class="filter-grid-compact">
+                <!-- グリッドを4列程度にして見やすく -->
+                <div class="filter-grid-compact" style="grid-template-columns: repeat(4, 1fr);">
                     <div class="chk-btn"><input type="checkbox" name="f_pos" value="CF" id="fp_cf"><label for="fp_cf">CF</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="ST" id="fp_st"><label for="fp_st">ST</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="WG" id="fp_wg"><label for="fp_wg">WG</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="AM" id="fp_am"><label for="fp_am">AM(OMF)</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="CM" id="fp_cm"><label for="fp_cm">CM(CMF)</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="DM" id="fp_dm"><label for="fp_dm">DM(DMF)</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="SM" id="fp_sm"><label for="fp_sm">SM(L/R)</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="SB" id="fp_sb"><label for="fp_sb">SB(FB)</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="LW" id="fp_lw"><label for="fp_lw">LW</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="RW" id="fp_rw"><label for="fp_rw">RW</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="AM" id="fp_am"><label for="fp_am">AM</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="LM" id="fp_lm"><label for="fp_lm">LM</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="RM" id="fp_rm"><label for="fp_rm">RM</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="DM" id="fp_dm"><label for="fp_dm">DM</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="LB" id="fp_lb"><label for="fp_lb">LB</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_pos" value="RB" id="fp_rb"><label for="fp_rb">RB</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_pos" value="CB" id="fp_cb"><label for="fp_cb">CB</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_pos" value="GK" id="fp_gk"><label for="fp_gk">GK</label></div>
                 </div>
+                <div style="font-size:0.6rem; color:#64748b; margin-top:2px;">※LW選択時はWFボーナス所持者も検索対象になります</div>
             </div>
 
             <!-- プレースタイルボーナス -->
             <div class="filter-group">
                 <div class="filter-group-title">プレースタイル (ボーナス所持)</div>
-                <div class="filter-grid-compact" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="filter-grid-compact" style="grid-template-columns: repeat(3, 1fr);">
+                    <!-- FW系 -->
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="ストライカー" id="fs_st"><label for="fs_st">ストライカー</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ラインブレイカー" id="fs_lb"><label for="fs_lb">ラインブレイカー</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ポストプレーヤー" id="fs_ps"><label for="fs_ps">ポストプレーヤー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ラインブレイカー" id="fs_lb"><label for="fs_lb">Lブレイカー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ポストプレーヤー" id="fs_ps"><label for="fs_ps">ポストP</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="ドリブラー" id="fs_dr"><label for="fs_dr">ドリブラー</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="サイドアタッカー" id="fs_sa"><label for="fs_sa">サイドアタッカー</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="サイドアタッカー" id="fs_sa"><label for="fs_sa">Sアタッカー</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="アタッカー" id="fs_at"><label for="fs_at">アタッカー</label></div>
+                    <!-- MF系 -->
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="パサー" id="fs_pa"><label for="fs_pa">パサー</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="セントラルMF" id="fs_cm"><label for="fs_cm">セントラルMF</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ハードマーカー" id="fs_hm"><label for="fs_hm">ハードマーカー</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="守備的FB" id="fs_dfb"><label for="fs_dfb">守備的FB</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="ハードマーカー" id="fs_hm"><label for="fs_hm">Hマーカー</label></div>
+                    <!-- DF/GK系 -->
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="攻撃的FB" id="fs_afb"><label for="fs_afb">攻撃的FB</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="守備的FB" id="fs_dfb"><label for="fs_dfb">守備的FB</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="組立CB" id="fs_mcb"><label for="fs_mcb">組立CB</label></div>
                     <div class="chk-btn"><input type="checkbox" name="f_sty" value="ストッパー" id="fs_stp"><label for="fs_stp">ストッパー</label></div>
-                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="GK" id="fs_gks"><label for="fs_gks">GK全般</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="スイーパーGK" id="fs_sgk"><label for="fs_sgk">スイーパーGK</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="f_sty" value="オーソドックスGK" id="fs_ogk"><label for="fs_ogk">オーソドGK</label></div>
                 </div>
             </div>
 
-            <!-- ステータスパラメータ (伸ばせる能力) -->
+            <!-- ステータスパラメータ (ゲーム画面準拠レイアウト + GK併記) -->
             <div class="filter-group">
                 <div class="filter-group-title">
-                    <span>強化パラメータ (OR検索 / 降順ソート)</span>
-                    <button class="btn btn-sm" style="width:auto; font-size:0.6rem;" onclick="document.querySelectorAll('input[name=f_prm]').forEach(c=>c.checked=false)">クリア</button>
+                    <span>強化パラメータ</span>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <!-- AND/OR 切替 -->
+                        <div style="background:#0f172a; border-radius:4px; padding:2px; display:flex;">
+                            <label style="font-size:0.65rem; padding:2px 6px; cursor:pointer;"><input type="radio" name="f_logic" value="OR" checked> OR</label>
+                            <label style="font-size:0.65rem; padding:2px 6px; cursor:pointer;"><input type="radio" name="f_logic" value="AND"> AND</label>
+                        </div>
+                        <button class="btn btn-sm" style="width:auto; font-size:0.6rem;" onclick="document.querySelectorAll('input[name=f_prm]').forEach(c=>c.checked=false)">クリア</button>
+                    </div>
                 </div>
-                <div class="filter-grid-params">
-                    <!-- 生成が面倒なので主要なものを配置、またはJSで生成も可だが今回はHTMLで -->
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="決定力" id="fprm_1"><label for="fprm_1">決定力</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ショートパス" id="fprm_2"><label for="fprm_2">Sパス</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="突破力" id="fprm_3"><label for="fprm_3">突破力</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="タックル" id="fprm_4"><label for="fprm_4">タックル</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="走力" id="fprm_5"><label for="fprm_5">走力</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キック力" id="fprm_6"><label for="fprm_6">キック力</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ロングパス" id="fprm_7"><label for="fprm_7">Lパス</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キープ力" id="fprm_8"><label for="fprm_8">キープ力</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="パスカット" id="fprm_9"><label for="fprm_9">Pカット</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="コンタクト" id="fprm_10"><label for="fprm_10">コンタクト</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="敏捷性" id="fprm_11"><label for="fprm_11">敏捷性</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="冷静さ" id="fprm_12"><label for="fprm_12">冷静さ</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="マーク" id="fprm_13"><label for="fprm_13">マーク</label></div>
-                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="セービング" id="fprm_14"><label for="fprm_14">セービング</label></div>
+                <!-- 6列グリッド (ゲーム画面配置) -->
+                <div class="filter-grid-params" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:3px;">
+                    <!-- 1段目 -->
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="決定力" id="fprm_sho"><label for="fprm_sho">決定</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ショートパス" id="fprm_pas"><label for="fprm_pas">Sパス</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="突破力" id="fprm_drb"><label for="fprm_drb">突破</label></div>
+                    <div class="chk-btn param">
+                        <input type="checkbox" name="f_prm" value="タックル" id="fprm_tac">
+                        <label for="fprm_tac" style="font-size:0.6rem; flex-direction:column; line-height:1;">TAC<br><span style="color:var(--gk)">SAV</span></label>
+                    </div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ジャンプ" id="fprm_jmp"><label for="fprm_jmp">跳躍</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="走力" id="fprm_spd"><label for="fprm_spd">走力</label></div>
+
+                    <!-- 2段目 -->
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キック力" id="fprm_pow"><label for="fprm_pow">K力</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ロングパス" id="fprm_lpa"><label for="fprm_lpa">Lパス</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キープ力" id="fprm_kep"><label for="fprm_kep">キー</label></div>
+                    <div class="chk-btn param">
+                        <input type="checkbox" name="f_prm" value="パスカット" id="fprm_cut">
+                        <label for="fprm_cut" style="font-size:0.6rem; flex-direction:column; line-height:1;">CUT<br><span style="color:var(--gk)">REF</span></label>
+                    </div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="コンタクト" id="fprm_phy"><label for="fprm_phy">コン</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="敏捷性" id="fprm_agi"><label for="fprm_agi">敏捷</label></div>
+
+                    <!-- 3段目 -->
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="冷静さ" id="fprm_men"><label for="fprm_men">冷静</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="キック精度" id="fprm_acc"><label for="fprm_acc">K精</label></div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="ボールタッチ" id="fprm_tch"><label for="fprm_tch">Bタ</label></div>
+                    <div class="chk-btn param">
+                        <input type="checkbox" name="f_prm" value="マーク" id="fprm_mar">
+                        <label for="fprm_mar" style="font-size:0.6rem; flex-direction:column; line-height:1;">MRK<br><span style="color:var(--gk)">1v1</span></label>
+                    </div>
+                    <div class="chk-btn param"><input type="checkbox" name="f_prm" value="スタミナ" id="fprm_sta"><label for="fprm_sta">スタ</label></div>
+                    <div class="chk-btn param" style="visibility:hidden;"></div>
                 </div>
+                <div style="font-size:0.6rem; color:#94a3b8; text-align:right; margin-top:2px;">※GK項目は守備項目と同時に検索されます</div>
             </div>
         </div>
         <div class="modal-footer">

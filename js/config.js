@@ -1,3 +1,5 @@
+// --- START OF FILE tra-sim-main/js/config.js ---
+
 // --- 定数定義 ---
 const STATS = [
     "決定力", "ショートパス", "突破力", "タックル", "ジャンプ", "走力",
@@ -14,18 +16,34 @@ const GK_MAP = {
     "マーク": "1対1"
 };
 
+// 正式名称でのポジション定義とプレースタイルの候補
 const POS_MAP = {
     "GK": ["スイーパーGK", "オーソドックスGK"],
     "CB": ["組立CB", "ストッパー"],
     "LB": ["守備的FB", "攻撃的FB"],
     "RB": ["守備的FB", "攻撃的FB"],
-    "DM": ["ハードマーカー", "セントラルMF", "パサー"],
-    "AM": ["セントラルMF", "パサー", "アタッカー"],
+    "DM": ["ハードマーカー", "セントラルMF", "パサー"], // DMF -> DM
+    "AM": ["セントラルMF", "パサー", "アタッカー"],     // OMF -> AM
     "LM": ["ドリブラー", "サイドアタッカー"],
     "RM": ["ドリブラー", "サイドアタッカー"],
-    "LW": ["ドリブラー", "サイドアタッカー"],
-    "RW": ["ドリブラー", "サイドアタッカー"],
+    "LW": ["ドリブラー", "サイドアタッカー", "ストライカー"], // WG -> LW/RW
+    "RW": ["ドリブラー", "サイドアタッカー", "ストライカー"],
     "CF": ["ポストプレーヤー", "ラインブレイカー", "ストライカー"]
+};
+
+// ★追加: ポジション選択時、有効となるボーナス名称の紐づけ
+// 例: LWを選択した場合、ボーナスが「LW」「WF」「WG」のいずれかであれば有効とする
+const POS_BONUS_MAPPING = {
+    "LW": ["WF", "WG"],
+    "RW": ["WF", "WG"],
+    "LM": ["WM", "SM"],
+    "RM": ["WM", "SM"],
+    "LB": ["FB", "SB"],
+    "RB": ["FB", "SB"],
+    "CF": ["FW"], // 稀なケース用
+    "AM": ["OMF"],
+    "DM": ["DMF"],
+    "CM": ["CMF"] // 一応定義
 };
 
 // --- プレイスタイルとアイコンの紐付け ---
@@ -51,8 +69,8 @@ const STYLE_ICONS = {
 const POS_GROUPS = {
     "GK": "gk",
     "CB": "df", "LB": "df", "RB": "df",
-    "DM": "mf", "AM": "mf", "LM": "mf", "RM": "mf",
-    "LW": "fw", "RW": "fw", "CF": "fw"
+    "DM": "mf", "AM": "mf", "LM": "mf", "RM": "mf", "CM": "mf",
+    "LW": "fw", "RW": "fw", "CF": "fw", "ST": "fw"
 };
 
 // --- グローバル変数 ---
@@ -63,11 +81,9 @@ let myCards = {};
 let selectedSlots = Array(6).fill(null);
 let activeSlotIndex = null;
 
-// 追加：選択状態を保持する変数
 let selectedPos = null;
 let selectedStyle = null;
 let selectedTargetSkills = [];
 let selectedTargetAbilities = [];
 
-// --- 既存のコードの下に追加 ---
-let profiles = {}; // 保存された選手プロファイル { "名前": { "now_決定力": 100, ... } }
+let profiles = {};

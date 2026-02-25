@@ -1,10 +1,13 @@
 // --- Global State ---
 let currentView = 'database';
+// フィルタ状態の構造を変更 (pos/style分離、パラメータロジック追加)
 let dbFilter = { 
     text: '', 
     rarity: { SSR: true, SR: true }, 
-    tags: [], // Pos/Style names
-    params: [] // Stat names
+    pos: [],   // ポジション (Formal Names: CF, LW...)
+    style: [], // プレースタイル
+    params: [], // Stats
+    paramLogic: 'OR' // 'AND' or 'OR'
 };
 let compareTray = []; 
 
@@ -45,7 +48,7 @@ window.switchView = (viewId) => {
     
     currentView = viewId;
     
-    // ★ 追加: BodyにView属性をセット (CSSでの表示制御用)
+    // BodyにView属性をセット (CSSでの表示制御用)
     document.body.setAttribute('data-view', viewId);
     
     if(viewId === 'database') renderDatabase();
@@ -65,8 +68,9 @@ window.renderDatabase = () => {
     const afDiv = document.getElementById('activeFilters');
     afDiv.innerHTML = '';
     const activeLabels = [
-        ...dbFilter.tags,
-        ...dbFilter.params.map(p => `UP: ${p}`)
+        ...dbFilter.pos.map(p => `Pos:${p}`),
+        ...dbFilter.style.map(s => `Style:${s}`),
+        ...(dbFilter.params.length > 0 ? [`Param:${dbFilter.paramLogic}`] : [])
     ];
     if (dbFilter.text) activeLabels.push(`"${dbFilter.text}"`);
     
@@ -83,7 +87,7 @@ window.renderDatabase = () => {
         const isFav = !!userData.favorite;
         const isOwned = !!userData.owned;
         
-        // Text
+        // Text Search
         if (dbFilter.text) {
             const search = dbFilter.text.toLowerCase();
             if (!card.name.toLowerCase().includes(search) && 
@@ -93,40 +97,78 @@ window.renderDatabase = () => {
         // Rarity
         if (!dbFilter.rarity[card.rarity]) return null;
 
-        // Tags (Pos/Style Bonus) - OR Logic
-        if (dbFilter.tags.length > 0) {
-            // カードが持つボーナスタイプ配列
-            const cTags = [];
-            if(card.bonuses) card.bonuses.forEach(b => cTags.push(b.type));
-            if(card.bonus_type) cTags.push(card.bonus_type);
-            
-            // GK特例: セービングがあればGKタグ扱い
-            if(card.stats && card.stats["セービング"]) cTags.push("GK");
+        // Position Filter (Strict + Mapping)
+        // ユーザーが選択した「LW」などは、カードが「LW」または「WF」などのボーナスを持っていればOK
+        if (dbFilter.pos.length > 0) {
+            // カードが持つボーナスリスト抽出
+            const cBonuses = [];
+            if(card.bonuses) card.bonuses.forEach(b => cBonuses.push(b.type));
+            if(card.bonus_type) cBonuses.push(card.bonus_type);
+            // GK特例: セービングがあればGKタグ扱いとする場合もあるが、ここではボーナス所持を厳密に見る
 
-            // 指定されたタグのいずれかが含まれるか (部分一致検索)
-            const hit = dbFilter.tags.some(reqTag => {
-                return cTags.some(ct => ct.includes(reqTag));
+            // 選択されたポジションのいずれかを満たすか
+            const hit = dbFilter.pos.some(selectedP => {
+                // 検索対象となるボーナス文字列群 (例: LW -> [LW, WF, WG])
+                let targetBonuses = [selectedP];
+                // config.js で定義されたマッピングを使用
+                if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[selectedP]) {
+                    targetBonuses = targetBonuses.concat(POS_BONUS_MAPPING[selectedP]);
+                }
+                // カードのボーナスといずれかが一致するか
+                return cBonuses.some(cb => targetBonuses.includes(cb));
             });
             if (!hit) return null;
         }
 
-        // Params (指定パラメータの値があるか)
+        // Style Filter (Strict)
+        if (dbFilter.style.length > 0) {
+            const cBonuses = [];
+            if(card.bonuses) card.bonuses.forEach(b => cBonuses.push(b.type));
+            if(card.bonus_type) cBonuses.push(card.bonus_type);
+
+            // 選択されたスタイルのいずれかを持っているか
+            const hit = dbFilter.style.some(s => cBonuses.includes(s));
+            if (!hit) return null;
+        }
+
+        // Params Filter (AND/OR Logic)
         let paramScore = 0;
         if (dbFilter.params.length > 0) {
             // 素ステータス(Max)で判定
             const stats = getCardStatsAtLevel(card, (card.rarity==='SSR'?50:45), null, null, 1.0);
             
-            // 指定パラメータのいずれかが有効値(>0)であればヒット
-            // さらにソート用に合計値を計算
-            let hasValidParam = false;
+            // このカードがGKかどうか判定（ボーナスまたはステータスで簡易判定）
+            const isGK = card.bonuses?.some(b => b.type.includes('GK')) 
+                      || card.bonus_type?.includes('GK') 
+                      || (stats["セービング"] && stats["セービング"] > 0);
+
+            // チェックされたパラメータについてループ
+            // GK対応: "タックル"がチェックされていたら、GKの場合は"セービング"の値を見る (config.jsのGK_MAP使用)
+            let matchCount = 0;
+            
             dbFilter.params.forEach(p => {
-                if (stats[p] && stats[p] > 0) {
-                    hasValidParam = true;
-                    paramScore += stats[p];
+                let val = 0;
+                // 通常ステータス
+                if (stats[p]) val = stats[p];
+                
+                // GKマッピング対応 (守備項目がGK項目に変わる)
+                if (isGK && typeof GK_MAP !== 'undefined' && GK_MAP[p]) {
+                    if (stats[GK_MAP[p]]) val = stats[GK_MAP[p]];
+                }
+
+                if (val > 0) {
+                    matchCount++;
+                    paramScore += val;
                 }
             });
-            
-            if (!hasValidParam) return null;
+
+            if (dbFilter.paramLogic === 'AND') {
+                // 全て満たす必要がある
+                if (matchCount < dbFilter.params.length) return null;
+            } else {
+                // OR: 1つでも満たせばOK
+                if (matchCount === 0) return null;
+            }
         }
         
         return { original: card, idx, key, isFav, isOwned, paramScore };
@@ -179,15 +221,24 @@ window.openFilterModal = () => {
     document.getElementById('f_rar_SSR').checked = dbFilter.rarity.SSR;
     document.getElementById('f_rar_SR').checked = dbFilter.rarity.SR;
     
-    // Tag Checkboxes
-    document.querySelectorAll('input[name="f_pos"], input[name="f_sty"]').forEach(el => {
-        el.checked = dbFilter.tags.includes(el.value);
+    // Pos Checkboxes
+    document.querySelectorAll('input[name="f_pos"]').forEach(el => {
+        el.checked = dbFilter.pos.includes(el.value);
+    });
+    
+    // Style Checkboxes
+    document.querySelectorAll('input[name="f_sty"]').forEach(el => {
+        el.checked = dbFilter.style.includes(el.value);
     });
     
     // Param Checkboxes
     document.querySelectorAll('input[name="f_prm"]').forEach(el => {
         el.checked = dbFilter.params.includes(el.value);
     });
+
+    // Param Logic Radio
+    const radio = document.querySelector(`input[name="f_logic"][value="${dbFilter.paramLogic}"]`);
+    if(radio) radio.checked = true;
     
     document.getElementById('filterModal').style.display = 'flex';
 };
@@ -201,12 +252,19 @@ window.applyFilters = () => {
     dbFilter.rarity.SSR = document.getElementById('f_rar_SSR').checked;
     dbFilter.rarity.SR = document.getElementById('f_rar_SR').checked;
     
-    // Tags (Pos + Style)
-    const newTags = [];
-    document.querySelectorAll('input[name="f_pos"]:checked, input[name="f_sty"]:checked').forEach(el => {
-        newTags.push(el.value);
+    // Pos
+    const newPos = [];
+    document.querySelectorAll('input[name="f_pos"]:checked').forEach(el => {
+        newPos.push(el.value);
     });
-    dbFilter.tags = newTags;
+    dbFilter.pos = newPos;
+
+    // Style
+    const newStyle = [];
+    document.querySelectorAll('input[name="f_sty"]:checked').forEach(el => {
+        newStyle.push(el.value);
+    });
+    dbFilter.style = newStyle;
     
     // Params
     const newParams = [];
@@ -214,6 +272,10 @@ window.applyFilters = () => {
         newParams.push(el.value);
     });
     dbFilter.params = newParams;
+
+    // Logic
+    const logicEl = document.querySelector('input[name="f_logic"]:checked');
+    dbFilter.paramLogic = logicEl ? logicEl.value : 'OR';
     
     renderDatabase();
     closeFilterModal();
@@ -223,8 +285,10 @@ window.resetFilters = () => {
     dbFilter = { 
         text: '', 
         rarity: { SSR: true, SR: true }, 
-        tags: [], 
-        params: [] 
+        pos: [], 
+        style: [], 
+        params: [],
+        paramLogic: 'OR'
     };
     document.getElementById('globalSearch').value = '';
     
@@ -232,6 +296,8 @@ window.resetFilters = () => {
     document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
     document.getElementById('f_rar_SSR').checked = true;
     document.getElementById('f_rar_SR').checked = true;
+    const radioOR = document.querySelector('input[name="f_logic"][value="OR"]');
+    if(radioOR) radioOR.checked = true;
     
     renderDatabase();
 };
@@ -412,7 +478,9 @@ window.updateComparisonTable = (level) => {
     thead += `</tr></thead>`;
     table.innerHTML += thead;
     
+    // GKが含まれているか判定
     const hasGK = compareTray.some(c => c.bonuses?.some(b => b.type.includes('GK')) || c.bonus_type?.includes('GK'));
+    // GK用ステータスを含むリストを作成
     const allStats = [...new Set([...STATS, ...(hasGK ? GK_STATS : [])])];
     
     const cardStats = compareTray.map(c => getCardStatsAtLevel(c, level, null, null, 1.0));

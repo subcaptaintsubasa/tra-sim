@@ -1,4 +1,4 @@
-// --- core_logic.js ---
+// --- START OF FILE tra-sim-main/js/core_logic.js ---
 
 function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult) {
     const maxLevel = card.rarity === 'SSR' ? 50 : 45;
@@ -8,21 +8,27 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
     
     let bonusTotal = 0;
 
-    // --- 修正箇所 START ---
-    // bonuses配列（新形式）がある場合はそちらを優先し、bonus_type（旧形式）は無視する
+    // ★修正: ターゲットとなるポジションボーナス群を定義
+    // targetPosが "LW" なら、["LW", "WF", "WG"] が対象になる
+    let validPosBonuses = [targetPos];
+    if (targetPos && typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[targetPos]) {
+        validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[targetPos]);
+    }
+
+    // bonuses配列（新形式）がある場合はそちらを優先
     if (card.bonuses && Array.isArray(card.bonuses) && card.bonuses.length > 0) {
         card.bonuses.forEach(b => {
-            if (b.type === targetPos || b.type === targetStyle) {
+            // ポジション一致 または スタイル一致
+            if (validPosBonuses.includes(b.type) || b.type === targetStyle) {
                 bonusTotal += b.value;
             }
         });
     } else if (card.bonus_type) {
-        // 新形式がない場合のみ旧形式を参照
-        if (card.bonus_type === targetPos || card.bonus_type === targetStyle) {
+        // 旧形式
+        if (validPosBonuses.includes(card.bonus_type) || card.bonus_type === targetStyle) {
             bonusTotal += (card.bonus_value || 0);
         }
     }
-    // --- 修正箇所 END ---
     
     const bonusMult = 1 + (bonusTotal / 100);
     const result = {};
@@ -32,12 +38,11 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
         if (!d1) continue;
 
         const d1_int = Math.round(d1 * 10);
-        
         const N = Math.round(d1 * growthRate);
-        
         const growthMax = (N * 10 - d1_int);
         const growthCurrent = Math.floor(growthMax * (useLevel - 1) / (maxLevel - 1));
         const vBase_x10 = d1_int + growthCurrent;
+        
         const val_x10 = Math.round(vBase_x10 * conditionMult * bonusMult);
         
         result[s] = val_x10;
@@ -56,7 +61,6 @@ window.runAutoSim = () => {
         return alert("ポジションとスタイルを選択してください。");
     }
 
-    // 安全に値を取得するヘルパー
     const getVal = (id, defaultVal = 0) => {
         const el = document.getElementById(id);
         return el ? el.value : defaultVal;
@@ -84,7 +88,7 @@ window.runAutoSim = () => {
 
     if(ownedCards.length === 0) return alert("所持カードが選択されていません。「所持カード」タブで設定してください。");
 
-    // 2. ターゲット（必須項目）と目標Gapの整理
+    // 2. ターゲットと目標Gapの整理
     const targetPct = parseInt(getVal('targetPct', 100)) / 100;
     const allTargets = [...selectedTargetSkills, ...selectedTargetAbilities];
     
@@ -105,7 +109,7 @@ window.runAutoSim = () => {
         return sc;
     };
 
-    // 3. ビームサーチによる探索
+    // 3. ビームサーチ
     const WIDTH = 300;
     let beam = [{ idxs: [], sums: {}, score: 0, covered: new Set() }];
 
