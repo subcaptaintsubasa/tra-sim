@@ -19,14 +19,35 @@
 <header class="app-header">
     <button class="icon-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></button>
     
+    <!-- モード切替スイッチ (新設) -->
+    <div class="mode-switch-container">
+        <button id="btnModeView" class="mode-btn active" onclick="setAppMode('view')">図鑑</button>
+        <button id="btnModeMy" class="mode-btn" onclick="setAppMode('mycards')">所持</button>
+    </div>
+
     <div class="header-tools">
         <div class="search-bar">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input type="text" id="globalSearch" placeholder="名前・称号..." oninput="filterDatabase()">
         </div>
+        
+        <!-- 表示形式切り替え (Viewモード用) -->
+        <button id="btnViewType" class="icon-btn" onclick="toggleViewType()" style="font-size:1rem;">
+            <i class="fa-solid fa-list"></i>
+        </button>
+
         <button class="icon-btn" onclick="openFilterModal()"><i class="fa-solid fa-filter"></i></button>
     </div>
 </header>
+
+<!-- メインコンテンツ (view-database を修正) -->
+<main id="mainContainer">
+    <!-- 1. データベース & MyCards 共通コンテナ -->
+    <div id="view-database" class="view-content active">
+        <div id="activeFilters" style="margin-bottom:10px; display:flex; gap:5px; flex-wrap:wrap;"></div>
+        <!-- グリッド/リストのクラスはJSで制御 -->
+        <div id="dbGrid" class="card-grid-visual"></div>
+    </div>
 
 <!-- ドロワーメニュー -->
 <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>

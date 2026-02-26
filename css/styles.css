@@ -283,3 +283,100 @@ body:not([data-view="database"]) #compareTray {
 body:not([data-view="database"]) {
     padding-bottom: 20px; /* トレイがないので少し詰める */
 }
+
+/* --- Header Mode Switch --- */
+.mode-switch-container {
+    display: flex;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-right: 5px;
+}
+.mode-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+.mode-btn.active {
+    background: var(--primary);
+    color: #000;
+}
+
+/* --- List View Styles --- */
+/* Grid View (Default) - 既存の .card-grid-visual を流用 */
+
+/* List View Override */
+.card-grid-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 20px;
+}
+.card-grid-list .db-card {
+    display: flex;
+    flex-direction: row;
+    height: 80px; /* 固定高さ */
+    align-items: center;
+}
+.card-grid-list .db-card-img {
+    width: 60px;
+    height: 80px;
+    aspect-ratio: auto;
+    border-right: 1px solid var(--border);
+}
+.card-grid-list .db-info {
+    flex: 1;
+    padding: 5px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+.card-grid-list .db-name {
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+}
+.card-grid-list .list-stats {
+    font-size: 0.7rem;
+    color: #ccc;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.card-grid-list .list-skills {
+    margin-top: 2px;
+}
+
+/* --- Detail Modal Level Buttons --- */
+.level-btn-group {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+    background: #0f172a;
+    padding: 5px;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+.lvl-btn {
+    flex: 1;
+    background: #334155;
+    border: 1px solid #475569;
+    color: #fff;
+    padding: 6px 0;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.lvl-btn.active {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+    font-weight: bold;
+}

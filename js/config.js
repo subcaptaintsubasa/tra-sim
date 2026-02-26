@@ -96,3 +96,7 @@ let selectedTargetSkills = [];
 let selectedTargetAbilities = [];
 
 let profiles = {};
+
+// --- グローバル変数 (追加) ---
+let appMode = 'view'; // 'view' or 'mycards'
+let viewType = 'grid'; // 'grid' or 'list'

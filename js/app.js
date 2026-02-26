@@ -1,5 +1,6 @@
 // --- Global State ---
 let currentView = 'database';
+
 let dbFilter = { 
     text: '', 
     rarity: { SSR: true, SR: true }, 
@@ -10,14 +11,17 @@ let dbFilter = {
 };
 let compareTray = []; 
 
+// 現在表示中のモーダルアイテム（共通）
+let currentModalItem = null;
+// Viewモード詳細モーダル用の一時レベル
+let currentViewLevel = 50; 
+
 window.onload = async () => {
-    // 開発者情報のロードはdata_managerでlocalStorage参照する形に変更したため、DOMへの代入は不要だが
-    // モーダル入力欄の再表示用に取得してもよい (checkDevLoginで実施)
-    
+    // データロード
     myCards = JSON.parse(localStorage.getItem('tra_my_cards') || '{}');
     profiles = JSON.parse(localStorage.getItem('tra_profiles') || '{}');
-    if(typeof renderProfileSelector === 'function') renderProfileSelector();
     
+    if(typeof renderProfileSelector === 'function') renderProfileSelector();
     if(typeof initStatInputs === 'function') initStatInputs();
     if(typeof initPosSelect === 'function') initPosSelect();
     if(typeof initEditors === 'function') initEditors();
@@ -27,6 +31,9 @@ window.onload = async () => {
     // 開発者自動ログインチェック
     checkDevLogin();
 
+    // 初期モード設定
+    setAppMode('view');
+    
     // 初期View設定
     switchView('database'); 
     
@@ -59,13 +66,38 @@ window.switchView = (viewId) => {
     if(viewId === 'sim' && typeof updateCalc === 'function') updateCalc();
     if(viewId === 'admin-card' && typeof renderCardList === 'function') renderCardList();
     if(viewId === 'admin-skill' && typeof renderSAList === 'function') renderSAList();
-    // backupは静的表示のため特になし
+};
+
+// --- Mode Management (Phase 1 New) ---
+window.setAppMode = (mode) => {
+    appMode = mode;
+    
+    // Header UI Update
+    const btnView = document.getElementById('btnModeView');
+    const btnMy = document.getElementById('btnModeMy');
+    if(btnView) btnView.classList.toggle('active', mode === 'view');
+    if(btnMy) btnMy.classList.toggle('active', mode === 'mycards');
+    
+    // View Type Button Visibility (Viewモードのみ表示)
+    const btnViewType = document.getElementById('btnViewType');
+    if(btnViewType) btnViewType.style.display = (mode === 'view') ? 'block' : 'none';
+
+    // Re-render
+    renderDatabase();
+};
+
+window.toggleViewType = () => {
+    viewType = (viewType === 'grid') ? 'list' : 'grid';
+    const btn = document.getElementById('btnViewType');
+    if(btn) {
+        btn.innerHTML = viewType === 'grid' ? '<i class="fa-solid fa-list"></i>' : '<i class="fa-solid fa-border-all"></i>';
+    }
+    renderDatabase();
 };
 
 // --- 開発者ログイン管理ロジック ---
 
 window.openDevModal = () => {
-    // 既に保存されている場合は自動ログインを試みる（または再確認表示）
     const t = localStorage.getItem('gh_token');
     const r = localStorage.getItem('gh_repo');
     if (t && r) {
@@ -85,7 +117,6 @@ window.submitDevAuth = () => {
         return;
     }
     
-    // 保存
     localStorage.setItem('gh_token', t);
     localStorage.setItem('gh_repo', r);
     
@@ -99,11 +130,9 @@ window.logoutDev = () => {
     localStorage.removeItem('gh_token');
     localStorage.removeItem('gh_repo');
     
-    // メニューを隠す
     document.getElementById('adminLinks').style.display = 'none';
     document.getElementById('devLoginBtn').style.display = 'block';
     
-    // もしAdmin画面にいたらTOPへ戻す
     if(currentView.startsWith('admin')) {
         switchView('database');
     }
@@ -120,34 +149,38 @@ function unlockDevMenu() {
     document.getElementById('adminLinks').style.display = 'block';
     document.getElementById('devLoginBtn').style.display = 'none';
     
-    // モーダルの入力欄にも一応セットしておく
     const t = localStorage.getItem('gh_token') || '';
     const r = localStorage.getItem('gh_repo') || '';
     if(document.getElementById('devAuthToken')) document.getElementById('devAuthToken').value = t;
     if(document.getElementById('devAuthRepo')) document.getElementById('devAuthRepo').value = r;
 }
 
-// --- Database Logic ---
+// --- Database Logic (Updated) ---
 
 window.renderDatabase = () => {
     const grid = document.getElementById('dbGrid');
     if(!grid) return;
     grid.innerHTML = '';
     
+    // クラス切り替え (Grid vs List)
+    grid.className = (viewType === 'grid') ? 'card-grid-visual' : 'card-grid-list';
+    
     // Active Filters Display
     const afDiv = document.getElementById('activeFilters');
-    afDiv.innerHTML = '';
-    const activeLabels = [
-        ...dbFilter.pos.map(p => `Pos:${p}`),
-        ...dbFilter.style.map(s => `Style:${s}`),
-        ...(dbFilter.params.length > 0 ? [`Param:${dbFilter.paramLogic}`] : [])
-    ];
-    if (dbFilter.text) activeLabels.push(`"${dbFilter.text}"`);
-    
-    if(activeLabels.length > 0) {
-        afDiv.innerHTML = activeLabels.map(l => 
-            `<span style="font-size:0.7rem; background:#334155; padding:2px 6px; border-radius:4px; color:#fff;">${l}</span>`
-        ).join('');
+    if(afDiv) {
+        afDiv.innerHTML = '';
+        const activeLabels = [
+            ...dbFilter.pos.map(p => `Pos:${p}`),
+            ...dbFilter.style.map(s => `Style:${s}`),
+            ...(dbFilter.params.length > 0 ? [`Param:${dbFilter.paramLogic}`] : [])
+        ];
+        if (dbFilter.text) activeLabels.push(`"${dbFilter.text}"`);
+        
+        if(activeLabels.length > 0) {
+            afDiv.innerHTML = activeLabels.map(l => 
+                `<span style="font-size:0.7rem; background:#334155; padding:2px 6px; border-radius:4px; color:#fff;">${l}</span>`
+            ).join('');
+        }
     }
 
     const list = cardsDB.map((card, idx) => {
@@ -229,25 +262,72 @@ window.renderDatabase = () => {
     list.forEach(item => {
         const c = item.original;
         const imgPath = `img/cards/${c.name}_${c.title}.png`;
-        
         const el = document.createElement('div');
-        el.className = `db-card ${item.isFav ? 'fav' : ''}`;
-        el.onclick = () => openCardDetailModal(item);
         
-        el.innerHTML = `
-            <div class="fav-icon"><i class="fa-solid fa-heart"></i></div>
-            <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/333333/ffffff/300x400.png?text=No+Image'">
-            <div class="db-info">
-                <div class="db-name">${c.name}</div>
-                <div class="db-badges">
-                    <span class="badge ${c.rarity}">${c.rarity}</span>
-                    ${item.isOwned ? '<span class="badge" style="background:#22c55e;color:#000;">所持</span>' : ''}
+        // CSS Class: Viewモードでは未所持グレーアウトなし
+        el.className = `db-card ${item.isFav ? 'fav' : ''}`;
+        
+        if (viewType === 'grid') {
+            // グリッド表示
+            el.innerHTML = `
+                <div class="fav-icon"><i class="fa-solid fa-heart"></i></div>
+                <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/333333/ffffff/300x400.png?text=No+Img'">
+                <div class="db-info">
+                    <div class="db-name">${c.name}</div>
+                    <div class="db-badges">
+                        <span class="badge ${c.rarity}">${c.rarity}</span>
+                        ${item.isOwned ? '<span class="badge" style="background:#22c55e;color:#000;">所持</span>' : ''}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // リスト表示 (Phase 1 New)
+            const maxLvl = c.rarity === 'SSR' ? 50 : 45;
+            const stats = getCardStatsAtLevel(c, maxLvl, null, null, 1.0);
+            
+            // 上位2-3個のステータスを表示
+            const topStats = Object.entries(stats)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 3)
+                .map(([k,v]) => `${k}:${(v/10).toFixed(0)}`);
+
+            const skillNames = c.abilities ? c.abilities.join(', ') : '';
+
+            el.innerHTML = `
+                <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/333333/ffffff/300x400.png?text=No+Img'">
+                <div class="db-info">
+                    <div style="display:flex; justify-content:space-between; width:100%;">
+                        <div class="db-name" style="font-weight:bold;">${c.name} <span style="font-size:0.7em; color:#999;">${c.title}</span></div>
+                        <div class="db-badges">
+                            <span class="badge ${c.rarity}">${c.rarity}</span>
+                            ${item.isOwned ? '<span class="badge" style="background:#22c55e;color:#000;">所持</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="list-stats">
+                        ${topStats.map(s => `<span>${s}</span>`).join('')}
+                    </div>
+                    <div class="list-skills" style="font-size:0.7rem; color:var(--skill); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        ${skillNames}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Click Handler
+        el.onclick = () => {
+            if (appMode === 'view') {
+                openViewDetailModal(item);
+            } else {
+                // Phase 3: MyCards Modal (Temporary use existing)
+                // 既存のopenCardDetailModalを使ってもよいが、Phase 3で作り変える
+                openCardDetailModal(item); 
+            }
+        };
+        
         grid.appendChild(el);
     });
 };
+
 window.filterDatabase = () => {
     dbFilter.text = document.getElementById('globalSearch').value;
     renderDatabase();
@@ -319,17 +399,96 @@ window.resetFilters = () => {
     renderDatabase();
 };
 
-// --- Card Detail Modal ---
-let currentModalItem = null;
+// --- View Mode Detail Modal (New) ---
 
-window.openCardDetailModal = (item) => {
-    currentModalItem = item;
+window.openViewDetailModal = (item) => {
+    currentModalItem = item; // 共通変数を利用
     const c = item.original;
     
+    // 初期表示レベル設定 (完凸)
+    currentViewLevel = c.rarity === 'SSR' ? 50 : 45;
+
+    // モーダルHTML構築
+    const modal = document.getElementById('cardDetailModal');
+    document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title}`;
+    
+    renderViewModalBody();
+    updateDetailButtons(); 
+    
+    modal.style.display = 'flex';
+};
+
+window.renderViewModalBody = () => {
+    if (!currentModalItem) return;
+    const c = currentModalItem.original;
+    const imgPath = `img/cards/${c.name}_${c.title}.png`;
+    
+    // ステータス計算 (現在のViewLevelを使用)
+    const stats = getCardStatsAtLevel(c, currentViewLevel, null, null, 1.0);
+
+    // レベルボタン生成
+    const levels = (c.rarity === 'SSR') 
+        ? [30, 35, 40, 45, 50] 
+        : [25, 30, 35, 40, 45];
+    const labels = ["無凸", "1凸", "2凸", "3凸", "完凸"];
+    
+    let btnHtml = '<div class="level-btn-group">';
+    levels.forEach((lvl, idx) => {
+        const active = (lvl === currentViewLevel) ? 'active' : '';
+        btnHtml += `<button class="lvl-btn ${active}" onclick="updateViewLevel(${lvl})">${labels[idx]}<br>(Lv${lvl})</button>`;
+    });
+    btnHtml += '</div>';
+
+    const body = document.getElementById('cdmBody');
+    body.innerHTML = `
+        <div style="display:flex; gap:15px; margin-bottom:10px;">
+            <img src="${imgPath}" style="width:100px; height:133px; object-fit:cover; border-radius:6px; border:1px solid #444;" onerror="this.src='https://placehold.jp/100x133.png?text=NoImg'">
+            <div style="flex:1;">
+                <div style="font-weight:bold; font-size:1.1rem; line-height:1.3;">${c.name}</div>
+                <div style="font-size:0.8rem; color:#ccc; margin-bottom:5px;">${c.title}</div>
+                <div style="margin-top:5px;">
+                    ${c.abilities?.map(a => `<span class="tag tag-skill">${a}</span>`).join(' ') || '<span style="color:#666;font-size:0.8rem">スキルなし</span>'}
+                </div>
+                <div style="margin-top:8px; font-size:0.75rem; color:#94a3b8;">
+                    ボーナス: ${c.bonuses ? c.bonuses.map(b=>`${b.type}+${b.value}%`).join(', ') : (c.bonus_type ? `${c.bonus_type}+${c.bonus_value}%` : 'なし')}
+                </div>
+            </div>
+        </div>
+        
+        <!-- レベル切り替えボタン -->
+        ${btnHtml}
+
+        <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
+            <div class="stat-grid">
+                ${Object.entries(c.stats || {}).map(([k,v]) => {
+                    // 現在のレベルでの計算値を表示
+                    const val = stats[k] ? (stats[k] / 10).toFixed(1) : '-';
+                    return `
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                        <span style="color:#aaa;">${k}</span>
+                        <span style="font-weight:bold; color:#fff;">${val}</span>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>
+    `;
+};
+
+window.updateViewLevel = (lvl) => {
+    currentViewLevel = lvl;
+    renderViewModalBody(); // 再描画
+};
+
+// --- Existing Detail Modal Logic (Legacy Support for buttons) ---
+
+window.openCardDetailModal = (item) => {
+    // 既存の関数。Phase 1ではMyCardsモード等から呼ばれる場合のフォールバックとして残す
+    // またはViewモードの呼び出しに統合しても良いが、一旦残置。
+    currentModalItem = item;
+    const c = item.original;
     document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title}`;
     const body = document.getElementById('cdmBody');
     const imgPath = `img/cards/${c.name}_${c.title}.png`;
-
     const maxLvl = c.rarity === 'SSR' ? 50 : 45;
     const maxStats = getCardStatsAtLevel(c, maxLvl, null, null, 1.0);
 
@@ -341,9 +500,6 @@ window.openCardDetailModal = (item) => {
                 <div style="font-size:0.8rem; color:#ccc; margin-bottom:5px;">${c.title}</div>
                 <div style="margin-top:5px;">
                     ${c.abilities?.map(a => `<span class="tag tag-skill">${a}</span>`).join(' ') || '<span style="color:#666;font-size:0.8rem">スキルなし</span>'}
-                </div>
-                <div style="margin-top:8px; font-size:0.75rem; color:#94a3b8;">
-                    ボーナス: ${c.bonuses ? c.bonuses.map(b=>`${b.type}+${b.value}%`).join(', ') : (c.bonus_type ? `${c.bonus_type}+${c.bonus_value}%` : 'なし')}
                 </div>
             </div>
         </div>
@@ -361,7 +517,6 @@ window.openCardDetailModal = (item) => {
             </div>
         </div>
     `;
-    
     updateDetailButtons();
     document.getElementById('cardDetailModal').style.display = 'flex';
 };
@@ -369,7 +524,7 @@ window.openCardDetailModal = (item) => {
 window.closeCardDetailModal = () => {
     document.getElementById('cardDetailModal').style.display = 'none';
     currentModalItem = null;
-    renderDatabase();
+    renderDatabase(); // リフレッシュ（お気に入り等の反映）
 };
 
 function updateDetailButtons() {
