@@ -355,3 +355,56 @@ window.batchRegisterSA = async () => {
         alert("JSONエラー: 形式が正しくありません\n" + e.message);
     }
 };
+
+// --- 開発者認証機能 (追加) ---
+
+window.openDevModal = () => {
+    // 既にログイン済みならログアウト確認
+    if(localStorage.getItem('gh_token')) {
+        if(confirm("現在ログイン中です。ログアウトしますか？")) {
+            logoutDev();
+        }
+        return;
+    }
+    const modal = document.getElementById('devAuthModal');
+    if(modal) modal.style.display = 'flex';
+};
+
+window.submitDevAuth = () => {
+    const token = document.getElementById('devAuthToken').value.trim();
+    const repo = document.getElementById('devAuthRepo').value.trim();
+    
+    if(!token || !repo) {
+        alert("TokenとRepositoryを入力してください");
+        return;
+    }
+    
+    localStorage.setItem('gh_token', token);
+    localStorage.setItem('gh_repo', repo);
+    
+    document.getElementById('devAuthModal').style.display = 'none';
+    alert("認証情報を保存しました");
+    checkDevLogin();
+};
+
+window.logoutDev = () => {
+    localStorage.removeItem('gh_token');
+    localStorage.removeItem('gh_repo');
+    alert("ログアウトしました");
+    checkDevLogin();
+    if (typeof switchView === 'function') switchView('database');
+};
+
+window.checkDevLogin = () => {
+    const hasAuth = !!localStorage.getItem('gh_token');
+    const adminLinks = document.getElementById('adminLinks');
+    const loginBtn = document.getElementById('devLoginBtn');
+    
+    if(adminLinks) adminLinks.style.display = hasAuth ? 'block' : 'none';
+    
+    if(loginBtn) {
+        loginBtn.innerHTML = hasAuth 
+            ? '<i class="fa-solid fa-user-shield"></i> 開発者: ログイン中' 
+            : '<i class="fa-solid fa-terminal"></i> 開発者オプション';
+    }
+};

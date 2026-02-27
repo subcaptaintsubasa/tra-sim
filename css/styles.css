@@ -237,11 +237,6 @@ input, textarea, select { background: #000; border: 1px solid #334155; color: #f
 /* --- Phase 2.5 追加・修正スタイル --- */
 
 /* Viewごとの表示制御 */
-/* 図鑑(database)ビュー以外では、特定のUIを隠す */
-body:not([data-view="database"]) .header-tools,
-body:not([data-view="database"]) #compareTray {
-    display: none !important;
-}
 
 /* Header Tools (検索バーとボタンをまとめるコンテナ) */
 .header-tools {
@@ -501,4 +496,152 @@ body:not([data-view="database"]) {
     color: #000;
     border-color: var(--gk);
     box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+}
+
+/* --- Phase 3 追加スタイル --- */
+
+/* MyCardsモード時の未所持カード表現 */
+body[data-view="database"] .db-card.unowned {
+    opacity: 0.6;
+    filter: grayscale(0.8);
+    border: 1px dashed #444;
+}
+/* 所持カードは少し明るく */
+body[data-view="database"] .db-card.owned {
+    border-color: var(--accent);
+    box-shadow: 0 0 5px rgba(34, 197, 94, 0.2);
+}
+
+/* 育成スライダー周辺 */
+.level-slider-container {
+    background: #0f172a;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    margin-bottom: 10px;
+}
+.level-control-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.level-slider {
+    flex: 1;
+    cursor: pointer;
+}
+.level-display {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary);
+    min-width: 50px;
+    text-align: right;
+}
+.mgmt-tools {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* --- Phase 3 修正スタイル --- */
+
+/* 未所持カード表現: MyCardsモード時のみ適用 */
+body[data-app-mode="mycards"] .db-card.unowned {
+    opacity: 0.6;
+    filter: grayscale(0.8);
+    border: 1px dashed #444;
+}
+/* Viewモード(図鑑)では未所持でもフルカラー (通常のスタイルを維持) */
+body[data-app-mode="view"] .db-card.unowned {
+    opacity: 1;
+    filter: none;
+}
+
+/* 所持カード共通スタイル */
+.db-card.owned {
+    border-color: var(--accent);
+    box-shadow: 0 0 5px rgba(34, 197, 94, 0.2);
+}
+
+/* --- モーダル改善 --- */
+
+/* 画像上のお気に入りアイコン */
+.card-img-container {
+    position: relative;
+    width: 100px;
+    height: 133px;
+    flex-shrink: 0;
+}
+.card-fav-overlay {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-size: 1.2rem;
+    color: #ec4899;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.8));
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.1s;
+}
+.card-fav-overlay:active {
+    transform: scale(1.2);
+}
+.card-fav-overlay i {
+    /* 白フチをつける */
+    text-shadow: 0 0 2px #000;
+}
+
+/* スライダー操作系 */
+.level-slider-container {
+    background: #0f172a;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    margin-bottom: 10px;
+}
+.level-control-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.level-slider {
+    flex: 1;
+    cursor: pointer;
+    padding: 10px 0; /* タップ領域確保 */
+}
+.level-display {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary);
+    min-width: 50px;
+    text-align: right;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 5px;
+    display: none; /* 入力がない時は非表示 */
+}
+.search-clear-btn:hover {
+    color: #fff;
+}
+
+/* 図鑑(database)以外のビューでは、ヘッダー内のツール群と下部トレイを非表示にする */
+body:not([data-view="database"]) .header-tools,
+body:not([data-view="database"]) #compareTray {
+    display: none !important;
+}
+
+/* MyCardsモーダル用: 右上の閉じるボタンを消す */
+#cardDetailModal.mycards-mode .btn-close {
+    display: none !important;
 }
