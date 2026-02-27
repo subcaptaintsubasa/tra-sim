@@ -20,6 +20,10 @@ var dbFilter = {
 // 比較トレイ
 var compareTray = []; 
 
+// 一括操作モード用
+var isSelectMode = false;
+var selectedKeys = new Set();
+
 // 現在表示中のモーダルアイテム
 var currentModalItem = null;
 var currentViewLevel = 50; 
@@ -203,6 +207,9 @@ window.renderDatabase = () => {
     
     const currentMode = (typeof appMode !== 'undefined') ? appMode : 'view';
     document.body.setAttribute('data-app-mode', currentMode);
+    
+    // ボディに選択モード属性を付与(CSS制御用)
+    document.body.setAttribute('data-select-mode', isSelectMode);
 
     // Active Filters Badge
     const afDiv = document.getElementById('activeFilters');
@@ -210,6 +217,7 @@ window.renderDatabase = () => {
         afDiv.innerHTML = '';
         const badges = [];
         if(currentMode === 'mycards') badges.push("モード: 所持/育成");
+        if(isSelectMode) badges.push("★ 選択モード中"); // バッジ追加
         if(dbFilter.ownedOnly) badges.push("所持のみ");
         if(dbFilter.hasSkill) badges.push("スキル所持");
         if(dbFilter.hasAbility) badges.push("アビリティ所持");
@@ -297,7 +305,10 @@ window.renderDatabase = () => {
         const c = item.original;
         const imgPath = `img/cards/${c.name}_${c.title}.png`;
         const el = document.createElement('div');
-        el.className = `db-card ${item.isFav ? 'fav' : ''} ${item.isOwned ? 'owned' : 'unowned'}`;
+        
+        // 選択モード時は .bulk-selected クラスを付与
+        const isSelected = isSelectMode && selectedKeys.has(item.key);
+        el.className = `db-card ${item.isFav ? 'fav' : ''} ${item.isOwned ? 'owned' : 'unowned'} ${isSelected ? 'bulk-selected' : ''}`;
         
         if (vType === 'grid') {
             el.innerHTML = `
@@ -338,8 +349,14 @@ window.renderDatabase = () => {
         }
         
         el.onclick = () => {
-            if (currentMode === 'mycards') openMyCardDetailModal(item);
-            else openViewDetailModal(item);
+            if (isSelectMode) {
+                // 選択モード: 選択状態をトグル
+                toggleBulkSelect(item.key);
+            } else {
+                // 通常モード: 詳細モーダル
+                if (currentMode === 'mycards') openMyCardDetailModal(item);
+                else openViewDetailModal(item);
+            }
         };
         grid.appendChild(el);
     });
@@ -849,4 +866,80 @@ window.changeCondition = (val, btn) => {
     
     // 再計算
     if (typeof updateCalc === 'function') updateCalc();
+};
+
+// --- Bulk Selection Mode Logic (Phase 4) ---
+
+window.toggleSelectMode = () => {
+    isSelectMode = !isSelectMode;
+    selectedKeys.clear(); // モード切替時にリセット
+    
+    // UI制御
+    const bar = document.getElementById('bulkActionBar');
+    const btn = document.getElementById('btnSelectMode');
+    const tray = document.getElementById('compareTray');
+    
+    if (isSelectMode) {
+        if(bar) bar.classList.add('active');
+        if(btn) btn.classList.add('active');
+        if(tray) tray.style.display = 'none'; // トレイを隠す
+    } else {
+        if(bar) bar.classList.remove('active');
+        if(btn) btn.classList.remove('active');
+        if(tray) tray.style.display = 'block'; // トレイを戻す
+    }
+    
+    // 表示更新
+    updateBulkCount();
+    renderDatabase();
+};
+
+window.toggleBulkSelect = (key) => {
+    if (selectedKeys.has(key)) {
+        selectedKeys.delete(key);
+    } else {
+        selectedKeys.add(key);
+    }
+    // 全体再描画は重いので、DOMのクラスだけ操作して最適化
+    // (renderDatabaseのロジックと整合性を取るため、今回はシンプルに再描画を呼ぶ形でも可。
+    //  ただし、スムーズな動作のためにrenderDatabaseを呼びます)
+    renderDatabase(); 
+    updateBulkCount();
+};
+
+window.updateBulkCount = () => {
+    const el = document.getElementById('bulkCount');
+    if(el) el.innerText = selectedKeys.size;
+};
+
+window.execBulkAction = (action, value) => {
+    if (selectedKeys.size === 0) return alert("カードが選択されていません");
+    if (!confirm(`${selectedKeys.size}枚のカードを更新しますか？`)) return;
+
+    selectedKeys.forEach(key => {
+        // データがなければ作成
+        if (!myCards[key]) {
+            // 元カード情報を探す (少し非効率だが安全策)
+            const [name, title] = key.split('_'); 
+            const card = cardsDB.find(c => c.name === name && c.title === title);
+            const defaultLvl = (card && card.rarity === 'SSR') ? 50 : 45;
+            myCards[key] = { owned: false, level: defaultLvl, favorite: false };
+        }
+
+        if (action === 'owned') {
+            myCards[key].owned = value;
+        } else if (action === 'level_max') {
+            // 所持状態にしてレベルMAXへ
+            myCards[key].owned = true;
+            // カード情報からレアリティ判定が必要
+            const [name, title] = key.split('_'); 
+            const card = cardsDB.find(c => c.name === name && c.title === title);
+            myCards[key].level = (card && card.rarity === 'SSR') ? 50 : 45;
+        }
+    });
+
+    saveInv(); // 保存
+    
+    alert("更新しました");
+    toggleSelectMode(); // 完了したらモード終了
 };

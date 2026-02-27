@@ -41,6 +41,11 @@
             <i class="fa-solid fa-list"></i>
         </button>
 
+        <!-- ★追加: 選択モード切り替えボタン -->
+        <button id="btnSelectMode" class="icon-btn" onclick="toggleSelectMode()">
+            <i class="fa-regular fa-square-check"></i>
+        </button>
+
         <!-- フィルタボタン -->
         <button class="icon-btn" onclick="openFilterModal()"><i class="fa-solid fa-filter"></i></button>
     </div>
@@ -258,6 +263,19 @@
         </div>
     </div>
 </main>
+
+<!-- 一括操作バー -->
+<div id="bulkActionBar" class="bulk-action-bar">
+    <div class="bulk-info">
+        <span id="bulkCount">0</span>枚 選択中
+    </div>
+    <div class="bulk-tools">
+        <button class="btn btn-sm" onclick="execBulkAction('owned', true)" style="background:#22c55e; color:#000;">所持にする</button>
+        <button class="btn btn-sm" onclick="execBulkAction('owned', false)" style="background:#334155;">未所持</button>
+        <button class="btn btn-sm btn-primary" onclick="execBulkAction('level_max')">Lv.Max</button>
+        <button class="btn btn-sm" style="background:#ef4444;" onclick="toggleSelectMode()">終了</button>
+    </div>
+</div>
 
 <!-- 下部比較トレイ -->
 <div id="compareTray" class="tray-container">
