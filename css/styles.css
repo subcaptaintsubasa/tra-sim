@@ -131,10 +131,13 @@ body {
     background: var(--card-bg); width: 90%; max-width: 500px; max-height: 90vh;
     border-radius: 10px; border: 1px solid #334155; display: flex; flex-direction: column;
 }
-.modal-header {
-    padding: 15px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;
+
+.modal-body {
+    padding: 15px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 200px; /* 中身が空でも最低限の高さを確保 */
 }
-.modal-body { padding: 15px; overflow-y: auto; }
 .modal-footer {
     display: flex; justify-content: space-between; gap: 10px;
     padding: 15px; border-top: 1px solid #333;
@@ -258,25 +261,71 @@ body:not([data-view="database"]) #compareTray {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px;
 }
 .filter-grid-params {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr) !important; /* 7列固定 */
+    gap: 3px;
+    margin-top: 5px;
 }
 
-/* フィルタ用チェックボックスの見た目 */
-.chk-btn { position: relative; }
-.chk-btn input { position: absolute; opacity: 0; width: 0; height: 0; }
+/* --- 既存の .chk-btn 関連を以下に差し替え --- */
+
+.chk-btn {
+    position: relative;
+    flex: 1; /* 親コンテナ内で均等に広げる */
+    min-width: 0; /* Flexboxでのはみ出し防止 */
+}
+
+.chk-btn input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
 .chk-btn label {
-    display: flex; align-items: center; justify-content: center;
-    width: 100%; padding: 6px 0; background: #334155; border: 1px solid #475569;
-    border-radius: 4px; font-size: 0.7rem; color: #ccc; cursor: pointer; text-align: center;
-    transition: 0.1s; user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px 4px; /* タップ領域を拡大 */
+    background: #1e293b; /* 暗めの背景 */
+    border: 1px solid #475569;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
+
+/* 選択時のスタイル：視認性を高める */
 .chk-btn input:checked + label {
-    background: rgba(0, 242, 255, 0.15); color: var(--primary); 
-    border-color: var(--primary); font-weight: bold;
+    background: var(--primary); /* シアン色背景 */
+    color: #000; /* 黒文字 */
+    border-color: var(--primary);
+    font-weight: bold;
+    box-shadow: 0 0 8px rgba(0, 242, 255, 0.4);
 }
-/* パラメータ選択時は色が違うと分かりやすい */
+
+/* パラメータ選択時はアクセントカラー（緑）にする場合 */
 .chk-btn.param input:checked + label {
-    background: rgba(34, 197, 94, 0.15); color: var(--accent); border-color: var(--accent);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+/* モーダル内の閉じるボタン等の配置調整 */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
 }
 
 /* トレイが非表示の時の下部余白調整 */
@@ -379,4 +428,77 @@ body:not([data-view="database"]) {
     color: #000;
     border-color: var(--primary);
     font-weight: bold;
+}
+
+/* --- Modal Tabs --- */
+.modal-tab-header {
+    display: flex;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    padding: 0 10px;
+}
+.modal-tab-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 12px 15px;
+    font-weight: bold;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: 0.2s;
+}
+.modal-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+.filter-tab-content {
+    display: none;
+}
+.filter-tab-content.active {
+    display: block;
+}
+
+/* --- Comparison Table Updates --- */
+/* カードごとのレベル操作UI用 */
+.comp-card-ctrl {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 5px;
+}
+.comp-lvl-btns {
+    display: flex;
+    gap: 1px;
+    justify-content: center;
+}
+.comp-lvl-btn {
+    padding: 2px 4px;
+    font-size: 0.55rem;
+    border: 1px solid #444;
+    background: #0f172a;
+    color: #ccc;
+    cursor: pointer;
+}
+.comp-lvl-btn.active {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+}
+
+.filter-grid-params .chk-btn label {
+    padding: 8px 0;
+    font-size: 0.65rem; /* 少し小さく */
+    white-space: nowrap;
+}
+
+/* GK項目を目立たせる（JSでクラス付与） */
+.chk-btn.param-gk label {
+    color: var(--gk);
+    border-color: rgba(249, 115, 22, 0.3);
+}
+.chk-btn.param-gk input:checked + label {
+    background: var(--gk);
+    color: #000;
+    border-color: var(--gk);
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
 }

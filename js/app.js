@@ -1,257 +1,405 @@
 // --- Global State ---
-let currentView = 'database';
+// config.jsで定義されている変数はここで宣言しない (appMode, viewTypeなど)
+var currentView = 'database';
 
-let dbFilter = { 
+// フィルタ条件
+var dbFilter = { 
     text: '', 
     rarity: { SSR: true, SR: true }, 
+    ownedOnly: false,
+    hasSkill: false,
+    hasAbility: false,
     pos: [], 
     style: [], 
     params: [], 
-    paramLogic: 'OR' 
+    paramLogic: 'OR',
+    sortParams: [],
+    useMyLevel: false
 };
-let compareTray = []; 
 
-// 現在表示中のモーダルアイテム（共通）
-let currentModalItem = null;
+// 比較トレイ
+var compareTray = []; 
+
+// 現在表示中のモーダルアイテム
+var currentModalItem = null;
 // Viewモード詳細モーダル用の一時レベル
-let currentViewLevel = 50; 
+var currentViewLevel = 50; 
+// 比較モーダル用のカード状態管理
+var compCardStates = []; 
 
+// --- Initialization ---
 window.onload = async () => {
-    // データロード
-    myCards = JSON.parse(localStorage.getItem('tra_my_cards') || '{}');
-    profiles = JSON.parse(localStorage.getItem('tra_profiles') || '{}');
-    
-    if(typeof renderProfileSelector === 'function') renderProfileSelector();
-    if(typeof initStatInputs === 'function') initStatInputs();
-    if(typeof initPosSelect === 'function') initPosSelect();
-    if(typeof initEditors === 'function') initEditors();
-    
-    await fetchAllDB();
-    
-    // 開発者自動ログインチェック
-    checkDevLogin();
+    console.log("App initializing...");
+    try {
+        // LocalStorageからデータロード
+        myCards = JSON.parse(localStorage.getItem('tra_my_cards') || '{}');
+        profiles = JSON.parse(localStorage.getItem('tra_profiles') || '{}');
+        
+        // 各種UI初期化関数が存在すれば実行
+        if(typeof renderProfileSelector === 'function') renderProfileSelector();
+        if(typeof initStatInputs === 'function') initStatInputs();
+        if(typeof initPosSelect === 'function') initPosSelect();
+        if(typeof initEditors === 'function') initEditors();
+        
+        // JSONデータ取得
+        await fetchAllDB();
+        
+        // 開発者ログイン状態チェック
+        if (typeof checkDevLogin === 'function') checkDevLogin();
 
-    // 初期モード設定
-    setAppMode('view');
-    
-    // 初期View設定
-    switchView('database'); 
-    
-    updateTrayUI();
+        // 初期モード設定
+        if (typeof setAppMode === 'function') setAppMode('view');
+        
+        // 初期ビュー設定
+        switchView('database'); 
+        
+        // トレイUI更新
+        updateTrayUI();
+
+    } catch(e) {
+        console.warn("初期化中にエラーが発生しましたが、続行します:", e);
+    }
 };
 
+// --- UI Navigation ---
 window.toggleDrawer = () => {
     document.getElementById('appDrawer').classList.toggle('open');
     document.getElementById('drawerOverlay').classList.toggle('open');
 };
 
 window.switchView = (viewId) => {
-    // コンテンツ切り替え
     document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.drawer-item').forEach(el => el.classList.remove('active'));
     
     const target = document.getElementById(`view-${viewId}`);
     if (target) target.classList.add('active');
     
-    // ドロワー閉じる
     document.getElementById('appDrawer').classList.remove('open');
     document.getElementById('drawerOverlay').classList.remove('open');
     
     currentView = viewId;
-    
-    // BodyにView属性をセット (CSSでの表示制御用)
     document.body.setAttribute('data-view', viewId);
     
+    // ビューに応じた初期化
     if(viewId === 'database') renderDatabase();
     if(viewId === 'sim' && typeof updateCalc === 'function') updateCalc();
     if(viewId === 'admin-card' && typeof renderCardList === 'function') renderCardList();
     if(viewId === 'admin-skill' && typeof renderSAList === 'function') renderSAList();
 };
 
-// --- Mode Management (Phase 1 New) ---
+// --- Mode Management ---
 window.setAppMode = (mode) => {
-    appMode = mode;
+    // config.jsのグローバル変数を更新
+    if (typeof appMode !== 'undefined') appMode = mode;
     
-    // Header UI Update
     const btnView = document.getElementById('btnModeView');
     const btnMy = document.getElementById('btnModeMy');
     if(btnView) btnView.classList.toggle('active', mode === 'view');
     if(btnMy) btnMy.classList.toggle('active', mode === 'mycards');
     
-    // View Type Button Visibility (Viewモードのみ表示)
     const btnViewType = document.getElementById('btnViewType');
     if(btnViewType) btnViewType.style.display = (mode === 'view') ? 'block' : 'none';
 
-    // Re-render
     renderDatabase();
 };
 
 window.toggleViewType = () => {
-    viewType = (viewType === 'grid') ? 'list' : 'grid';
-    const btn = document.getElementById('btnViewType');
-    if(btn) {
-        btn.innerHTML = viewType === 'grid' ? '<i class="fa-solid fa-list"></i>' : '<i class="fa-solid fa-border-all"></i>';
+    if (typeof viewType !== 'undefined') {
+        viewType = (viewType === 'grid') ? 'list' : 'grid';
+        const btn = document.getElementById('btnViewType');
+        if(btn) {
+            btn.innerHTML = viewType === 'grid' ? '<i class="fa-solid fa-list"></i>' : '<i class="fa-solid fa-border-all"></i>';
+        }
+        renderDatabase();
     }
+};
+
+// --- Filter Modal Logic ---
+
+// パラメータボタン生成関数
+window.renderParamButtons = (targetId, nameAttr) => {
+    const container = document.getElementById(targetId);
+    if (!container) {
+        console.error(`[Error] Target ID not found: ${targetId}`);
+        return;
+    }
+
+    container.innerHTML = ''; // クリア
+
+    // 順序定義（シミュレータ配置準拠 + GK）
+    const order = [
+        "決定力", "ショートパス", "突破力", "タックル", "セービング", "ジャンプ", "走力",
+        "キック力", "ロングパス", "キープ力", "パスカット", "反応速度", "コンタクト", "敏捷性",
+        "冷静さ", "キック精度", "ボールタッチ", "マーク", "1対1", "スタミナ"
+    ];
+    const gkStats = ["セービング", "反応速度", "1対1"];
+
+    order.forEach(s => {
+        const div = document.createElement('div');
+        const isGk = gkStats.includes(s);
+        div.className = `chk-btn param ${isGk ? 'param-gk' : ''}`;
+        
+        const id = `${nameAttr}_${s}`;
+        // 4文字以上は3文字に省略
+        const labelText = s.length > 3 ? s.substring(0,3) : s;
+
+        div.innerHTML = `<input type="checkbox" name="${nameAttr}" value="${s}" id="${id}"><label for="${id}">${labelText}</label>`;
+        container.appendChild(div);
+    });
+
+    // 7列グリッドのレイアウト調整（20項目なので1つ余る）
+    if (order.length % 7 !== 0) {
+        const emptyCount = 7 - (order.length % 7);
+        for(let i=0; i<emptyCount; i++) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'chk-btn';
+            emptyDiv.style.visibility = 'hidden';
+            container.appendChild(emptyDiv);
+        }
+    }
+};
+
+window.openFilterModal = () => {
+    // フィルタ用とソート用、両方のボタン生成を実行
+    renderParamButtons('filterParamsGrid', 'f_prm');
+    renderParamButtons('sortParamsGrid', 's_prm');
+
+    // 現在の状態をUIに反映
+    document.getElementById('f_rar_SSR').checked = dbFilter.rarity.SSR;
+    document.getElementById('f_rar_SR').checked = dbFilter.rarity.SR;
+    document.getElementById('f_owned_only').checked = dbFilter.ownedOnly;
+    
+    if(document.getElementById('f_has_skill')) document.getElementById('f_has_skill').checked = dbFilter.hasSkill;
+    if(document.getElementById('f_has_ability')) document.getElementById('f_has_ability').checked = dbFilter.hasAbility;
+    if(document.getElementById('f_skill_text')) document.getElementById('f_skill_text').value = dbFilter.text; // テキスト検索もここで反映
+
+    const setChecks = (name, vals) => {
+        document.querySelectorAll(`input[name="${name}"]`).forEach(el => {
+            el.checked = vals.includes(el.value);
+        });
+    };
+    setChecks('f_pos', dbFilter.pos);
+    setChecks('f_sty', dbFilter.style);
+    setChecks('f_prm', dbFilter.params);
+    setChecks('s_prm', dbFilter.sortParams);
+    
+    const radio = document.querySelector(`input[name="f_logic"][value="${dbFilter.paramLogic}"]`);
+    if(radio) radio.checked = true;
+
+    if(document.getElementById('s_use_my_level')) 
+        document.getElementById('s_use_my_level').checked = dbFilter.useMyLevel;
+
+    document.getElementById('filterModal').style.display = 'flex';
+    switchFilterTab('filter');
+};
+
+window.closeFilterModal = () => {
+    document.getElementById('filterModal').style.display = 'none';
+};
+
+window.switchFilterTab = (tabName) => {
+    document.querySelectorAll('.filter-tab-content').forEach(el => el.style.display = 'none');
+    document.getElementById(`tab-${tabName}`).style.display = 'block';
+    
+    document.querySelectorAll('.modal-tab-btn').forEach(el => el.classList.remove('active'));
+    // クリックされたボタンをアクティブにする処理
+    // eventオブジェクト経由で取得
+    if (window.event && window.event.target && window.event.target.classList.contains('modal-tab-btn')) {
+        window.event.target.classList.add('active');
+    } else {
+        // デフォルトで最初のタブボタンなどをアクティブにする場合のフォールバック
+        const btns = document.querySelectorAll('.modal-tab-btn');
+        if (tabName === 'filter' && btns[0]) btns[0].classList.add('active');
+        if (tabName === 'sort' && btns[1]) btns[1].classList.add('active');
+    }
+};
+
+window.applyFilters = () => {
+    dbFilter.rarity.SSR = document.getElementById('f_rar_SSR').checked;
+    dbFilter.rarity.SR = document.getElementById('f_rar_SR').checked;
+    dbFilter.ownedOnly = document.getElementById('f_owned_only').checked;
+    
+    if(document.getElementById('f_has_skill')) dbFilter.hasSkill = document.getElementById('f_has_skill').checked;
+    if(document.getElementById('f_has_ability')) dbFilter.hasAbility = document.getElementById('f_has_ability').checked;
+    
+    // スキル名テキスト検索 (index.htmlにある場合)
+    if(document.getElementById('f_skill_text')) {
+        dbFilter.skillText = document.getElementById('f_skill_text').value.trim().toLowerCase();
+    }
+
+    const getChecks = (name) => {
+        const arr = [];
+        document.querySelectorAll(`input[name="${name}"]:checked`).forEach(el => arr.push(el.value));
+        return arr;
+    };
+    dbFilter.pos = getChecks('f_pos');
+    dbFilter.style = getChecks('f_sty');
+    dbFilter.params = getChecks('f_prm');
+    
+    const logicEl = document.querySelector('input[name="f_logic"]:checked');
+    dbFilter.paramLogic = logicEl ? logicEl.value : 'OR';
+
+    dbFilter.sortParams = getChecks('s_prm');
+    
+    if(document.getElementById('s_use_my_level'))
+        dbFilter.useMyLevel = document.getElementById('s_use_my_level').checked;
+
     renderDatabase();
+    closeFilterModal();
 };
 
-// --- 開発者ログイン管理ロジック ---
-
-window.openDevModal = () => {
-    const t = localStorage.getItem('gh_token');
-    const r = localStorage.getItem('gh_repo');
-    if (t && r) {
-        unlockDevMenu();
-        alert("既にログイン済みです");
-        return;
-    }
-    document.getElementById('devAuthModal').style.display = 'flex';
-};
-
-window.submitDevAuth = () => {
-    const t = document.getElementById('devAuthToken').value.trim();
-    const r = document.getElementById('devAuthRepo').value.trim();
+window.resetFilters = () => {
+    dbFilter = { 
+        text: '', 
+        rarity: { SSR: true, SR: true }, 
+        ownedOnly: false,
+        hasSkill: false,
+        hasAbility: false,
+        skillText: '',
+        pos: [], 
+        style: [], 
+        params: [], 
+        paramLogic: 'OR',
+        sortParams: [],
+        useMyLevel: false
+    };
+    if(document.getElementById('globalSearch')) document.getElementById('globalSearch').value = '';
     
-    if (!t || !r) {
-        alert("Tokenとリポジトリ名を入力してください");
-        return;
-    }
-    
-    localStorage.setItem('gh_token', t);
-    localStorage.setItem('gh_repo', r);
-    
-    unlockDevMenu();
-    document.getElementById('devAuthModal').style.display = 'none';
-    alert("開発者モードを有効化しました");
-};
-
-window.logoutDev = () => {
-    if(!confirm("開発者モードからログアウトしますか？")) return;
-    localStorage.removeItem('gh_token');
-    localStorage.removeItem('gh_repo');
-    
-    document.getElementById('adminLinks').style.display = 'none';
-    document.getElementById('devLoginBtn').style.display = 'block';
-    
-    if(currentView.startsWith('admin')) {
-        switchView('database');
+    renderDatabase();
+    // モーダルが開いていればUIもリセット
+    if (document.getElementById('filterModal').style.display === 'flex') {
+        openFilterModal();
     }
 };
 
-function checkDevLogin() {
-    const t = localStorage.getItem('gh_token');
-    if (t) {
-        unlockDevMenu();
+window.filterDatabase = () => {
+    const el = document.getElementById('globalSearch');
+    if (el) {
+        dbFilter.text = el.value;
+        renderDatabase();
     }
-}
+};
 
-function unlockDevMenu() {
-    document.getElementById('adminLinks').style.display = 'block';
-    document.getElementById('devLoginBtn').style.display = 'none';
-    
-    const t = localStorage.getItem('gh_token') || '';
-    const r = localStorage.getItem('gh_repo') || '';
-    if(document.getElementById('devAuthToken')) document.getElementById('devAuthToken').value = t;
-    if(document.getElementById('devAuthRepo')) document.getElementById('devAuthRepo').value = r;
-}
-
-// --- Database Logic (Updated) ---
-
+// --- Database Render Logic ---
 window.renderDatabase = () => {
     const grid = document.getElementById('dbGrid');
     if(!grid) return;
+    
     grid.innerHTML = '';
+    // viewType変数がundefinedの場合はデフォルト'grid'を使用
+    const vType = (typeof viewType !== 'undefined') ? viewType : 'grid';
+    grid.className = (vType === 'grid') ? 'card-grid-visual' : 'card-grid-list';
     
-    // クラス切り替え (Grid vs List)
-    grid.className = (viewType === 'grid') ? 'card-grid-visual' : 'card-grid-list';
-    
-    // Active Filters Display
+    // Active Filters Badge
     const afDiv = document.getElementById('activeFilters');
     if(afDiv) {
         afDiv.innerHTML = '';
-        const activeLabels = [
-            ...dbFilter.pos.map(p => `Pos:${p}`),
-            ...dbFilter.style.map(s => `Style:${s}`),
-            ...(dbFilter.params.length > 0 ? [`Param:${dbFilter.paramLogic}`] : [])
-        ];
-        if (dbFilter.text) activeLabels.push(`"${dbFilter.text}"`);
+        const badges = [];
+        if(dbFilter.ownedOnly) badges.push("所持のみ");
+        if(dbFilter.hasSkill) badges.push("スキル所持");
+        if(dbFilter.hasAbility) badges.push("アビリティ所持");
+        if(dbFilter.skillText) badges.push(`Skill:"${dbFilter.skillText}"`);
+        if(dbFilter.pos.length) badges.push(`Pos:${dbFilter.pos.join(',')}`);
+        if(dbFilter.style.length) badges.push(`Style:${dbFilter.style.join(',')}`);
+        if(dbFilter.sortParams.length) badges.push(`Sort:${dbFilter.sortParams.join('+')}`);
         
-        if(activeLabels.length > 0) {
-            afDiv.innerHTML = activeLabels.map(l => 
-                `<span style="font-size:0.7rem; background:#334155; padding:2px 6px; border-radius:4px; color:#fff;">${l}</span>`
-            ).join('');
-        }
+        afDiv.innerHTML = badges.map(l => `<span class="tag" style="background:#334155;">${l}</span>`).join('');
     }
 
     const list = cardsDB.map((card, idx) => {
         const key = card.name + "_" + card.title;
         const userData = myCards[key] || {};
-        const isFav = !!userData.favorite;
         const isOwned = !!userData.owned;
+        const isFav = !!userData.favorite;
         
-        // 1. Text
+        // --- 絞り込み ---
+        
+        // Text
         if (dbFilter.text) {
             const search = dbFilter.text.toLowerCase();
-            if (!card.name.toLowerCase().includes(search) && 
-                !card.title.toLowerCase().includes(search)) return null;
+            if (!card.name.toLowerCase().includes(search) && !card.title.toLowerCase().includes(search)) return null;
         }
-
-        // 2. Rarity
+        // Rarity
         if (!dbFilter.rarity[card.rarity]) return null;
+        // Owned
+        if (dbFilter.ownedOnly && !isOwned) return null;
 
-        // 3. Position Filter
-        if (dbFilter.pos.length > 0) {
+        // Skill/Ability Boolean Filter
+        if (dbFilter.hasSkill) {
+            const hasS = (card.abilities || []).some(aname => skillsDB.some(s => s.name === aname));
+            if (!hasS) return null;
+        }
+        if (dbFilter.hasAbility) {
+            const hasA = (card.abilities || []).some(aname => abilitiesDB.some(a => a.name === aname));
+            if (!hasA) return null;
+        }
+        // Skill Text Filter
+        if (dbFilter.skillText) {
+            const hasSkillText = (card.abilities || []).some(a => a.toLowerCase().includes(dbFilter.skillText));
+            if (!hasSkillText) return null;
+        }
+
+        // Pos & Style (OR Logic)
+        const hasPosFilter = dbFilter.pos.length > 0;
+        const hasStyleFilter = dbFilter.style.length > 0;
+        
+        if (hasPosFilter || hasStyleFilter) {
+            let isMatch = false;
             const cBonuses = [];
             if(card.bonuses) card.bonuses.forEach(b => cBonuses.push(b.type));
             if(card.bonus_type) cBonuses.push(card.bonus_type);
 
-            const hit = dbFilter.pos.some(selectedP => {
-                let targetBonuses = [selectedP];
-                if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[selectedP]) {
-                    targetBonuses = targetBonuses.concat(POS_BONUS_MAPPING[selectedP]);
-                }
-                return cBonuses.some(cb => targetBonuses.includes(cb));
-            });
-            if (!hit) return null;
+            if (hasPosFilter) {
+                isMatch = dbFilter.pos.some(p => {
+                    let targets = [p];
+                    if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[p]) targets = targets.concat(POS_BONUS_MAPPING[p]);
+                    return cBonuses.some(cb => targets.includes(cb));
+                });
+            }
+            if (!isMatch && hasStyleFilter) {
+                isMatch = dbFilter.style.some(s => cBonuses.includes(s));
+            }
+            if (!isMatch) return null;
         }
 
-        // 4. Style Filter
-        if (dbFilter.style.length > 0) {
-            const cBonuses = [];
-            if(card.bonuses) card.bonuses.forEach(b => cBonuses.push(b.type));
-            if(card.bonus_type) cBonuses.push(card.bonus_type);
-
-            const hit = dbFilter.style.some(s => cBonuses.includes(s));
-            if (!hit) return null;
-        }
-
-        // 5. Params Filter
-        let paramScore = 0;
+        // Params Filter
         if (dbFilter.params.length > 0) {
-            const stats = getCardStatsAtLevel(card, (card.rarity==='SSR'?50:45), null, null, 1.0);
+            const stats = getCardStatsAtLevel(card, 50, null, null, 1.0);
             let matchCount = 0;
-            dbFilter.params.forEach(p => {
-                const val = stats[p] || 0;
-                if (val > 0) {
-                    matchCount++;
-                    paramScore += val;
-                }
-            });
-
+            dbFilter.params.forEach(p => { if((stats[p]||0) > 0) matchCount++; });
+            
             if (dbFilter.paramLogic === 'AND') {
                 if (matchCount < dbFilter.params.length) return null;
             } else {
                 if (matchCount === 0) return null;
             }
         }
-        
-        return { original: card, idx, key, isFav, isOwned, paramScore };
+
+        // --- ソート用スコア計算 ---
+        let sortScore = 0;
+        if (dbFilter.sortParams.length > 0) {
+            let level = (card.rarity==='SSR'?50:45);
+            if (dbFilter.useMyLevel) {
+                level = isOwned ? (parseInt(userData.level)||1) : 1;
+            }
+            // フィルタの先頭条件をボーナスとして適用
+            const tPos = dbFilter.pos.length > 0 ? dbFilter.pos[0] : null;
+            const tStyle = dbFilter.style.length > 0 ? dbFilter.style[0] : null;
+
+            const stats = getCardStatsAtLevel(card, level, tPos, tStyle, 1.0);
+            
+            dbFilter.sortParams.forEach(p => {
+                sortScore += (stats[p] || 0);
+            });
+        }
+
+        return { original: card, idx, key, isFav, isOwned, sortScore };
     }).filter(item => item !== null);
     
     // Sort
     list.sort((a, b) => {
-        if (dbFilter.params.length > 0) {
-            if (b.paramScore !== a.paramScore) return b.paramScore - a.paramScore;
+        if (dbFilter.sortParams.length > 0) {
+            if (b.sortScore !== a.sortScore) return b.sortScore - a.sortScore;
         }
         if (a.isFav !== b.isFav) return b.isFav - a.isFav;
         if (a.original.rarity !== b.original.rarity) return a.original.rarity === 'SSR' ? -1 : 1;
@@ -263,12 +411,9 @@ window.renderDatabase = () => {
         const c = item.original;
         const imgPath = `img/cards/${c.name}_${c.title}.png`;
         const el = document.createElement('div');
-        
-        // CSS Class: Viewモードでは未所持グレーアウトなし
         el.className = `db-card ${item.isFav ? 'fav' : ''}`;
         
-        if (viewType === 'grid') {
-            // グリッド表示
+        if (vType === 'grid') {
             el.innerHTML = `
                 <div class="fav-icon"><i class="fa-solid fa-heart"></i></div>
                 <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/333333/ffffff/300x400.png?text=No+Img'">
@@ -277,20 +422,23 @@ window.renderDatabase = () => {
                     <div class="db-badges">
                         <span class="badge ${c.rarity}">${c.rarity}</span>
                         ${item.isOwned ? '<span class="badge" style="background:#22c55e;color:#000;">所持</span>' : ''}
+                        ${item.sortScore > 0 ? `<span style="color:#fbbf24;font-weight:bold;margin-left:2px;">${(item.sortScore/10).toFixed(1)}</span>` : ''}
                     </div>
                 </div>
             `;
         } else {
-            // リスト表示 (Phase 1 New)
-            const maxLvl = c.rarity === 'SSR' ? 50 : 45;
-            const stats = getCardStatsAtLevel(c, maxLvl, null, null, 1.0);
-            
-            // 上位2-3個のステータスを表示
-            const topStats = Object.entries(stats)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 3)
-                .map(([k,v]) => `${k}:${(v/10).toFixed(0)}`);
-
+            // List View
+            let displayStats = [];
+            if (dbFilter.sortParams.length > 0) {
+                displayStats.push(`合計:${(item.sortScore/10).toFixed(1)}`);
+            } else {
+                const maxLvl = c.rarity === 'SSR' ? 50 : 45;
+                const stats = getCardStatsAtLevel(c, maxLvl, null, null, 1.0);
+                displayStats = Object.entries(stats)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 3)
+                    .map(([k,v]) => `${k}:${(v/10).toFixed(0)}`);
+            }
             const skillNames = c.abilities ? c.abilities.join(', ') : '';
 
             el.innerHTML = `
@@ -304,7 +452,7 @@ window.renderDatabase = () => {
                         </div>
                     </div>
                     <div class="list-stats">
-                        ${topStats.map(s => `<span>${s}</span>`).join('')}
+                        ${displayStats.map(s => `<span>${s}</span>`).join('')}
                     </div>
                     <div class="list-skills" style="font-size:0.7rem; color:var(--skill); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         ${skillNames}
@@ -312,104 +460,29 @@ window.renderDatabase = () => {
                 </div>
             `;
         }
-
-        // Click Handler
+        
         el.onclick = () => {
-            if (appMode === 'view') {
+            // config.jsのappModeを参照
+            if (typeof appMode !== 'undefined' && appMode === 'view') {
                 openViewDetailModal(item);
             } else {
-                // Phase 3: MyCards Modal (Temporary use existing)
-                // 既存のopenCardDetailModalを使ってもよいが、Phase 3で作り変える
-                openCardDetailModal(item); 
+                openCardDetailModal(item); // 互換性のため
             }
         };
-        
         grid.appendChild(el);
     });
 };
 
-window.filterDatabase = () => {
-    dbFilter.text = document.getElementById('globalSearch').value;
-    renderDatabase();
-};
-
-window.openFilterModal = () => {
-    document.getElementById('f_rar_SSR').checked = dbFilter.rarity.SSR;
-    document.getElementById('f_rar_SR').checked = dbFilter.rarity.SR;
-    
-    document.querySelectorAll('input[name="f_pos"]').forEach(el => {
-        el.checked = dbFilter.pos.includes(el.value);
-    });
-    document.querySelectorAll('input[name="f_sty"]').forEach(el => {
-        el.checked = dbFilter.style.includes(el.value);
-    });
-    document.querySelectorAll('input[name="f_prm"]').forEach(el => {
-        el.checked = dbFilter.params.includes(el.value);
-    });
-    const radio = document.querySelector(`input[name="f_logic"][value="${dbFilter.paramLogic}"]`);
-    if(radio) radio.checked = true;
-    
-    document.getElementById('filterModal').style.display = 'flex';
-};
-
-window.closeFilterModal = () => {
-    document.getElementById('filterModal').style.display = 'none';
-};
-
-window.applyFilters = () => {
-    dbFilter.rarity.SSR = document.getElementById('f_rar_SSR').checked;
-    dbFilter.rarity.SR = document.getElementById('f_rar_SR').checked;
-    
-    const newPos = [];
-    document.querySelectorAll('input[name="f_pos"]:checked').forEach(el => newPos.push(el.value));
-    dbFilter.pos = newPos;
-
-    const newStyle = [];
-    document.querySelectorAll('input[name="f_sty"]:checked').forEach(el => newStyle.push(el.value));
-    dbFilter.style = newStyle;
-    
-    const newParams = [];
-    document.querySelectorAll('input[name="f_prm"]:checked').forEach(el => newParams.push(el.value));
-    dbFilter.params = newParams;
-
-    const logicEl = document.querySelector('input[name="f_logic"]:checked');
-    dbFilter.paramLogic = logicEl ? logicEl.value : 'OR';
-    
-    renderDatabase();
-    closeFilterModal();
-};
-
-window.resetFilters = () => {
-    dbFilter = { 
-        text: '', 
-        rarity: { SSR: true, SR: true }, 
-        pos: [], 
-        style: [], 
-        params: [],
-        paramLogic: 'OR'
-    };
-    document.getElementById('globalSearch').value = '';
-    
-    document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
-    document.getElementById('f_rar_SSR').checked = true;
-    document.getElementById('f_rar_SR').checked = true;
-    const radioOR = document.querySelector('input[name="f_logic"][value="OR"]');
-    if(radioOR) radioOR.checked = true;
-    
-    renderDatabase();
-};
-
-// --- View Mode Detail Modal (New) ---
+// --- View Mode Detail Modal ---
 
 window.openViewDetailModal = (item) => {
-    currentModalItem = item; // 共通変数を利用
+    currentModalItem = item;
     const c = item.original;
-    
-    // 初期表示レベル設定 (完凸)
     currentViewLevel = c.rarity === 'SSR' ? 50 : 45;
 
-    // モーダルHTML構築
     const modal = document.getElementById('cardDetailModal');
+    if (!modal) return;
+    
     document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title}`;
     
     renderViewModalBody();
@@ -422,11 +495,8 @@ window.renderViewModalBody = () => {
     if (!currentModalItem) return;
     const c = currentModalItem.original;
     const imgPath = `img/cards/${c.name}_${c.title}.png`;
-    
-    // ステータス計算 (現在のViewLevelを使用)
     const stats = getCardStatsAtLevel(c, currentViewLevel, null, null, 1.0);
 
-    // レベルボタン生成
     const levels = (c.rarity === 'SSR') 
         ? [30, 35, 40, 45, 50] 
         : [25, 30, 35, 40, 45];
@@ -454,14 +524,10 @@ window.renderViewModalBody = () => {
                 </div>
             </div>
         </div>
-        
-        <!-- レベル切り替えボタン -->
         ${btnHtml}
-
         <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
             <div class="stat-grid">
                 ${Object.entries(c.stats || {}).map(([k,v]) => {
-                    // 現在のレベルでの計算値を表示
                     const val = stats[k] ? (stats[k] / 10).toFixed(1) : '-';
                     return `
                     <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
@@ -476,76 +542,38 @@ window.renderViewModalBody = () => {
 
 window.updateViewLevel = (lvl) => {
     currentViewLevel = lvl;
-    renderViewModalBody(); // 再描画
-};
-
-// --- Existing Detail Modal Logic (Legacy Support for buttons) ---
-
-window.openCardDetailModal = (item) => {
-    // 既存の関数。Phase 1ではMyCardsモード等から呼ばれる場合のフォールバックとして残す
-    // またはViewモードの呼び出しに統合しても良いが、一旦残置。
-    currentModalItem = item;
-    const c = item.original;
-    document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title}`;
-    const body = document.getElementById('cdmBody');
-    const imgPath = `img/cards/${c.name}_${c.title}.png`;
-    const maxLvl = c.rarity === 'SSR' ? 50 : 45;
-    const maxStats = getCardStatsAtLevel(c, maxLvl, null, null, 1.0);
-
-    body.innerHTML = `
-        <div style="display:flex; gap:15px; margin-bottom:15px;">
-            <img src="${imgPath}" style="width:100px; height:133px; object-fit:cover; border-radius:6px; border:1px solid #444;" onerror="this.src='https://placehold.jp/100x133.png?text=NoImg'">
-            <div style="flex:1;">
-                <div style="font-weight:bold; font-size:1.1rem; line-height:1.3;">${c.name}</div>
-                <div style="font-size:0.8rem; color:#ccc; margin-bottom:5px;">${c.title}</div>
-                <div style="margin-top:5px;">
-                    ${c.abilities?.map(a => `<span class="tag tag-skill">${a}</span>`).join(' ') || '<span style="color:#666;font-size:0.8rem">スキルなし</span>'}
-                </div>
-            </div>
-        </div>
-        <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
-            <h5 style="margin:0 0 5px 0; color:var(--primary); font-size:0.8rem;">Lv.${maxLvl} ステータス (素)</h5>
-            <div class="stat-grid">
-                ${Object.entries(c.stats || {}).map(([k,v]) => {
-                    const val = maxStats[k] ? (maxStats[k] / 10).toFixed(1) : '-';
-                    return `
-                    <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
-                        <span style="color:#aaa;">${k}</span>
-                        <span>${val}</span>
-                    </div>`;
-                }).join('')}
-            </div>
-        </div>
-    `;
-    updateDetailButtons();
-    document.getElementById('cardDetailModal').style.display = 'flex';
+    renderViewModalBody();
 };
 
 window.closeCardDetailModal = () => {
     document.getElementById('cardDetailModal').style.display = 'none';
     currentModalItem = null;
-    renderDatabase(); // リフレッシュ（お気に入り等の反映）
+    renderDatabase(); 
 };
 
 function updateDetailButtons() {
     if (!currentModalItem) return;
     const btnFav = document.getElementById('btnFav');
-    if (currentModalItem.isFav) {
-        btnFav.innerHTML = '<i class="fa-solid fa-heart"></i> お気に入り済';
-        btnFav.classList.add('active');
-    } else {
-        btnFav.innerHTML = '<i class="fa-regular fa-heart"></i> お気に入り';
-        btnFav.classList.remove('active');
+    if(btnFav) {
+        if (currentModalItem.isFav) {
+            btnFav.innerHTML = '<i class="fa-solid fa-heart"></i> お気に入り済';
+            btnFav.classList.add('active');
+        } else {
+            btnFav.innerHTML = '<i class="fa-regular fa-heart"></i> お気に入り';
+            btnFav.classList.remove('active');
+        }
     }
     const btnOwned = document.getElementById('btnOwned');
-    if (currentModalItem.isOwned) {
-        btnOwned.innerHTML = '所持済';
-        btnOwned.style.background = '#22c55e';
-        btnOwned.style.color = '#000';
-    } else {
-        btnOwned.innerHTML = '未所持にする';
-        btnOwned.style.background = '#334155';
-        btnOwned.style.color = '#fff';
+    if(btnOwned) {
+        if (currentModalItem.isOwned) {
+            btnOwned.innerHTML = '所持済';
+            btnOwned.style.background = '#22c55e';
+            btnOwned.style.color = '#000';
+        } else {
+            btnOwned.innerHTML = '未所持にする';
+            btnOwned.style.background = '#334155';
+            btnOwned.style.color = '#fff';
+        }
     }
 }
 
@@ -576,7 +604,122 @@ window.addToTrayFromDetail = () => {
     document.getElementById('compareTray').classList.add('open');
 };
 
-// --- Tray & Comparison Logic ---
+// --- Comparison Logic (Vertical Layout) ---
+
+window.runComparison = () => {
+    if(compareTray.length < 1) return alert("比較するカードを選択してください");
+    
+    // 初期化
+    compCardStates = compareTray.map(c => ({
+        id: c.name + "_" + c.title,
+        level: c.rarity === 'SSR' ? 50 : 45
+    }));
+
+    updateComparisonTable();
+    document.getElementById('comparisonModal').style.display = 'flex';
+};
+
+window.updateComparisonTable = () => {
+    const table = document.getElementById('compTable');
+    if(!table) return;
+    table.innerHTML = '';
+    
+    // Header Row
+    let thead = `<thead><tr><th style="min-width:80px;">項目</th>`;
+    compareTray.forEach((c, idx) => {
+        const state = compCardStates[idx];
+        const imgPath = `img/cards/${c.name}_${c.title}.png`;
+        const levels = c.rarity === 'SSR' ? [30,35,40,45,50] : [25,30,35,40,45];
+        const labels = ["0","1","2","3","完"];
+        
+        let btnHtml = `<div class="comp-lvl-btns">`;
+        levels.forEach((lvl, i) => {
+            const active = (lvl === state.level) ? 'active' : '';
+            btnHtml += `<button class="comp-lvl-btn ${active}" onclick="updateCompCardLevel(${idx}, ${lvl})">${labels[i]}</button>`;
+        });
+        btnHtml += `</div>`;
+
+        thead += `
+            <th>
+                <div class="comp-card-header">
+                    <img src="${imgPath}" onerror="this.src='https://placehold.jp/50x65.png'">
+                    <div class="comp-card-name">${c.name}</div>
+                    <div class="comp-card-ctrl">
+                        <span style="font-size:0.6rem;">Lv.${state.level}</span>
+                        ${btnHtml}
+                    </div>
+                </div>
+            </th>`;
+    });
+    thead += `</tr></thead>`;
+    table.innerHTML += thead;
+
+    // Data Calculation
+    const cardStats = compareTray.map((c, idx) => {
+        const lvl = compCardStates[idx].level;
+        return getCardStatsAtLevel(c, lvl, null, null, 1.0);
+    });
+
+    // Vertical Order Definition (Same as config.js logic)
+    const order = (typeof STATS_VERTICAL_ORDER !== 'undefined') 
+        ? STATS_VERTICAL_ORDER 
+        : [
+            "決定力", "キック力", "冷静さ",
+            "ショートパス", "ロングパス", "キック精度",
+            "突破力", "キープ力", "ボールタッチ",
+            "タックル", "パスカット", "マーク",
+            "ジャンプ", "コンタクト", "スタミナ",
+            "走力", "敏捷性",
+            "セービング", "反応速度", "1対1"
+        ];
+
+    let tbody = `<tbody>`;
+    order.forEach(statName => {
+        // 全員0ならスキップ
+        const isAllZero = cardStats.every(st => !st[statName]);
+        if (isAllZero) return;
+
+        let maxVal = -1;
+        cardStats.forEach(st => {
+            if((st[statName]||0) > maxVal) maxVal = st[statName]||0;
+        });
+
+        let row = `<tr><td>${statName}</td>`;
+        cardStats.forEach(st => {
+            const val = st[statName] || 0;
+            const displayVal = (val / 10).toFixed(1);
+            const isWin = (val > 0 && val === maxVal);
+            const style = val === 0 ? 'color:#444;' : '';
+            const classAttr = isWin ? 'comp-val comp-win' : 'comp-val';
+            row += `<td class="${classAttr}" style="${style}">${val > 0 ? displayVal : '-'}</td>`;
+        });
+        row += `</tr>`;
+        tbody += row;
+    });
+
+    // Skills Row
+    tbody += `<tr><td>スキル</td>`;
+    compareTray.forEach(c => {
+        tbody += `<td style="font-size:0.6rem; white-space:normal; vertical-align:top;">
+            ${(c.abilities||[]).map(s => `<div class="tag tag-skill" style="margin-bottom:2px;">${s}</div>`).join('')}
+        </td>`;
+    });
+    tbody += `</tr></tbody>`;
+    table.innerHTML += tbody;
+};
+
+window.updateCompCardLevel = (idx, lvl) => {
+    compCardStates[idx].level = lvl;
+    updateComparisonTable();
+};
+
+// --- Misc ---
+window.changeCondition = (val, btn) => {
+    document.querySelectorAll('.cond-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('conditionMod').value = val;
+    if (typeof updateCalc === 'function') updateCalc();
+};
 
 window.toggleTray = () => {
     document.getElementById('compareTray').classList.toggle('open');
@@ -592,15 +735,15 @@ window.addToTray = (card) => {
 
 window.updateTrayUI = () => {
     const list = document.getElementById('trayList');
+    if(!list) return;
     const count = document.getElementById('trayCount');
-    count.innerText = `比較リスト (${compareTray.length})`;
+    if(count) count.innerText = `比較リスト (${compareTray.length})`;
     
     list.innerHTML = '';
     if(compareTray.length === 0) {
         list.innerHTML = '<div class="tray-placeholder">カードをドロップ</div>';
         return;
     }
-    
     compareTray.forEach((c, idx) => {
         const imgPath = `img/cards/${c.name}_${c.title}.png`;
         const div = document.createElement('div');
@@ -621,73 +764,12 @@ window.clearTray = () => {
     updateTrayUI();
 };
 
-window.runComparison = () => {
-    if(compareTray.length < 1) return alert("比較するカードを選択してください");
-    document.getElementById('compLevelSlider').value = 50;
-    updateComparisonTable(50);
-    document.getElementById('comparisonModal').style.display = 'flex';
-};
+// Fallback logic
+window.openCardDetailModal = window.openViewDetailModal;
 
-window.updateComparisonTable = (level) => {
-    const table = document.getElementById('compTable');
-    document.getElementById('compLevelVal').innerText = level;
-    
-    table.innerHTML = '';
-    
-    let thead = `<thead><tr><th>項目</th>`;
-    compareTray.forEach(c => {
-        const imgPath = `img/cards/${c.name}_${c.title}.png`;
-        thead += `
-            <th>
-                <div class="comp-card-header">
-                    <img src="${imgPath}" onerror="this.src='https://placehold.jp/50x65.png'">
-                    <div class="comp-card-name">${c.name}</div>
-                </div>
-            </th>`;
-    });
-    thead += `</tr></thead>`;
-    table.innerHTML += thead;
-    
-    const hasGK = compareTray.some(c => c.bonuses?.some(b => b.type.includes('GK')) || c.bonus_type?.includes('GK'));
-    const allStats = [...new Set([...STATS, ...(hasGK ? GK_STATS : [])])];
-    
-    const cardStats = compareTray.map(c => getCardStatsAtLevel(c, level, null, null, 1.0));
-
-    let tbody = `<tbody>`;
-    allStats.forEach(statName => {
-        let maxVal = -1;
-        cardStats.forEach(st => {
-            if(st[statName] && st[statName] > maxVal) maxVal = st[statName];
-        });
-
-        let row = `<tr><td>${statName}</td>`;
-        cardStats.forEach(st => {
-            const val = st[statName] || 0;
-            const displayVal = (val / 10).toFixed(1);
-            const isWin = (val > 0 && val === maxVal);
-            const style = val === 0 ? 'color:#444;' : '';
-            const classAttr = isWin ? 'comp-val comp-win' : 'comp-val';
-            row += `<td class="${classAttr}" style="${style}">${val > 0 ? displayVal : '-'}</td>`;
-        });
-        row += `</tr>`;
-        tbody += row;
-    });
-    
-    tbody += `<tr><td>スキル</td>`;
-    compareTray.forEach(c => {
-        const skills = c.abilities || [];
-        tbody += `<td style="font-size:0.65rem; white-space:normal; min-width:100px;">
-            ${skills.map(s => `<div class="tag tag-skill" style="display:inline-block; margin:1px;">${s}</div>`).join('')}
-        </td>`;
-    });
-    tbody += `</tr></tbody>`;
-    table.innerHTML += tbody;
-};
-
-// --- Misc ---
-window.changeCondition = (val, btn) => {
-    document.querySelectorAll('.cond-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('conditionMod').value = val;
-    if (typeof updateCalc === 'function') updateCalc();
-};
+// Google Drive Auth related global helpers (if drive_sync.js not loaded or fails)
+// エラー回避のためのダミー関数定義
+if (typeof checkDevLogin === 'undefined') window.checkDevLogin = () => {};
+if (typeof handleOCR === 'undefined') window.handleOCR = () => {};
+if (typeof renderProfileSelector === 'undefined') window.renderProfileSelector = () => {};
+if (typeof saveInv === 'undefined') window.saveInv = () => { localStorage.setItem('tra_my_cards', JSON.stringify(myCards)); };
