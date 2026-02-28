@@ -692,3 +692,93 @@ body[data-select-mode="true"] .db-card {
 .bulk-tools {
     display: flex; gap: 8px;
 }
+
+/* --- v1.1 追加スタイル --- */
+
+/* 3.1. ターゲット選択ボタン */
+.tag-selector-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 5px;
+}
+.tag-btn-select {
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: #94a3b8;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.tag-btn-select:hover {
+    background: #334155;
+    color: #fff;
+}
+/* 選択状態: スキルは黄色系、アビリティは紫系 */
+.tag-btn-select.selected-skill {
+    background: var(--skill);
+    color: #000;
+    border-color: var(--skill);
+    font-weight: bold;
+}
+.tag-btn-select.selected-ability {
+    background: var(--ability);
+    color: #fff;
+    border-color: var(--ability);
+    font-weight: bold;
+}
+
+/* 5. シミュレータ カードスロット (画像表示対応) */
+.slot-active {
+    position: relative;
+    padding: 0 !important; /* 内側のpaddingをリセット */
+    overflow: hidden;
+    border: 2px solid var(--primary) !important;
+}
+.slot-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.6; /* 少し暗くする */
+}
+.slot-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    padding: 20px 2px 2px 2px;
+    color: #fff;
+    font-size: 0.65rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.slot-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fbbf24;
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid #fbbf24;
+}
+
+/* 2.2. 一括レベル変更モーダル用 */
+.bulk-level-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+}
+.bulk-val-display {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+}

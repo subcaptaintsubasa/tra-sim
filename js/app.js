@@ -112,13 +112,24 @@ window.switchView = (viewId) => {
 window.setAppMode = (mode) => {
     if (typeof appMode !== 'undefined') appMode = mode;
     
+    // タブボタンのスタイル切り替え
     const btnView = document.getElementById('btnModeView');
     const btnMy = document.getElementById('btnModeMy');
     if(btnView) btnView.classList.toggle('active', mode === 'view');
     if(btnMy) btnMy.classList.toggle('active', mode === 'mycards');
     
+    // --- 1. ヘッダーUIの表示制御 ---
+    const btnSelect = document.getElementById('btnSelectMode'); // 一括選択
+    const btnFilter = document.getElementById('btnFilterOpen'); // フィルタ
+    
+    // 図鑑モード(view): フィルタ表示, 選択モード非表示
+    // 所持モード(mycards): フィルタ非表示, 選択モード表示
+    if(btnSelect) btnSelect.style.display = (mode === 'mycards') ? 'block' : 'none';
+    if(btnFilter) btnFilter.style.display = (mode === 'view') ? 'block' : 'none';
+    // ----------------------------
+
     const btnViewType = document.getElementById('btnViewType');
-    if(btnViewType) btnViewType.style.display = (mode === 'view') ? 'block' : 'none';
+    if(btnViewType) btnViewType.style.display = 'block'; // 両方で表示
 
     renderDatabase();
 };
@@ -299,6 +310,9 @@ window.renderDatabase = () => {
         if (a.original.rarity !== b.original.rarity) return a.original.rarity === 'SSR' ? -1 : 1;
         return a.original.name.localeCompare(b.original.name, 'ja');
     });
+
+    // グローバル変数に保存（全選択機能用）
+window.lastRenderedItems = list;
     
     // Render
     list.forEach(item => {
@@ -363,19 +377,29 @@ window.renderDatabase = () => {
 };
 
 // --- MyCards Modal ---
-window.openMyCardDetailModal = (item) => {
+window.openMyCardDetailModal = (item, fromSim = false) => {
     currentModalItem = item;
     const c = item.original;
     const userData = myCards[item.key] || { owned: false, level: 1, favorite: false };
     
     const modal = document.getElementById('cardDetailModal');
     if (!modal) return;
-    
-    // MyCardsモードクラス付与（CSSで×ボタンを隠す）
     modal.classList.add('mycards-mode');
     
     document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title} (育成)`;
     renderMyCardModalBody(userData);
+
+    // --- 4. シミュレータからの呼び出し時のフッター制御 ---
+    const footer = modal.querySelector('.modal-footer');
+    if (fromSim) {
+        footer.innerHTML = `
+            <button class="btn btn-accent" style="width:100%; font-size:1.1rem; padding:12px;" onclick="setSimSlotFromModal()">
+                <i class="fa-solid fa-check"></i> このカードをセット
+            </button>
+        `;
+    } 
+    // ---------------------------------------------------
+    
     modal.style.display = 'flex';
 };
 
@@ -942,4 +966,85 @@ window.execBulkAction = (action, value) => {
     
     alert("更新しました");
     toggleSelectMode(); // 完了したらモード終了
+};
+
+window.setSimSlotFromModal = () => {
+    if (!currentModalItem || activeSlotIndex === null) return;
+    // スロットにセット
+    selectedSlots[activeSlotIndex] = currentModalItem.original;
+    
+    // 関連モーダルをすべて閉じる
+    closeCardDetailModal();
+    document.getElementById('simCardPickerModal').style.display = 'none';
+    
+    // 再計算
+    updateCalc();
+};
+
+/* --- 以下、v1.1 一括操作機能の拡張 (新規追加) --- */
+
+// 1. 全選択 / 全解除
+window.toggleBulkSelectAll = (doSelect) => {
+    // ステップ1で保存したリストを使用
+    if (typeof window.lastRenderedItems === 'undefined' || !window.lastRenderedItems) {
+        return alert("リストが見つかりません");
+    }
+
+    if (doSelect) {
+        // 現在表示されている全てのカードのキーを選択セットに追加
+        window.lastRenderedItems.forEach(item => {
+            selectedKeys.add(item.key);
+        });
+    } else {
+        // 全解除
+        selectedKeys.clear();
+    }
+    
+    // 画面更新
+    renderDatabase();
+    updateBulkCount();
+};
+
+// 2. レベル変更モーダルを開く
+window.openBulkLevelModal = () => {
+    if (selectedKeys.size === 0) return alert("カードが選択されていません");
+    
+    // モーダルのスライダー等を初期化
+    const defaultVal = 50;
+    document.getElementById('bulkLevelSlider').value = defaultVal;
+    document.getElementById('bulkLevelVal').innerText = defaultVal;
+    
+    document.getElementById('bulkLevelModal').style.display = 'flex';
+};
+
+// 3. モーダル内の数値を更新 (ボタン/スライダー用)
+window.setBulkLevelVal = (val) => {
+    document.getElementById('bulkLevelSlider').value = val;
+    document.getElementById('bulkLevelVal').innerText = val;
+};
+
+// 4. 一括レベル適用実行
+window.applyBulkLevel = () => {
+    const lvl = parseInt(document.getElementById('bulkLevelSlider').value);
+    
+    if (!confirm(`${selectedKeys.size}枚のカードを Lv.${lvl} に設定しますか？`)) return;
+    
+    selectedKeys.forEach(key => {
+        if (!myCards[key]) {
+            // 未所持データなら新規作成して所持済みにする
+            myCards[key] = { owned: true, level: lvl, favorite: false };
+        } else {
+            // 既存データならレベル更新＆所持済みにする
+            myCards[key].level = lvl;
+            myCards[key].owned = true; 
+        }
+    });
+    
+    saveInv(); // 保存
+    
+    document.getElementById('bulkLevelModal').style.display = 'none'; // モーダル閉じる
+    alert("更新しました");
+    
+    // 一括モードを終了して一覧を更新
+    toggleSelectMode();
 };

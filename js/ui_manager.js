@@ -138,10 +138,37 @@ window.expandSelection = () => {
 // --- ターゲットボタン選択 UI ---
 
 window.updateAutoComplete = () => {
+    // 3.2. 所持のみフィルタ
+    const onlyOwned = document.getElementById('chkOnlyOwnedSkills')?.checked || false;
+    
+    // 所持しているスキル/アビリティのセットを作成
+    const ownedSkills = new Set();
+    const ownedAbilities = new Set();
+    if (onlyOwned) {
+        Object.values(myCards).forEach(mc => {
+            if (mc.owned) {
+                // キーから名前を復元するのは困難なため、cardsDB全体を走査してownedなものを探す
+                // ※少し非効率ですが、データ量が少なければ許容範囲
+            }
+        });
+        // 効率化のため、cardsDBを回して myCards[key].owned をチェック
+        cardsDB.forEach(c => {
+            const key = c.name + "_" + c.title;
+            if (myCards[key]?.owned && c.abilities) {
+                c.abilities.forEach(a => {
+                    // 名前だけでS/A区別がつかないため、両方のセット候補に入れる
+                    ownedSkills.add(a);
+                    ownedAbilities.add(a);
+                });
+            }
+        });
+    }
+
     const sContainer = document.getElementById('skillTargetContainer');
     if (sContainer) {
         sContainer.innerHTML = '';
         skillsDB.forEach(s => {
+            if (onlyOwned && !ownedSkills.has(s.name)) return; // フィルタ
             const btn = document.createElement('button');
             const isSelected = selectedTargetSkills.includes(s.name);
             btn.className = `tag-btn-select ${isSelected ? 'selected-skill' : ''}`;
@@ -155,6 +182,7 @@ window.updateAutoComplete = () => {
     if (aContainer) {
         aContainer.innerHTML = '';
         abilitiesDB.forEach(a => {
+            if (onlyOwned && !ownedAbilities.has(a.name)) return; // フィルタ
             const btn = document.createElement('button');
             const isSelected = selectedTargetAbilities.includes(a.name);
             btn.className = `tag-btn-select ${isSelected ? 'selected-ability' : ''}`;
@@ -308,24 +336,19 @@ function renderResults(totals_x10, saList, missingTargets) {
         const isTarget = selectedTargetSkills.includes(name) || selectedTargetAbilities.includes(name);
         const hlStyle = isTarget ? 'border:1px solid var(--accent); background:rgba(34,197,94,0.1);' : '';
         
-        // onclick="openSaModal('${name}')" と class="clickable-sa" を追加
+        // 【修正】詳細テキスト（valueやcondition）を削除し、タグと名前のみにする
         if(s) {
-            let areaH = '<div class="sa-result-area">';
-            (s.area || Array(9).fill(0)).forEach(v => areaH += `<div class="sa-result-cell ${v?'active':''}"></div>`);
-            areaH += '</div>';
-            
             saDiv.innerHTML += `
-            <div class="clickable-sa" onclick="openSaModal('${name}')" style="display:flex; align-items:center; margin-bottom:5px; width:100%; padding:4px; border-radius:4px; ${hlStyle}">
-                ${areaH}
-                <div style="flex:1; min-width:0; white-space:nowrap;">
-                    <span class="tag tag-skill">S</span><b>${name}</b><br><small>${s.value}%</small>
-                </div>
+            <div class="clickable-sa" onclick="openSaModal('${name}')" style="display:flex; align-items:center; margin-bottom:5px; width:100%; padding:6px; border-radius:4px; border:1px solid #334155; background:#1e293b; ${hlStyle}">
+                <span class="tag tag-skill" style="margin-right:8px;">S</span>
+                <b style="font-size:0.85rem;">${name}</b>
             </div>`;
         }
         if(a) {
             saDiv.innerHTML += `
-            <div class="clickable-sa" onclick="openSaModal('${name}')" style="margin-bottom:5px; width:100%; white-space:nowrap; padding:4px; border-radius:4px; ${hlStyle}">
-                <span class="tag tag-ability">A</span><b>${name}</b><br><small>${a.condition || ''}</small>
+            <div class="clickable-sa" onclick="openSaModal('${name}')" style="display:flex; align-items:center; margin-bottom:5px; width:100%; padding:6px; border-radius:4px; border:1px solid #334155; background:#1e293b; ${hlStyle}">
+                <span class="tag tag-ability" style="margin-right:8px;">A</span>
+                <b style="font-size:0.85rem;">${name}</b>
             </div>`;
         }
     });
@@ -335,12 +358,17 @@ function renderSimSlots(pos, style) {
     if (!g) return;
     g.innerHTML = '';
     selectedSlots.forEach((c, i) => {
-        let h = `枠 ${i+1}`;
+        const div = document.createElement('div');
+        // 4. クリックで新ピッカーを開く
+        div.onclick = () => openSimCardPicker(i); 
+        
         if (c) {
+            div.className = 'slot-active';
+            div.style.cssText = "height:90px; border-radius:8px; cursor:pointer;";
+            
+            // ボーナス計算
             let bVal = 0;
-            // --- 修正箇所 START ---
             if (pos && style) {
-                // 配列(bonuses)優先、無ければ単体(bonus_type)を使用
                 if (c.bonuses && Array.isArray(c.bonuses) && c.bonuses.length > 0) {
                     c.bonuses.forEach(b => { 
                         if(b.type===pos || b.type===style) bVal += b.value; 
@@ -349,12 +377,24 @@ function renderSimSlots(pos, style) {
                     if(c.bonus_type === pos || c.bonus_type === style) bVal += (c.bonus_value||0);
                 }
             }
-            // --- 修正箇所 END ---
+            const bText = bVal > 0 ? `+${bVal}%` : '';
+            const bDisplay = bVal > 0 ? `<div class="slot-badge">${bText}</div>` : '';
+            const imgPath = `img/cards/${c.name}_${c.title}.png`;
 
-            const bDisplay = bVal > 0 ? `<div class="bonus-on" style="font-size:0.6rem;">Bonus +${bVal}%</div>` : `<div class="bonus-off" style="font-size:0.6rem;">No Bonus</div>`;
-            h = `<div style="font-weight:bold;font-size:0.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;">${c.name}</div>${bDisplay}`;
+            div.innerHTML = `
+                <img src="${imgPath}" class="slot-bg-img" onerror="this.src='https://placehold.jp/333333/ffffff/100x133.png?text=NoImg'">
+                ${bDisplay}
+                <div class="slot-overlay">
+                    <div style="font-weight:bold;">${c.name}</div>
+                    <div style="font-size:0.6rem; opacity:0.8;">${c.title}</div>
+                </div>
+            `;
+        } else {
+            div.className = 'slot-empty';
+            div.style.cssText = "height:90px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; text-align:center; padding:2px;";
+            div.innerHTML = `枠 ${i+1}<br><span style="font-size:0.7rem; color:#666;">タップして選択</span>`;
         }
-        g.innerHTML += `<div onclick="openModal(${i})" class="${c?'slot-active':'slot-empty'}" style="height:65px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center;padding:2px;">${h}</div>`;
+        g.appendChild(div);
     });
 }
 
@@ -1011,3 +1051,69 @@ window.openSaModal = (name) => {
 window.closeSaModal = () => {
     document.getElementById('saModal').style.display = 'none';
 };
+
+window.openSimCardPicker = (slotIndex) => {
+    activeSlotIndex = slotIndex; // 選択中のスロット番号を保存
+    const modal = document.getElementById('simCardPickerModal');
+    modal.style.display = 'flex';
+    document.getElementById('simPickerSearch').value = ''; // 検索リセット
+    renderSimCardPicker();
+};
+
+window.renderSimCardPicker = () => {
+    const grid = document.getElementById('simPickerGrid');
+    const searchText = document.getElementById('simPickerSearch').value.toLowerCase();
+    grid.innerHTML = '';
+
+    // 所持カードのみ対象にする
+    const list = cardsDB.map((c, idx) => {
+        const key = c.name + "_" + c.title;
+        const userData = myCards[key];
+        if (!userData || !userData.owned) return null; // 未所持は除外
+        if (searchText && !c.name.toLowerCase().includes(searchText)) return null;
+        
+        return { original: c, key, idx, level: userData.level };
+    }).filter(i => i !== null);
+
+    // ソート: レベル順 -> レアリティ順
+    list.sort((a,b) => b.level - a.level || (a.original.rarity==='SSR'?-1:1));
+
+    if(list.length === 0) {
+        grid.innerHTML = '<div style="color:#ccc; text-align:center; grid-column:1/-1;">所持カードが見つかりません</div>';
+        return;
+    }
+
+    list.forEach(item => {
+        const c = item.original;
+        const imgPath = `img/cards/${c.name}_${c.title}.png`;
+        const el = document.createElement('div');
+        el.className = 'db-card owned';
+        el.style.border = '1px solid #444';
+        
+        // カードクリック時の動作: 詳細モーダルを開き、セットボタンを表示させる
+        el.onclick = () => {
+            // itemオブジェクト構造を openMyCardDetailModal が期待する形に合わせる
+            // (renderDatabaseで生成されるオブジェクトと同等にする)
+            const modalItem = { 
+                original: c, 
+                key: item.key, 
+                isOwned: true, 
+                level: item.level 
+            };
+            openMyCardDetailModal(modalItem, true); // true = fromSim
+        };
+
+        el.innerHTML = `
+            <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/100x133.png?text=NoImg'">
+            <div class="db-info">
+                <div class="db-name">${c.name}</div>
+                <div class="db-badges">
+                    <span class="badge ${c.rarity}">${c.rarity}</span>
+                    <span class="badge" style="background:#22c55e;color:#000;">Lv.${item.level}</span>
+                </div>
+            </div>
+        `;
+        grid.appendChild(el);
+    });
+};
+

@@ -372,15 +372,19 @@ window.openDevModal = () => {
 
 window.submitDevAuth = () => {
     const token = document.getElementById('devAuthToken').value.trim();
-    const repo = document.getElementById('devAuthRepo').value.trim();
+    // Repo入力取得を廃止し、定数を使用
+    if (typeof GITHUB_REPO === 'undefined') {
+        return alert("設定エラー: GITHUB_REPO が定義されていません。config.jsを確認してください。");
+    }
+    const repo = GITHUB_REPO;
     
-    if(!token || !repo) {
-        alert("TokenとRepositoryを入力してください");
+    if(!token) {
+        alert("Tokenを入力してください");
         return;
     }
     
     localStorage.setItem('gh_token', token);
-    localStorage.setItem('gh_repo', repo);
+    localStorage.setItem('gh_repo', repo); // 互換性のため保存しておく
     
     document.getElementById('devAuthModal').style.display = 'none';
     alert("認証情報を保存しました");
