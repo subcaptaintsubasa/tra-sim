@@ -20,6 +20,9 @@ var dbFilter = {
 // 比較トレイ
 var compareTray = []; 
 
+// シミュレータ選択モード管理
+var simSelectState = { active: false, slotIndex: null };
+
 // 一括操作モード用
 var isSelectMode = false;
 var selectedKeys = new Set();
@@ -363,15 +366,27 @@ window.lastRenderedItems = list;
         }
         
         el.onclick = () => {
-            if (isSelectMode) {
-                // 選択モード: 選択状態をトグル
-                toggleBulkSelect(item.key);
-            } else {
-                // 通常モード: 詳細モーダル
-                if (currentMode === 'mycards') openMyCardDetailModal(item);
-                else openViewDetailModal(item);
-            }
-        };
+        // ★ v1.3 追加ロジック
+        if (simSelectState.active) {
+            // シミュレータ選択モード: 常にMyCard詳細を開く (セットボタン用フラグ true)
+            // itemデータを適合させる
+            const modalItem = { 
+                original: c, 
+                key: item.key, 
+                isOwned: true, // 所持前提
+                level: item.level 
+            };
+            openMyCardDetailModal(modalItem, true); // true = fromSim
+            return;
+        }
+
+        if (isSelectMode) {
+            toggleBulkSelect(item.key);
+        } else {
+            if (currentMode === 'mycards') openMyCardDetailModal(item);
+            else openViewDetailModal(item);
+        }
+    };
         grid.appendChild(el);
     });
 };
@@ -722,42 +737,6 @@ window.updateTrayUI = () => {
 };
 window.clearTray = () => { compareTray = []; updateTrayUI(); };
 
-// --- Admin Logic (Merged) ---
-window.openDevModal = () => {
-    if(localStorage.getItem('gh_token')) {
-        if(confirm("現在ログイン中です。ログアウトしますか？")) logoutDev();
-        return;
-    }
-    const modal = document.getElementById('devAuthModal');
-    if(modal) modal.style.display = 'flex';
-};
-
-window.submitDevAuth = () => {
-    const token = document.getElementById('devAuthToken').value.trim();
-    const repo = document.getElementById('devAuthRepo').value.trim();
-    if(!token || !repo) return alert("TokenとRepositoryを入力してください");
-    localStorage.setItem('gh_token', token);
-    localStorage.setItem('gh_repo', repo);
-    document.getElementById('devAuthModal').style.display = 'none';
-    alert("認証情報を保存しました");
-    checkDevLogin();
-};
-
-window.logoutDev = () => {
-    localStorage.removeItem('gh_token');
-    localStorage.removeItem('gh_repo');
-    alert("ログアウトしました");
-    checkDevLogin();
-    switchView('database');
-};
-
-window.checkDevLogin = () => {
-    const hasAuth = !!localStorage.getItem('gh_token');
-    const adminLinks = document.getElementById('adminLinks');
-    const loginBtn = document.getElementById('devLoginBtn');
-    if(adminLinks) adminLinks.style.display = hasAuth ? 'block' : 'none';
-    if(loginBtn) loginBtn.innerHTML = hasAuth ? '<i class="fa-solid fa-user-shield"></i> 開発者: ログイン中' : '<i class="fa-solid fa-terminal"></i> 開発者オプション';
-};
 
 // Fallback for missing funcs
 window.openCardDetailModal = (item) => {
@@ -968,14 +947,18 @@ window.execBulkAction = (action, value) => {
     toggleSelectMode(); // 完了したらモード終了
 };
 
+// カードセット実行
 window.setSimSlotFromModal = () => {
-    if (!currentModalItem || activeSlotIndex === null) return;
-    // スロットにセット
-    selectedSlots[activeSlotIndex] = currentModalItem.original;
+    if (!currentModalItem || simSelectState.slotIndex === null) return;
     
-    // 関連モーダルをすべて閉じる
+    // スロットにセット
+    selectedSlots[simSelectState.slotIndex] = currentModalItem.original;
+    
+    // モーダルを閉じる
     closeCardDetailModal();
-    document.getElementById('simCardPickerModal').style.display = 'none';
+    
+    // 選択モード終了して戻る
+    cancelSimCardSelection(); // フラグ解除とView戻しを兼用
     
     // 再計算
     updateCalc();

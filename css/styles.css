@@ -782,3 +782,137 @@ body[data-select-mode="true"] .db-card {
     font-weight: bold;
     color: var(--primary);
 }
+
+/* --- v1.2 シミュレータUI改修 --- */
+
+/* 1. スロットコンテナ: 6枚横並び対応 */
+#simSlots {
+    display: grid !important;
+    /* 6列固定。画面が狭い場合はスクロールさせる */
+    grid-template-columns: repeat(6, minmax(70px, 1fr)) !important;
+    gap: 6px;
+    margin-bottom: 20px;
+    overflow-x: auto; /* 横スクロール有効化 */
+    padding-bottom: 5px; /* スクロールバーの干渉防止 */
+}
+
+/* 2. スロット個別の形状: 縦長カード型(3:4)にする */
+.slot-active, .slot-empty {
+    height: auto !important; /* 固定高さを解除 */
+    aspect-ratio: 3 / 4;     /* 縦横比を固定 */
+    border-radius: 6px;
+    position: relative;
+    /* フレックス配置の設定（空スロットの文字中央寄せ用） */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 空スロットのデザイン調整 */
+.slot-empty {
+    border: 2px dashed #444;
+    font-size: 0.7rem;
+    color: #666;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* 3. カード選択モーダル(Picker)のグリッド調整 */
+/* --- v1.2.1 修正スタイル (カード選択モーダル用) --- */
+
+/* --- v1.2.1 修正スタイル (カード選択モーダル用) --- */
+
+/* グリッドコンテナ */
+#simPickerGrid {
+    display: grid;
+    /* カード幅を固定気味にして配置 */
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+    gap: 10px;
+    padding: 15px;
+    align-content: start; /* 上詰め */
+}
+
+/* カード枠: 縦横比を強制固定し、Flexを解除 */
+#simPickerGrid .db-card {
+    position: relative !important;
+    display: block !important; /* Flex解除 */
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 3 / 4 !important; /* 比率固定 */
+    border: 1px solid #555;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    margin: 0 !important; /* 余計なマージン排除 */
+}
+
+/* 画像: 枠に対して絶対配置で全域を埋める */
+#simPickerGrid .db-card-img {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    z-index: 1;
+}
+
+/* 情報テキスト: 画像の上に重ねる */
+#simPickerGrid .db-info {
+    position: absolute !important;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    /* 文字が見やすいようにグラデーション背景 */
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%) !important;
+    padding: 20px 4px 4px 4px !important;
+    box-sizing: border-box;
+    z-index: 2;
+    display: block !important;
+}
+
+/* 名前テキスト調整 */
+#simPickerGrid .db-name {
+    font-size: 0.65rem !important;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    margin-bottom: 2px;
+}
+
+/* レベル表示などの微調整 */
+#simPickerGrid .db-info > div:last-child {
+    font-size: 0.6rem;
+    color: #fbbf24; /* 金色 */
+    text-shadow: 0 1px 2px black;
+    line-height: 1;
+}
+
+/* --- v1.3 シミュレータ選択モード時の表示制御 --- */
+
+/* 選択モード中は特定のUIを非表示にしてブロックする */
+body[data-sim-selecting="true"] #btnDrawer,            /* ハンバーガー */
+body[data-sim-selecting="true"] .mode-switch-container,/* モード切替 */
+body[data-sim-selecting="true"] #btnSelectMode,        /* 一括選択 */
+body[data-sim-selecting="true"] #btnFilterOpen,        /* フィルタ */
+body[data-sim-selecting="true"] #compareTray           /* 比較トレイ */
+{
+    display: none !important;
+}
+
+/* キャンセルボタンを表示 */
+body[data-sim-selecting="true"] #btnSimCancel {
+    display: block !important;
+}
+
+/* 念のためドロワー操作も無効化 (オーバーレイクリック等) */
+body[data-sim-selecting="true"] .drawer-overlay {
+    pointer-events: none;
+}

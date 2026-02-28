@@ -357,10 +357,10 @@ function renderSimSlots(pos, style) {
     const g = document.getElementById('simSlots');
     if (!g) return;
     g.innerHTML = '';
-    selectedSlots.forEach((c, i) => {
+        selectedSlots.forEach((c, i) => {
         const div = document.createElement('div');
-        // 4. クリックで新ピッカーを開く
-        div.onclick = () => openSimCardPicker(i); 
+        // ★変更: 新しい関数を呼ぶ
+        div.onclick = () => startSimCardSelection(i);
         
         if (c) {
             div.className = 'slot-active';
@@ -391,8 +391,13 @@ function renderSimSlots(pos, style) {
             `;
         } else {
             div.className = 'slot-empty';
-            div.style.cssText = "height:90px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; text-align:center; padding:2px;";
-            div.innerHTML = `枠 ${i+1}<br><span style="font-size:0.7rem; color:#666;">タップして選択</span>`;
+            // style指定はCSSクラス(.slot-empty)に任せるため削除し、クラスのみ適用
+            div.removeAttribute('style'); 
+            
+            div.innerHTML = `
+                <div style="font-size:1.2rem; font-weight:bold; color:#444;">${i+1}</div>
+                <span style="font-size:0.65rem; color:#666; margin-top:5px;">タップで<br>選択</span>
+            `;
         }
         g.appendChild(div);
     });
@@ -1052,12 +1057,33 @@ window.closeSaModal = () => {
     document.getElementById('saModal').style.display = 'none';
 };
 
-window.openSimCardPicker = (slotIndex) => {
-    activeSlotIndex = slotIndex; // 選択中のスロット番号を保存
-    const modal = document.getElementById('simCardPickerModal');
-    modal.style.display = 'flex';
-    document.getElementById('simPickerSearch').value = ''; // 検索リセット
-    renderSimCardPicker();
+// シミュレータからのカード選択開始
+window.startSimCardSelection = (slotIndex) => {
+    simSelectState.active = true;
+    simSelectState.slotIndex = slotIndex;
+    
+    // UI制御用属性セット
+    document.body.setAttribute('data-sim-selecting', 'true');
+    
+    // 強制的に所持カードモードへ
+    setAppMode('mycards');
+    
+    // 画面をDBビューへ切り替え
+    switchView('database');
+    
+    // 検索窓をクリアしておく
+    clearSearch();
+};
+
+// 選択キャンセル
+window.cancelSimCardSelection = () => {
+    simSelectState.active = false;
+    simSelectState.slotIndex = null;
+    
+    document.body.removeAttribute('data-sim-selecting');
+    
+    // シミュレータへ戻る
+    switchView('sim');
 };
 
 window.renderSimCardPicker = () => {
@@ -1090,10 +1116,11 @@ window.renderSimCardPicker = () => {
         el.className = 'db-card owned';
         el.style.border = '1px solid #444';
         
-        // カードクリック時の動作: 詳細モーダルを開き、セットボタンを表示させる
+        // カードクリック時の動作
         el.onclick = () => {
-            // itemオブジェクト構造を openMyCardDetailModal が期待する形に合わせる
-            // (renderDatabaseで生成されるオブジェクトと同等にする)
+            // ★追加: 邪魔になるので選択モーダル(ピッカー)を閉じる
+            document.getElementById('simCardPickerModal').style.display = 'none';
+
             const modalItem = { 
                 original: c, 
                 key: item.key, 
@@ -1103,14 +1130,12 @@ window.renderSimCardPicker = () => {
             openMyCardDetailModal(modalItem, true); // true = fromSim
         };
 
+        // HTML構造をCSSに合わせてシンプル化
         el.innerHTML = `
             <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/100x133.png?text=NoImg'">
             <div class="db-info">
                 <div class="db-name">${c.name}</div>
-                <div class="db-badges">
-                    <span class="badge ${c.rarity}">${c.rarity}</span>
-                    <span class="badge" style="background:#22c55e;color:#000;">Lv.${item.level}</span>
-                </div>
+                <div style="font-size:0.6rem; color:#fbbf24;">Lv.${item.level}</div>
             </div>
         `;
         grid.appendChild(el);
