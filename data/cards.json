@@ -219,7 +219,10 @@
     "bonus_type": "DM",
     "bonus_value": 20,
     "abilities": [
-      "魔術師の弾道"
+      {
+        "name": "魔術師の弾道",
+        "rarity": "Silver"
+      }
     ],
     "stats": {
       "ショートパス": 2.7,
