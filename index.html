@@ -247,8 +247,14 @@
                 </div>
                 
                 <!-- スキル/ボーナス -->
-                <div style="margin-top:5px;"><input id="editAbilityName" placeholder="スキル/アビ名" list="skillList" class="card-input"></div>
-                <div style="margin-top:10px; border:1px dashed #555; padding:5px; border-radius:4px;">
+<!-- 新しいスキル選択UI -->
+                <label style="font-size:0.7rem; color:#94a3b8; margin-top:10px; display:block;">習得スキル/アビリティ</label>
+                <div class="skill-selector-container">
+                    <input type="text" id="skillSearchInput" class="skill-search-input" placeholder="名前で検索して追加..." oninput="searchSkillCandidates(this.value)" onfocus="searchSkillCandidates(this.value)">
+                    <div id="skillSuggestions" class="skill-suggestions"></div>
+                </div>
+                <!-- 選択されたスキルがここに並ぶ -->
+                <div id="linkedSkillsList" class="linked-skills-list"></div>                <div style="margin-top:10px; border:1px dashed #555; padding:5px; border-radius:4px;">
                     <label style="font-size:0.7rem;">ボーナス条件</label>
                     <div id="editBonusList"></div>
                     <button class="btn btn-sm" onclick="addBonusRow()" style="margin-top:5px;">+ 条件追加</button>

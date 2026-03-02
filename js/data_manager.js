@@ -162,12 +162,15 @@ async function saveCardToGH() {
         const nc = { 
             title, name, rarity: document.getElementById('editRarity').value, 
             bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
-            abilities: [document.getElementById('editAbilityName').value], 
+            
+            // ★修正箇所: 入力欄の値ではなく、リスト変数を使用する
+            abilities: currentEditingSkills, 
+            
             stats,
             growth_rate: growthRate
         };
 
-        if (growthRate === 6) delete nc.growth_rate; // デフォルトは削除
+        if (growthRate === 6) delete nc.growth_rate;
 
         // 既存データの更新または新規追加
         // (カード名と称号が一致するものを更新)

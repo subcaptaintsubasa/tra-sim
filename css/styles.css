@@ -1121,3 +1121,81 @@ body[data-sim-selecting="true"] .drawer-overlay {
     font-weight: bold;
     color: var(--primary);
 }
+
+/* --- Admin: スキルセレクター用 --- */
+.skill-selector-container {
+    position: relative;
+    width: 100%;
+}
+
+.skill-search-input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #fff;
+    border-radius: 4px;
+}
+
+.skill-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 0 0 4px 4px;
+    z-index: 1000;
+    display: none; /* JSで制御 */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+}
+
+.skill-suggestion-item {
+    padding: 8px;
+    border-bottom: 1px solid #334155;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+.skill-suggestion-item:hover {
+    background: rgba(0, 242, 255, 0.1);
+}
+
+/* 選択済みスキルタグリスト */
+.linked-skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 8px;
+}
+
+.linked-skill-tag {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: #0f172a;
+    border-radius: 4px;
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+
+/* レアリティ別の色定義 (既存クラスと統一感を持たせる) */
+.bd-gold { border-left-color: #fbbf24; }
+.bd-silver { border-left-color: #cbd5e1; }
+.bd-bronze { border-left-color: #d97706; }
+
+.remove-skill-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 5px;
+}
+.remove-skill-btn:hover { color: #ff0000; }

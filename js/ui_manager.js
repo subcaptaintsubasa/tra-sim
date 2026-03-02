@@ -524,6 +524,116 @@ window.toggleSaEditorMode = () => {
     if(legacy) legacy.style.display = 'none';
 };
 
+// --- Admin: Skill Linker Logic ---
+
+// 編集中のスキルリスト (一時保存用)
+let currentEditingSkills = []; 
+
+// 1. 検索機能
+window.searchSkillCandidates = (text) => {
+    const container = document.getElementById('skillSuggestions');
+    if (!text) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const search = text.toLowerCase();
+    
+    // スキルDBとアビリティDBを結合して検索
+    // mapで種別(S/A)を付与しておく
+    const candidates = [
+        ...skillsDB.map(s => ({...s, type: 'S'})),
+        ...abilitiesDB.map(a => ({...a, type: 'A'}))
+    ].filter(item => item.name.toLowerCase().includes(search));
+
+    container.innerHTML = '';
+    
+    if (candidates.length === 0) {
+        container.innerHTML = '<div style="padding:8px; color:#aaa; font-size:0.7rem;">一致なし</div>';
+    } else {
+        candidates.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'skill-suggestion-item';
+            
+            // レアリティ表示
+            const r = item.rarity || 'Gold'; // デフォルトGold
+            const rClass = `sa-${r.toLowerCase()}`;
+            
+            div.innerHTML = `
+                <span class="sa-badge ${rClass}">${item.type}</span>
+                <span style="font-weight:bold;">${item.name}</span>
+                <span style="font-size:0.65rem; color:#aaa; margin-left:auto;">${r}</span>
+            `;
+            
+            div.onclick = () => {
+                addSkillToCard(item.name, r);
+                container.style.display = 'none';
+                document.getElementById('skillSearchInput').value = ''; // 入力クリア
+            };
+            
+            container.appendChild(div);
+        });
+    }
+    
+    container.style.display = 'block';
+};
+
+// 候補以外をクリックしたら閉じる処理
+document.addEventListener('click', (e) => {
+    const wrapper = document.querySelector('.skill-selector-container');
+    if (wrapper && !wrapper.contains(e.target)) {
+        document.getElementById('skillSuggestions').style.display = 'none';
+    }
+});
+
+// 2. 追加処理
+window.addSkillToCard = (name, rarity) => {
+    // 重複チェック
+    const exists = currentEditingSkills.some(s => s.name === name && s.rarity === rarity);
+    if (exists) return;
+
+    currentEditingSkills.push({ name, rarity });
+    renderLinkedSkills();
+};
+
+// 3. 削除処理
+window.removeSkillFromCard = (index) => {
+    currentEditingSkills.splice(index, 1);
+    renderLinkedSkills();
+};
+
+// 4. 描画処理
+window.renderLinkedSkills = () => {
+    const list = document.getElementById('linkedSkillsList');
+    if (!list) return;
+    list.innerHTML = '';
+
+    currentEditingSkills.forEach((item, idx) => {
+        const div = document.createElement('div');
+        const r = item.rarity || 'Gold';
+        // 左線の色クラス
+        const borderClass = r === 'Silver' ? 'bd-silver' : (r === 'Bronze' ? 'bd-bronze' : 'bd-gold');
+        // バッジクラス
+        const badgeClass = `sa-${r.toLowerCase()}`;
+        
+        // SかAか判定 (DB検索)
+        const isS = skillsDB.some(s => s.name === item.name && s.rarity === item.rarity);
+        const typeLabel = isS ? 'S' : 'A';
+
+        div.className = `linked-skill-tag ${borderClass}`;
+        div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="sa-badge ${badgeClass}">${typeLabel}</span>
+                <span style="font-weight:bold; font-size:0.8rem;">${item.name}</span>
+            </div>
+            <button class="remove-skill-btn" onclick="removeSkillFromCard(${idx})">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+        list.appendChild(div);
+    });
+};
+
     // --- Admin: Image Preview Logic ---
 window.previewCardImage = (input) => {
     const file = input.files[0];
@@ -619,14 +729,17 @@ window.loadCardToEditor = (d) => {
     document.getElementById('cardImgUpload').value = ''; // ファイル選択リセット
 
     if(!d) {
-        // 新規作成
+        // 新規作成時の初期化
         document.querySelectorAll('.edit-val').forEach(i => i.value = '');
         document.getElementById('editName').value = '';
         document.getElementById('editTitle').value = '';
-        document.getElementById('editAbilityName').value = '';
         document.getElementById('editBonusList').innerHTML = '';
         document.getElementById('editGrowth').value = "6"; 
         
+        // スキルリストリセット (新規作成時は空)
+        currentEditingSkills = [];
+        renderLinkedSkills();
+
         // プレビューリセット
         const prev = document.getElementById('editCardPreview');
         prev.src = '';
@@ -643,7 +756,25 @@ window.loadCardToEditor = (d) => {
     document.getElementById('editTitle').value = d.title;
     document.getElementById('editRarity').value = d.rarity;
     document.getElementById('editGrowth').value = d.growth_rate || "6";
-    document.getElementById('editAbilityName').value = d.abilities ? d.abilities[0] : '';
+
+    // --- スキルリストの展開 (新旧データ構造対応) ---
+    currentEditingSkills = []; // 初期化
+    
+    if (d.abilities && Array.isArray(d.abilities)) {
+        d.abilities.forEach(ab => {
+            if (typeof ab === 'object' && ab !== null) {
+                // 新データ構造 ({name, rarity})
+                currentEditingSkills.push({ name: ab.name, rarity: ab.rarity });
+            } else {
+                // 旧データ構造 (文字列のみ) -> カードのレアリティから推測して変換
+                // SSRならGold, それ以外(SR)ならSilverとする
+                const guessedRarity = (d.rarity === 'SSR') ? 'Gold' : 'Silver';
+                currentEditingSkills.push({ name: ab, rarity: guessedRarity });
+            }
+        });
+    }
+    renderLinkedSkills(); // 描画実行
+    // ----------------------------------
     
     // ステータス
     document.querySelectorAll('.edit-val').forEach(i => i.value = d.stats[i.dataset.stat] || '');
