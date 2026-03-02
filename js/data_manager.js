@@ -218,9 +218,11 @@ window.saveSA = async () => {
     
     const editor = document.getElementById('saEditor');
     const originalName = editor.dataset.originalName;
-    // datasetには "undefined" という文字列で入っている可能性があるためケアする
+    // datasetから取得 (文字列の "undefined" 等が入る可能性を考慮して空文字化)
     let originalRarity = editor.dataset.originalRarity;
-    if (originalRarity === "undefined" || originalRarity === "null") originalRarity = "";
+    if (!originalRarity || originalRarity === "undefined" || originalRarity === "null") {
+        originalRarity = "";
+    }
 
     const isEditMode = editor.dataset.isEditMode === "true";
 
@@ -230,6 +232,7 @@ window.saveSA = async () => {
     if(btn) { btn.disabled = true; btn.innerText = "処理中..."; }
 
     try {
+        // 対象の配列を選択
         let targetDB = (type === 'skill') ? skillsDB : abilitiesDB;
         const fileName = (type === 'skill') ? 'skills.json' : 'abilities.json';
 
@@ -254,82 +257,77 @@ window.saveSA = async () => {
             data.targets = targets;
         }
 
-        // 2. 編集モード時：古いデータを確実に削除
-        if (isEditMode) {
-            const isOldDataMatch = (item) => {
-                // 名前チェック
-                if (item.name !== originalName) return false;
-                
-                // レアリティチェック (未定義/空文字を等価として扱う)
-                const itemR = item.rarity || "";
-                const orgR = originalRarity || "";
-                
-                return itemR === orgR;
-            };
+        // =========================================================
+        // DB操作: 古いデータを削除して、新しいデータを追加する
+        // =========================================================
 
-            // 古いデータに一致「しない」ものだけを残す
-            if (type === 'skill') {
-                skillsDB = skillsDB.filter(s => !isOldDataMatch(s));
-                targetDB = skillsDB;
-            } else {
-                abilitiesDB = abilitiesDB.filter(a => !isOldDataMatch(a));
-                targetDB = abilitiesDB;
-            }
-        }
-
-        // 3. 新規追加（同キーの上書き含む）
-        // 念のため、これから追加するキーと完全に一致するものが残っていないか再確認して削除（重複防止）
-        const isNewKeyMatch = (item) => {
-            const itemR = item.rarity || "";
-            const newR = newRarity || "";
-            return item.name === newName && itemR === newR;
+        // ヘルパー: アイテムが条件に一致するか判定
+        const isMatch = (item, name, rarity) => {
+            const itemR = item.rarity || ""; // undefined/null は空文字扱い
+            const targetR = rarity || "";
+            return item.name === name && itemR === targetR;
         };
-        
-        if (type === 'skill') {
-            skillsDB = skillsDB.filter(s => !isNewKeyMatch(s));
-            skillsDB.push(data);
-            targetDB = skillsDB;
-        } else {
-            abilitiesDB = abilitiesDB.filter(a => !isNewKeyMatch(a));
-            abilitiesDB.push(data);
-            targetDB = abilitiesDB;
+
+        // 2-1. 編集モードの場合、編集前の元データを削除する
+        if (isEditMode) {
+            targetDB = targetDB.filter(item => !isMatch(item, originalName, originalRarity));
         }
 
+        // 2-2. 重複防止: これから保存するデータと同じキーを持つデータも削除する
+        // (名前を変えた結果、既存の別データと衝突する場合の上書き用)
+        targetDB = targetDB.filter(item => !isMatch(item, newName, newRarity));
+
+        // 2-3. 新しいデータを追加
+        targetDB.push(data);
+
+        // グローバル変数への反映 (参照切れ防止のため書き戻す)
+        if (type === 'skill') skillsDB = targetDB;
+        else abilitiesDB = targetDB;
+
+        // GitHub保存
         await pushToGH(fileName, targetDB, `Update ${type}: ${newName} (${newRarity})`);
 
-        // 4. カード連動更新 (変更があった場合のみ)
-        if (isEditMode && (originalName !== newName || originalRarity !== newRarity) && 
+
+        // 3. カードデータの連動更新 (Cascade Update)
+        // 名前やレアリティが変わった場合のみ確認
+        const hasKeyChanged = (originalName !== newName) || (originalRarity !== newRarity);
+        
+        if (isEditMode && hasKeyChanged && 
             confirm(`この${type}を持っているカードのデータも自動更新しますか？\n(対象: ${originalName})`)) {
             
             let updatedCardCount = 0;
             cardsDB.forEach(card => {
                 if (!card.abilities) return;
                 let cardChanged = false;
+                
                 card.abilities = card.abilities.map(ab => {
-                    // 文字列(旧) or オブジェクト(新) から名前とレアリティを抽出
-                    const currentSaName = (typeof ab === 'string') ? ab : ab.name;
-                    const currentSaRarity = (typeof ab === 'string') ? "" : (ab.rarity || "");
+                    // カード内のスキルデータから名前とレアリティを抽出
+                    const currentName = (typeof ab === 'string') ? ab : ab.name;
+                    const currentRarity = (typeof ab === 'string') ? "" : (ab.rarity || "");
                     
-                    // 編集前の情報と比較 (レアリティなしも等価判定)
-                    const orgR = originalRarity || "";
-
-                    if (currentSaName === originalName && currentSaRarity === orgR) {
+                    // 編集前の元データと一致するか？
+                    if (currentName === originalName && currentRarity === originalRarity) {
                         cardChanged = true;
+                        // 新しいデータに置き換え
                         return { name: newName, rarity: newRarity };
                     }
                     return ab;
                 });
+
                 if (cardChanged) updatedCardCount++;
             });
 
             if (updatedCardCount > 0) {
                 await pushToGH('cards.json', cardsDB, `Cascading update: ${newName}`);
+                alert(`保存完了しました。\n関連するカード ${updatedCardCount}枚 の情報も更新しました。`);
+            } else {
+                alert("保存完了しました。(関連カードなし)");
             }
+        } else {
+            alert("保存完了しました。");
         }
 
-        alert("保存完了しました。");
-        
-        // リセット処理
+        // 4. 画面リセット
         editor.dataset.isEditMode = "false";
         delete editor.dataset.originalName;
         delete editor.dataset.originalRarity;
