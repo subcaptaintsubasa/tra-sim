@@ -138,25 +138,15 @@ window.expandSelection = () => {
 // --- ターゲットボタン選択 UI ---
 
 window.updateAutoComplete = () => {
-    // 3.2. 所持のみフィルタ
+    // ... (既存のフィルタロジック) ...
     const onlyOwned = document.getElementById('chkOnlyOwnedSkills')?.checked || false;
-    
-    // 所持しているスキル/アビリティのセットを作成
     const ownedSkills = new Set();
     const ownedAbilities = new Set();
     if (onlyOwned) {
-        Object.values(myCards).forEach(mc => {
-            if (mc.owned) {
-                // キーから名前を復元するのは困難なため、cardsDB全体を走査してownedなものを探す
-                // ※少し非効率ですが、データ量が少なければ許容範囲
-            }
-        });
-        // 効率化のため、cardsDBを回して myCards[key].owned をチェック
         cardsDB.forEach(c => {
             const key = c.name + "_" + c.title;
             if (myCards[key]?.owned && c.abilities) {
                 c.abilities.forEach(a => {
-                    // 名前だけでS/A区別がつかないため、両方のセット候補に入れる
                     ownedSkills.add(a);
                     ownedAbilities.add(a);
                 });
@@ -168,10 +158,16 @@ window.updateAutoComplete = () => {
     if (sContainer) {
         sContainer.innerHTML = '';
         skillsDB.forEach(s => {
-            if (onlyOwned && !ownedSkills.has(s.name)) return; // フィルタ
+            if (onlyOwned && !ownedSkills.has(s.name)) return;
             const btn = document.createElement('button');
             const isSelected = selectedTargetSkills.includes(s.name);
+            // レアリティクラス付与
+            const rarityClass = s.rarity ? `sa-${s.rarity.toLowerCase()}` : 'sa-gold'; // デフォルトGold
+            // 選択状態のスタイル調整 (背景色などをレアリティ色に合わせるか、既存の黄色/紫を維持しつつ枠線を出すか)
+            // ここではシンプルに既存クラス + ボーダー色変更とする
             btn.className = `tag-btn-select ${isSelected ? 'selected-skill' : ''}`;
+            btn.style.borderLeft = `4px solid ${s.rarity==='Silver'?'#cbd5e1':(s.rarity==='Bronze'?'#d97706':'#fbbf24')}`;
+            
             btn.innerText = s.name;
             btn.onclick = () => toggleTarget('skill', s.name);
             sContainer.appendChild(btn);
@@ -182,10 +178,14 @@ window.updateAutoComplete = () => {
     if (aContainer) {
         aContainer.innerHTML = '';
         abilitiesDB.forEach(a => {
-            if (onlyOwned && !ownedAbilities.has(a.name)) return; // フィルタ
+            if (onlyOwned && !ownedAbilities.has(a.name)) return;
             const btn = document.createElement('button');
             const isSelected = selectedTargetAbilities.includes(a.name);
+            const rarityClass = a.rarity ? `sa-${a.rarity.toLowerCase()}` : 'sa-gold';
+            
             btn.className = `tag-btn-select ${isSelected ? 'selected-ability' : ''}`;
+            btn.style.borderLeft = `4px solid ${a.rarity==='Silver'?'#cbd5e1':(a.rarity==='Bronze'?'#d97706':'#fbbf24')}`;
+            
             btn.innerText = a.name;
             btn.onclick = () => toggleTarget('ability', a.name);
             aContainer.appendChild(btn);
@@ -320,10 +320,9 @@ function renderResults(totals_x10, saList, missingTargets) {
         }
     });
 
-    const saDiv = document.getElementById('saResults');
+   const saDiv = document.getElementById('saResults');
     if (!saDiv) return;
     let header = '<h4>予定スキル/アビ</h4>';
-    
     if(missingTargets.length > 0) {
         header += `<div style="color:#ef4444; font-size:0.7rem;">⚠ 不足: ${missingTargets.join(', ')}</div>`;
     } else if (selectedTargetSkills.length > 0 || selectedTargetAbilities.length > 0) {
@@ -331,26 +330,32 @@ function renderResults(totals_x10, saList, missingTargets) {
     }
     saDiv.innerHTML = header;
 
+    // (renderResults関数内、最後のforEachループ部分)
     saList.forEach(name => {
-        const s = skillsDB.find(i=>i.name===name), a = abilitiesDB.find(i=>i.name===name);
+        // 名前から検索 (複数ある場合はGold優先)
+        const s = skillsDB.find(i => i.name === name);
+        const a = abilitiesDB.find(i => i.name === name);
+        const target = s || a;
+        
+        // レアリティ判定 (データにない場合はGold)
+        const rarity = target ? (target.rarity || 'Gold') : 'Gold';
+        const type = s ? 'S' : 'A';
+        const typeBadge = `<span class="sa-badge sa-${rarity.toLowerCase()}" style="margin-right:8px;">${type}</span>`;
+
         const isTarget = selectedTargetSkills.includes(name) || selectedTargetAbilities.includes(name);
         const hlStyle = isTarget ? 'border:1px solid var(--accent); background:rgba(34,197,94,0.1);' : '';
         
-        // 【修正】詳細テキスト（valueやcondition）を削除し、タグと名前のみにする
-        if(s) {
-            saDiv.innerHTML += `
-            <div class="clickable-sa" onclick="openSaModal('${name}')" style="display:flex; align-items:center; margin-bottom:5px; width:100%; padding:6px; border-radius:4px; border:1px solid #334155; background:#1e293b; ${hlStyle}">
-                <span class="tag tag-skill" style="margin-right:8px;">S</span>
-                <b style="font-size:0.85rem;">${name}</b>
-            </div>`;
-        }
-        if(a) {
-            saDiv.innerHTML += `
-            <div class="clickable-sa" onclick="openSaModal('${name}')" style="display:flex; align-items:center; margin-bottom:5px; width:100%; padding:6px; border-radius:4px; border:1px solid #334155; background:#1e293b; ${hlStyle}">
-                <span class="tag tag-ability" style="margin-right:8px;">A</span>
-                <b style="font-size:0.85rem;">${name}</b>
-            </div>`;
-        }
+        // シミュレータ結果表示では、とりあえず完凸(Lv5)として詳細を表示するか、
+        // もしくは「そのカードの現在のレベル」を表示するのが理想ですが、
+        // ここでは「複数のカードから発動する可能性がある」ため特定が難しいです。
+        // 仕様として「Lv5 (最大値)」を表示することにします。
+        const clickAction = `openSaModal('${name}', '${rarity}', 5)`;
+
+        saDiv.innerHTML += `
+        <div class="clickable-sa" onclick="${clickAction}" style="display:flex; align-items:center; margin-bottom:5px; width:100%; padding:6px; border-radius:4px; border:1px solid #334155; background:#1e293b; ${hlStyle}">
+            ${typeBadge}
+            <b style="font-size:0.85rem;">${name}</b>
+        </div>`;
     });
 }
 function renderSimSlots(pos, style) {
@@ -432,35 +437,145 @@ window.renderCardList = () => {
     const l = document.getElementById('masterList'); 
     if (!l) return;
     l.innerHTML = ''; 
-    cardsDB.forEach((c,idx) => l.innerHTML += `<div class="list-item"><b>${c.name}</b><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadCardToEditor(cardsDB[${idx}])">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteCard(${idx})">削除</button></div></div>`); 
+    
+    // インデックス逆順（新しい順）等が見やすいが、仕様書通りインデックス順で表示
+    cardsDB.forEach((c, idx) => {
+        const imgPath = `img/cards/${c.name}_${c.title}.png`;
+        const div = document.createElement('div');
+        div.className = 'admin-card-item';
+        div.innerHTML = `
+            <img src="${imgPath}" class="admin-card-thumb" onerror="this.src='https://placehold.jp/333333/ffffff/100x133.png?text=NoImg'">
+            <div style="padding:5px; font-size:0.75rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${c.name}
+            </div>
+            <div style="padding:0 5px 25px 5px; font-size:0.6rem; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${c.title}
+            </div>
+            <div class="admin-card-tools">
+                <button class="btn btn-sm btn-primary" onclick="loadCardToEditor(cardsDB[${idx}])">編集</button>
+                <button class="btn btn-sm" style="background:#ef4444;" onclick="deleteCard(${idx})">削除</button>
+            </div>
+        `;
+        l.appendChild(div);
+    });
 };
 
 window.renderSAList = () => { 
     const l = document.getElementById('saList'); 
     if (!l) return;
     l.innerHTML = ''; 
-    skillsDB.forEach(s => l.innerHTML += `<div class="list-item"><span><span class="tag tag-skill">S</span>${s.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('skill','${s.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('skill','${s.name}')">削除</button></div></div>`); 
-    abilitiesDB.forEach(a => l.innerHTML += `<div class="list-item"><span><span class="tag tag-ability">A</span>${a.name}</span><div style="display:flex;gap:5px;"><button class="btn-edit" onclick="loadSA('ability','${a.name}')">編集</button><button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('ability','${a.name}')">削除</button></div></div>`); 
+    
+    const renderItem = (item, type) => {
+        // 旧データ判定
+        const isLegacy = !item.rarity || (type==='skill' && !item.params);
+        const warning = isLegacy ? '<i class="fa-solid fa-triangle-exclamation warning-icon" title="旧データ: 要更新"></i>' : '';
+        const rarityClass = item.rarity ? `sa-${item.rarity.toLowerCase()}` : '';
+        const rarityLabel = item.rarity ? item.rarity[0] : '-';
+        
+        // ユニークID生成 (名前+レアリティ)
+        const uid = `${type}::${item.name}::${item.rarity||'legacy'}`;
+
+        return `
+        <div class="list-item">
+            <div style="display:flex; align-items:center;">
+                <span class="sa-type-badge ${rarityClass}">${rarityLabel}</span>
+                <span class="tag ${type==='skill'?'tag-skill':'tag-ability'}">${type==='skill'?'S':'A'}</span>
+                <span style="font-weight:bold; font-size:0.85rem;">${item.name}</span>
+                ${warning}
+            </div>
+            <div style="display:flex;gap:5px;">
+                <button class="btn-edit" onclick="loadSA('${type}','${item.name}', '${item.rarity||''}')">編集</button>
+                <button class="btn-edit" style="background:#ef4444;" onclick="deleteSA('${type}','${item.name}', '${item.rarity||''}')">削除</button>
+            </div>
+        </div>`;
+    };
+
+    skillsDB.forEach(s => l.innerHTML += renderItem(s, 'skill')); 
+    abilitiesDB.forEach(a => l.innerHTML += renderItem(a, 'ability')); 
 };
 
 window.initEditors = () => {
     const grid = document.getElementById('editStatsGrid');
-    if (!grid) return;
-    const allStats = [...new Set([...STATS, ...GK_STATS])];
-    grid.innerHTML = '';
-    allStats.forEach(s => grid.innerHTML += `<div class="stat-item ${GK_STATS.includes(s)?'gk-stat':''}"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`);
-    
-    const saTgt = document.getElementById('saTargets');
-    if (saTgt) {
-        saTgt.innerHTML = '';
-        allStats.forEach(s => saTgt.innerHTML += `<label style="font-size:0.7rem;"><input type="checkbox" value="${s}" name="sa_tgt"> ${s}</label>`);
+    if (grid) {
+        const allStats = [...new Set([...STATS, ...GK_STATS])];
+        grid.innerHTML = '';
+        allStats.forEach(s => grid.innerHTML += `<div class="stat-item ${GK_STATS.includes(s)?'gk-stat':''}"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`);
     }
     
-    const areaGrid = document.getElementById('saAreaGrid');
+    // アビリティ用パラメータチェックボックス生成
+    const saChecks = document.getElementById('saParamChecks');
+    if (saChecks) {
+        saChecks.innerHTML = '';
+        const allParams = [...STATS, ...GK_STATS];
+        allParams.forEach(s => {
+            saChecks.innerHTML += `<label style="font-size:0.7rem; display:flex; align-items:center; gap:4px;"><input type="checkbox" value="${s}" class="sa-param-check"> ${s}</label>`;
+        });
+    }
+    
+     const areaGrid = document.getElementById('saAreaGrid');
     if (areaGrid) {
         areaGrid.innerHTML = '';
         for(let i=0; i<9; i++) areaGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
     }
+};
+
+window.toggleSaEditorMode = () => {
+    const type = document.getElementById('saType').value;
+    document.getElementById('abilityEditorArea').style.display = (type === 'ability') ? 'block' : 'none';
+    document.getElementById('skillEditorArea').style.display = (type === 'skill') ? 'block' : 'none';
+    
+    // 旧ターゲット表示の制御
+    const legacy = document.getElementById('saTargetsLegacy');
+    if(legacy) legacy.style.display = 'none';
+};
+
+    // --- Admin: Image Preview Logic ---
+window.previewCardImage = (input) => {
+    const file = input.files[0];
+    const preview = document.getElementById('editCardPreview');
+    if (!file || !preview) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        preview.nextElementSibling.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+};
+
+// --- Admin: Card Navigation ---
+let currentEditCardIndex = -1;
+let isCardEditorDirty = false;
+
+// フォームの入力監視を追加
+function watchCardFormChanges() {
+    const inputs = document.querySelectorAll('.card-input, .edit-val, .edit-b-val, #cardImgUpload');
+    inputs.forEach(input => {
+        input.addEventListener('change', () => { isCardEditorDirty = true; });
+        input.addEventListener('input', () => { isCardEditorDirty = true; });
+    });
+}
+
+window.navigateCard = (direction) => {
+    if (isCardEditorDirty) {
+        if (!confirm("変更が保存されていませんが移動しますか？")) return;
+    }
+
+    if (cardsDB.length === 0) return;
+
+    // 未選択時は先頭へ
+    if (currentEditCardIndex === -1) {
+        currentEditCardIndex = 0;
+    } else {
+        currentEditCardIndex += direction;
+    }
+
+    // ループ制御
+    if (currentEditCardIndex < 0) currentEditCardIndex = cardsDB.length - 1;
+    if (currentEditCardIndex >= cardsDB.length) currentEditCardIndex = 0;
+
+    loadCardToEditor(cardsDB[currentEditCardIndex]);
 };
 
 window.showTab = (id) => { 
@@ -496,20 +611,49 @@ window.selectSlot = (i) => {
 };
 
 window.loadCardToEditor = (d) => {
+    // インデックス特定
+    if(d) {
+        currentEditCardIndex = cardsDB.findIndex(x => x.name === d.name && x.title === d.title);
+    } else {
+        currentEditCardIndex = -1;
+    }
+    document.getElementById('editIndexDisplay').innerText = currentEditCardIndex !== -1 ? currentEditCardIndex : 'NEW';
+
+    // フォームリセット
+    isCardEditorDirty = false;
+    document.getElementById('cardImgUpload').value = ''; // ファイル選択リセット
+
     if(!d) {
+        // 新規作成
         document.querySelectorAll('.edit-val').forEach(i => i.value = '');
+        document.getElementById('editName').value = '';
+        document.getElementById('editTitle').value = '';
+        document.getElementById('editAbilityName').value = '';
         document.getElementById('editBonusList').innerHTML = '';
-        document.getElementById('editGrowth').value = "6"; // 新規作成時はデフォルト6倍
+        document.getElementById('editGrowth').value = "6"; 
+        
+        // プレビューリセット
+        const prev = document.getElementById('editCardPreview');
+        prev.src = '';
+        prev.style.display = 'none';
+        prev.nextElementSibling.style.display = 'block';
+        
+        watchCardFormChanges();
+        showTab('admin-card');
         return;
     }
+
+    // 既存データロード
     document.getElementById('editName').value = d.name;
     document.getElementById('editTitle').value = d.title;
     document.getElementById('editRarity').value = d.rarity;
-    
     document.getElementById('editGrowth').value = d.growth_rate || "6";
-
     document.getElementById('editAbilityName').value = d.abilities ? d.abilities[0] : '';
+    
+    // ステータス
     document.querySelectorAll('.edit-val').forEach(i => i.value = d.stats[i.dataset.stat] || '');
+    
+    // ボーナス
     const bList = document.getElementById('editBonusList');
     bList.innerHTML = '';
     if (d.bonuses) {
@@ -517,6 +661,17 @@ window.loadCardToEditor = (d) => {
     } else if (d.bonus_type) {
         addBonusRow(d.bonus_type, d.bonus_value);
     }
+
+    // 画像プレビュー (GitHub URL)
+    const prev = document.getElementById('editCardPreview');
+    prev.src = `img/cards/${d.name}_${d.title}.png`;
+    prev.style.display = 'block';
+    prev.nextElementSibling.style.display = 'none';
+
+    // スクロール
+    document.getElementById('cardEditor').scrollIntoView({behavior: "smooth"});
+    
+    watchCardFormChanges();
     showTab('admin-card');
 };
 
@@ -529,21 +684,94 @@ window.addBonusRow = (type='', val='') => {
     document.getElementById('editBonusList').appendChild(div);
 };
 
-window.loadSA = (type, name) => { 
+// --- スキル/アビリティ編集系 ---
+
+window.toggleSaEditorMode = () => {
+    const type = document.getElementById('saType').value;
+    document.getElementById('abilityEditorArea').style.display = (type === 'ability') ? 'block' : 'none';
+    document.getElementById('skillEditorArea').style.display = (type === 'skill') ? 'block' : 'none';
+    // 旧ターゲット表示はとりあえず残すが非推奨
+    document.getElementById('saTargetsLegacy').style.display = 'none'; 
+};
+
+window.setAbilityCondition = (cond) => {
+    document.getElementById('saCondition').value = cond;
+    document.querySelectorAll('.cond-select-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText === cond);
+    });
+};
+
+window.addSkillParamRow = (target='', vals=[]) => {
+    const container = document.getElementById('saParamRows');
+    const div = document.createElement('div');
+    div.className = 'param-input-group';
+    
+    // パラメータ選択肢生成
+    let options = STATS.map(s => `<option>${s}</option>`).join('');
+    // GK用も追加
+    options += GK_STATS.map(s => `<option>${s}</option>`).join('');
+
+    const v1 = vals[0] || ''; const v2 = vals[1] || ''; const v3 = vals[2] || '';
+    const v4 = vals[3] || ''; const v5 = vals[4] || '';
+
+    div.innerHTML = `
+        <select style="font-size:0.7rem; padding:2px;"><option value="">Param</option>${options}</select>
+        <input type="number" placeholder="L1" value="${v1}">
+        <input type="number" placeholder="L2" value="${v2}">
+        <input type="number" placeholder="L3" value="${v3}">
+        <input type="number" placeholder="L4" value="${v4}">
+        <input type="number" placeholder="L5" value="${v5}">
+        <button class="btn btn-sm" style="background:#ef4444; padding:0;" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    // Select値セット
+    if(target) div.querySelector('select').value = target;
+    
+    container.appendChild(div);
+};
+
+window.loadSA = (type, name, rarity) => { 
     const db = type === 'skill' ? skillsDB : abilitiesDB;
-    const item = db.find(i => i.name === name); 
+    // 名前とレアリティで検索
+    const item = db.find(i => i.name === name && (!rarity || i.rarity === rarity)); 
     if(!item) return; 
-    document.getElementById('saType').value = type; 
-    toggleAreaGrid(); 
+
+    document.getElementById('saType').value = type;
     document.getElementById('saName').value = item.name; 
-    document.getElementById('saValue').value = item.value || ''; 
-    document.getElementById('saCondition').value = item.condition || ''; 
-    document.querySelectorAll('input[name="sa_tgt"]').forEach(c => c.checked = item.targets?.includes(c.value)); 
-    const cells = document.querySelectorAll('.area-cell'); 
-    cells.forEach((c, idx) => { 
-        c.classList.remove('active'); 
-        if(type === 'skill' && item.area?.[idx]) c.classList.add('active'); 
-    }); 
+    document.getElementById('saRarity').value = item.rarity || 'Gold';
+
+    toggleSaEditorMode();
+
+    if (type === 'skill') {
+        document.getElementById('saSkillType').value = item.skill_type || '';
+        document.getElementById('saNote').value = item.note || '';
+        
+        const pContainer = document.getElementById('saParamRows');
+        pContainer.innerHTML = '';
+        if (item.params && Array.isArray(item.params)) {
+            item.params.forEach(p => addSkillParamRow(p.stat, p.values));
+        } else if (item.value && item.targets) {
+            // 旧データ互換
+            item.targets.forEach(t => addSkillParamRow(t, [item.value, item.value, item.value, item.value, item.value]));
+        } else {
+            addSkillParamRow();
+        }
+
+        const cells = document.querySelectorAll('.area-cell'); 
+        cells.forEach((c, idx) => { 
+            c.classList.remove('active'); 
+            if(item.area?.[idx]) c.classList.add('active'); 
+        });
+
+    } else {
+        // Ability
+        setAbilityCondition(item.condition || '');
+        // チェックボックス反映
+        document.querySelectorAll('.sa-param-check').forEach(c => {
+            c.checked = (item.targets && item.targets.includes(c.value));
+        });
+    }
+
     showTab('admin-skill');
 };
 
@@ -1003,54 +1231,143 @@ function renderDetailSkills(card) {
     }
 }
 
-window.openSaModal = (name) => {
-    // データベースから検索
-    const skill = skillsDB.find(s => s.name === name);
-    const ability = abilitiesDB.find(a => a.name === name);
-    const target = skill || ability;
+// --- スキル/アビリティ詳細モーダル (共通・完全生成版) ---
+window.openSaModal = (name, rarity = null, level = 1) => {
+    // 1. データ検索
+    // rarityが指定されている場合はそれを優先、なければ名前で検索
+    let skill = null, ability = null;
+    
+    if (rarity) {
+        skill = skillsDB.find(s => s.name === name && s.rarity === rarity);
+        ability = abilitiesDB.find(a => a.name === name && a.rarity === rarity);
+    }
+    
+    // フォールバック: 名前だけで検索 (旧データやViewモード用)
+    if (!skill && !ability) {
+        skill = skillsDB.find(s => s.name === name);
+        ability = abilitiesDB.find(a => a.name === name);
+    }
 
-    if (!target) return; // データがない場合は何もしない
+    const target = skill || ability;
+    if (!target) return; // データが見つからない場合
 
     const isSkill = !!skill;
+    const itemRarity = target.rarity || (rarity ? rarity : 'Gold'); // デフォルトGold
+    // レベルは1~5の範囲に収める (Admin/View等の指定に対応)
+    const skillLv = Math.max(1, Math.min(5, level ? level : 1));
 
-    // タイトルと種別
-    document.getElementById('saModalTitle').innerText = name;
-    const typeEl = document.getElementById('saModalType');
-    typeEl.className = `tag ${isSkill ? 'tag-skill' : 'tag-ability'}`;
-    typeEl.innerText = isSkill ? 'SKILL' : 'ABILITY';
+    // 2. モーダル要素の取得と初期化
+    const modal = document.getElementById('saModal');
+    const headerTitle = document.getElementById('saModalTitle');
+    const body = modal.querySelector('.modal-body');
 
-    // 数値
-    document.getElementById('saModalValue').innerText = 
-        (target.value ? target.value : '0') + (isSkill ? '%' : '');
+    // タイトル設定
+    headerTitle.innerText = `${name} (Lv.${skillLv})`;
 
-    // 対象ステータス
-    document.getElementById('saModalTargets').innerText = 
-        (target.targets && target.targets.length > 0) ? target.targets.join(', ') : 'なし';
+    // 3. コンテンツの生成 (DOM依存を排除し、HTML文字列で構築)
+    
+    // バッジ用クラス
+    const badgeClass = `sa-badge sa-${itemRarity.toLowerCase()}`;
+    const typeLabel = isSkill ? 'SKILL' : 'ABILITY';
 
-    // 条件 (アビリティのみ)
-    const condBox = document.getElementById('saModalConditionBox');
-    if (!isSkill && target.condition) {
-        condBox.style.display = 'block';
-        document.getElementById('saModalCondition').innerText = target.condition;
+    let html = `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; border-bottom:1px solid #334155; padding-bottom:10px;">
+            <span class="${badgeClass}" style="font-size:0.9rem; padding:4px 8px;">${typeLabel}</span>
+            <div style="font-weight:bold; font-size:1.2rem;">${target.name}</div>
+        </div>
+    `;
+
+    if (isSkill) {
+        // --- SKILL ---
+        if (target.note) {
+            html += `<div style="font-size:0.8rem; color:#ccc; margin-bottom:10px; white-space:pre-wrap;">${target.note}</div>`;
+        } else if (target.skill_type) {
+            html += `<div style="font-size:0.8rem; color:#ccc; margin-bottom:10px;">タイプ: ${target.skill_type}</div>`;
+        }
+
+        html += `<div class="card-box">`;
+        if (target.params && target.params.length > 0) {
+            // 新仕様: パラメータ配列
+            target.params.forEach(p => {
+                // Lv配列から該当レベルの値を取得 (インデックスは Lv-1)
+                const val = p.values[skillLv - 1] || 0;
+                html += `
+                <div class="sa-modal-param-row">
+                    <span style="color:#ccc;">${p.stat}</span>
+                    <span class="sa-modal-val">+${val}%</span>
+                </div>`;
+            });
+        } else if (target.value) { 
+            // 旧データ互換
+            const tText = (target.targets || []).join(', ');
+            html += `
+            <div class="sa-modal-param-row">
+                <span style="color:#ccc;">${tText}</span>
+                <span class="sa-modal-val">+${target.value}%</span>
+            </div>`;
+        } else {
+            html += `<div style="color:#666; font-size:0.8rem;">効果設定なし</div>`;
+        }
+        html += `</div>`;
+
+        // 発動エリア
+        if (target.area) {
+            html += `<div style="text-align:center; margin-top:15px;">
+                <label style="font-size:0.7rem; color:#94a3b8;">発動エリア</label>
+                <div class="area-grid" id="saModalAreaGridRender" style="margin:5px auto;"></div>
+            </div>`;
+        }
+
     } else {
-        condBox.style.display = 'none';
+        // --- ABILITY ---
+        const condition = target.condition || 'なし';
+        html += `
+        <div class="card-box" style="margin-bottom:10px; background:rgba(167, 139, 250, 0.1); border-color:var(--ability);">
+            <label style="font-size:0.7rem; color:var(--ability);">発動条件</label>
+            <div style="font-weight:bold; font-size:0.9rem;">${condition}</div>
+        </div>`;
+
+        // アビリティ値の自動計算 (config.jsのテーブル参照)
+        const table = ABILITY_GROWTH_TABLE[itemRarity] || ABILITY_GROWTH_TABLE["Gold"];
+        const val = table[skillLv - 1]; // Lv1->index0
+
+        html += `<div class="card-box"><label style="font-size:0.7rem; color:#94a3b8; margin-bottom:5px; display:block;">効果パラメータ</label>`;
+        
+        if (target.targets && target.targets.length > 0) {
+            target.targets.forEach(t => {
+                html += `
+                <div class="sa-modal-param-row">
+                    <span style="color:#ccc;">${t}</span>
+                    <span class="sa-modal-val">+${val}</span>
+                </div>`;
+            });
+        } else {
+            html += `<div style="font-size:0.8rem; color:#666;">対象パラメータなし</div>`;
+        }
+        html += `</div>`;
+        
+        html += `<div style="margin-top:5px; text-align:right; font-size:0.7rem; color:#64748b;">
+            Base: ${itemRarity} Table (Lv.${skillLv})
+        </div>`;
     }
 
-    // エリア (スキルのみ)
-    const areaBox = document.getElementById('saModalAreaBox');
+    // HTML流し込み
+    body.innerHTML = html;
+
+    // エリアグリッドの描画 (HTML挿入後に行う)
     if (isSkill && target.area) {
-        areaBox.style.display = 'block';
-        const grid = document.getElementById('saModalAreaGrid');
-        grid.innerHTML = '';
-        target.area.forEach(isActive => {
-            grid.innerHTML += `<div class="area-cell ${isActive ? 'active' : ''}"></div>`;
-        });
-    } else {
-        areaBox.style.display = 'none';
+        setTimeout(() => {
+            const grid = document.getElementById('saModalAreaGridRender');
+            if (grid) {
+                grid.innerHTML = '';
+                target.area.forEach(isActive => {
+                    grid.innerHTML += `<div class="area-cell ${isActive ? 'active' : ''}"></div>`;
+                });
+            }
+        }, 0);
     }
 
-    // 表示
-    document.getElementById('saModal').style.display = 'flex';
+    modal.style.display = 'flex';
 };
 
 window.closeSaModal = () => {

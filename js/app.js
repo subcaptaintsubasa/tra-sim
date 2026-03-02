@@ -421,10 +421,20 @@ window.openMyCardDetailModal = (item, fromSim = false) => {
 window.renderMyCardModalBody = (userData) => {
     if (!currentModalItem) return;
     const c = currentModalItem.original;
+    const rarity = c.rarity; // 'SSR' or 'SR'
+    
+    // カード情報から「スキルのレアリティ」を推測 (現状カードデータにはないため、カードのレアリティに合わせる運用とする)
+    // ※Admin運用で「カードレアリティ=スキルレアリティ」とする前提。
+    // 金=SSR, 銀=SR とする。
+    const saRarity = (rarity === 'SSR') ? 'Gold' : 'Silver'; 
+
     const imgPath = `img/cards/${c.name}_${c.title}.png`;
     const currentLevel = userData.owned ? parseInt(userData.level) : 1;
     const maxLevel = c.rarity === 'SSR' ? 50 : 45;
     const stats = getCardStatsAtLevel(c, currentLevel, null, null, 1.0);
+
+    // スキルLv計算
+    const skillLv = getSkillLevelFromCardLevel(rarity, currentLevel);
 
     const levels = (c.rarity === 'SSR') ? [30, 35, 40, 45, 50] : [25, 30, 35, 40, 45];
     const labels = ["無凸", "1凸", "2凸", "3凸", "完凸"];
@@ -435,6 +445,26 @@ window.renderMyCardModalBody = (userData) => {
         presetBtns += `<button class="lvl-btn ${active}" data-lvl="${lvl}" onclick="updateMyCardLevel(${lvl})">${labels[idx]}<br>(${lvl})</button>`;
     });
     presetBtns += '</div>';
+
+    // スキルリスト生成
+    let skillListHtml = '';
+    if (c.abilities && c.abilities.length > 0) {
+        c.abilities.forEach(name => {
+            // ここでスキルかアビリティか判定したいが、名前だけでは不明。
+            // openSaModal内でよしなに判定させるため、ここでは表示のみ構築。
+            // 暫定的にDBから引いてタイプ判定だけ行う（バッジ表示用）
+            const sObj = skillsDB.find(s=>s.name===name) || abilitiesDB.find(a=>a.name===name);
+            const isS = !!skillsDB.find(s=>s.name===name);
+            const typeBadge = `<span class="sa-badge sa-${saRarity.toLowerCase()}">${isS?'S':'A'}</span>`;
+            
+            skillListHtml += `
+            <div class="modal-skill-row" onclick="openSaModal('${name}', '${saRarity}', ${skillLv})">
+                ${typeBadge}
+                <span style="font-weight:bold; flex:1;">${name}</span>
+                <span class="modal-skill-lv">Lv.${skillLv}</span>
+            </div>`;
+        });
+    }
 
     const favIconClass = userData.favorite ? "fa-solid" : "fa-regular";
 
@@ -448,7 +478,7 @@ window.renderMyCardModalBody = (userData) => {
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:1.1rem; line-height:1.3;">${c.name}</div>
                 <div style="font-size:0.8rem; color:#ccc; margin-bottom:5px;">${c.title}</div>
-                <div style="margin-top:5px; font-size:0.75rem; color:#94a3b8;">${(c.abilities||[]).map(a => `<span class="tag tag-skill">${a}</span>`).join(' ')}</div>
+                <div style="margin-top:5px;">${skillListHtml}</div>
             </div>
         </div>
         <div id="levelControlArea" class="level-slider-container" style="${!userData.owned ? 'opacity:0.5; pointer-events:none;' : ''}">
@@ -463,8 +493,10 @@ window.renderMyCardModalBody = (userData) => {
             <div class="stat-grid" id="mcStatGrid">${renderStatGridHTML(c.stats, stats)}</div>
         </div>
     `;
-
+    
+    // フッター更新 (既存コードと同じなので省略)
     const footer = document.querySelector('#cardDetailModal .modal-footer');
+    // ... (footer生成コードは既存維持)
     const btnClass = userData.owned ? 'btn-accent' : 'btn-primary';
     const btnIcon = userData.owned ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>';
     const btnText = userData.owned ? '所持しています' : '未所持にする';
@@ -567,8 +599,12 @@ window.openViewDetailModal = (item) => {
 window.renderViewModalBody = () => {
     if (!currentModalItem) return;
     const c = currentModalItem.original;
+    const rarity = c.rarity;
+    const saRarity = (rarity === 'SSR') ? 'Gold' : 'Silver'; 
     const imgPath = `img/cards/${c.name}_${c.title}.png`;
     const stats = getCardStatsAtLevel(c, currentViewLevel, null, null, 1.0);
+    const skillLv = getSkillLevelFromCardLevel(rarity, currentViewLevel);
+
     const levels = (c.rarity === 'SSR') ? [30, 35, 40, 45, 50] : [25, 30, 35, 40, 45];
     const labels = ["無凸", "1凸", "2凸", "3凸", "完凸"];
     
@@ -579,13 +615,28 @@ window.renderViewModalBody = () => {
     });
     btnHtml += '</div>';
 
+    // スキルリスト生成
+    let skillListHtml = '';
+    if (c.abilities && c.abilities.length > 0) {
+        c.abilities.forEach(name => {
+            const isS = !!skillsDB.find(s=>s.name===name);
+            const typeBadge = `<span class="sa-badge sa-${saRarity.toLowerCase()}">${isS?'S':'A'}</span>`;
+            skillListHtml += `
+            <div class="modal-skill-row" onclick="openSaModal('${name}', '${saRarity}', ${skillLv})">
+                ${typeBadge}
+                <span style="font-weight:bold; flex:1;">${name}</span>
+                <span class="modal-skill-lv">Lv.${skillLv}</span>
+            </div>`;
+        });
+    }
+
     document.getElementById('cdmBody').innerHTML = `
         <div style="display:flex; gap:15px; margin-bottom:10px;">
             <img src="${imgPath}" style="width:100px; height:133px; object-fit:cover; border-radius:6px; border:1px solid #444;" onerror="this.src='https://placehold.jp/100x133.png?text=NoImg'">
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:1.1rem; line-height:1.3;">${c.name}</div>
                 <div style="font-size:0.8rem; color:#ccc; margin-bottom:5px;">${c.title}</div>
-                <div style="margin-top:5px;">${(c.abilities||[]).map(a => `<span class="tag tag-skill">${a}</span>`).join(' ')}</div>
+                <div style="margin-top:5px;">${skillListHtml}</div>
                 <div style="margin-top:8px; font-size:0.75rem; color:#94a3b8;">
                     ボーナス: ${c.bonuses ? c.bonuses.map(b=>`${b.type}+${b.value}%`).join(', ') : (c.bonus_type ? `${c.bonus_type}+${c.bonus_value}%` : 'なし')}
                 </div>

@@ -128,4 +128,32 @@ const FILTER_PARAM_ORDER = [
 
 // --- GitHub設定 ---
 // 開発者オプション用のリポジトリ指定 (ユーザー名/リポジトリ名)
-const GITHUB_REPO = 'username/repository';
+const GITHUB_REPO = 'subcaptaintsubasa/tra-sim';
+
+// --- アビリティ/スキル成長設定 ---
+
+// アビリティ成長テーブル (インデックス0=Lv1 ... 4=Lv5)
+const ABILITY_GROWTH_TABLE = {
+    "Gold":   [32, 38, 44, 53, 63],
+    "Silver": [30, 36, 42, 50, 60],
+    "Bronze": [23, 27, 32, 38, 45]
+};
+
+// カードLv -> スキルLv (1~5) 変換
+function getSkillLevelFromCardLevel(rarity, level) {
+    const lvl = parseInt(level);
+    if (rarity === 'SSR') {
+        if (lvl >= 50) return 5;
+        if (lvl >= 45) return 4;
+        if (lvl >= 40) return 3;
+        if (lvl >= 35) return 2;
+        return 1; // Lv30以下
+    } else {
+        // SR
+        if (lvl >= 45) return 5;
+        if (lvl >= 40) return 4;
+        if (lvl >= 35) return 3;
+        if (lvl >= 30) return 2;
+        return 1; // Lv25以下
+    }
+}

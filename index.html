@@ -214,56 +214,141 @@
             <p style="font-size:0.7rem; color:#ccc;">ここではマスターデータの編集・削除が行われます。変更は即座にGitHubへ反映されます。</p>
         </div>
 
+        <div class="card-box" id="cardEditor" style="position:relative; border:1px solid var(--primary);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="margin:0;">カード編集</h4>
+                <div style="font-size:0.7rem; color:#94a3b8;">ID: <span id="editIndexDisplay">-</span></div>
+            </div>
+
+            <div class="admin-editor-container">
+                <!-- ナビゲーション -->
+                <button class="nav-btn prev" onclick="navigateCard(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="nav-btn next" onclick="navigateCard(1)"><i class="fa-solid fa-chevron-right"></i></button>
+
+                <!-- プレビューエリア -->
+                <div class="card-preview-area">
+                    <img id="editCardPreview" src="" class="card-preview-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display:none; color:#666; font-size:0.8rem;">No Image</div>
+                </div>
+
+                <!-- 画像選択 -->
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <input type="file" id="cardImgUpload" accept="image/*" style="font-size:0.8rem; flex:1;" onchange="previewCardImage(this)">
+                </div>
+
+                <!-- 基本情報 -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                    <input id="editName" placeholder="選手名" class="card-input">
+                    <input id="editTitle" placeholder="【称号】" class="card-input">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
+                    <select id="editRarity" class="card-input"><option>SSR</option><option>SR</option></select>
+                    <select id="editGrowth" class="card-input"><option value="6">成長: 通常(6倍)</option><option value="3" style="color:#fbbf24;">成長: 3倍</option></select>
+                </div>
+                
+                <!-- スキル/ボーナス -->
+                <div style="margin-top:5px;"><input id="editAbilityName" placeholder="スキル/アビ名" list="skillList" class="card-input"></div>
+                <div style="margin-top:10px; border:1px dashed #555; padding:5px; border-radius:4px;">
+                    <label style="font-size:0.7rem;">ボーナス条件</label>
+                    <div id="editBonusList"></div>
+                    <button class="btn btn-sm" onclick="addBonusRow()" style="margin-top:5px;">+ 条件追加</button>
+                </div>
+
+                <!-- ステータス -->
+                <div class="stat-grid" id="editStatsGrid" style="margin-top:10px;"></div>
+                
+                <!-- 保存ボタン (統合) -->
+                <button id="btnSaveCard" class="btn btn-accent" style="margin-top:15px;" onclick="saveCardToGH()">
+                    <i class="fa-solid fa-floppy-disk"></i> 保存 (画像+データ)
+                </button>
+            </div>
+        </div>
+
+        <!-- カード一覧 (グリッド) -->
+        <h4 style="margin-top:20px; border-bottom:1px solid #333; padding-bottom:5px;">登録済みカード一覧</h4>
         <div class="card-box">
             <h4>JSON一括登録 (Card)</h4>
             <textarea id="aiPasteCard" placeholder="カードデータを貼り付け" style="height:60px;"></textarea>
-            <button class="btn btn-accent" onclick="batchRegisterCards()">一括保存</button>
+            <button class="btn btn-sm btn-primary" onclick="batchRegisterCards()">JSON一括保存</button>
         </div>
-        
-        <div class="card-box" id="cardEditor" style="margin-top:10px; border:1px dashed #334155;">
-            <h4>個別カード編集</h4>
-            <div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed #333;">
-                <label style="font-size:0.75rem; color:#94a3b8;">カード画像</label>
-                <div style="display:flex; gap:5px; margin-top:5px;">
-                    <input type="file" id="cardImgUpload" accept="image/*" style="font-size:0.8rem;">
-                    <button class="btn btn-sm btn-primary" onclick="uploadCardImage()">Upload</button>
-                </div>
-                <p id="imgUploadStatus" style="font-size:0.7rem; color:var(--accent); margin-top:2px;"></p>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
-                <input id="editName" placeholder="選手名">
-                <input id="editTitle" placeholder="【称号】">
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
-                <select id="editRarity"><option>SSR</option><option>SR</option></select>
-                <select id="editGrowth"><option value="6">成長: 通常(6倍)</option><option value="3" style="color:#fbbf24;">成長: 3倍</option></select>
-            </div>
-            <div style="margin-top:5px;"><input id="editAbilityName" placeholder="スキル/アビ名" list="skillList"></div>
-            <div style="margin-top:10px; border:1px dashed #555; padding:5px;">
-                <label style="font-size:0.7rem;">ボーナス条件</label>
-                <div id="editBonusList"></div>
-                <button class="btn btn-sm" onclick="addBonusRow()">+ 条件追加</button>
-            </div>
-            <div class="stat-grid" id="editStatsGrid"></div>
-            <button class="btn btn-accent" onclick="saveCardToGH()">保存</button>
-        </div>
-        <div id="masterList"></div>
+        <div id="masterList" class="admin-card-grid"></div>
     </div>
 
     <!-- 5. スキル管理 (Admin) - 開発者限定 -->
     <div id="view-admin-skill" class="view-content">
         <div class="card-box" id="saEditor" style="border:2px solid var(--primary)">
             <h4>スキル/アビリティ編集</h4>
-            <select id="saType" onchange="toggleAreaGrid()"><option value="skill">SKILL (%)</option><option value="ability">ABILITY (固定値)</option></select>
-            <input id="saName" placeholder="名称" style="margin-top:5px;">
-            <input id="saValue" placeholder="数値" type="number" style="margin-top:5px;">
-            <input id="saCondition" placeholder="発動条件" style="margin-top:5px;">
-            <div id="saTargets" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:5px; margin-top:10px;"></div>
-            <div id="areaContainer" style="margin-top:10px;"><label>発動エリア:</label><div class="area-grid" id="saAreaGrid"></div></div>
-            <button class="btn btn-accent" onclick="saveSA()">保存</button>
-            <button class="btn" style="margin-top:10px; background:#444;" onclick="document.getElementById('saListArea').style.display='block'">一覧を表示</button>
+            
+            <!-- 共通項目 -->
+            <div class="sa-editor-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <select id="saType" onchange="toggleSaEditorMode()">
+                    <option value="skill">SKILL (パラメータ)</option>
+                    <option value="ability">ABILITY (固定値)</option>
+                </select>
+                <select id="saRarity">
+                    <option value="Gold" style="color:#d97706; font-weight:bold;">金 (Gold)</option>
+                    <option value="Silver" style="color:#94a3b8; font-weight:bold;">銀 (Silver)</option>
+                    <option value="Bronze" style="color:#78350f; font-weight:bold;">銅 (Bronze)</option>
+                </select>
+            </div>
+            <input id="saName" placeholder="名称 (例: シュート)" style="margin-bottom:5px;">
+
+            <!-- アビリティ専用UI -->
+            <div id="abilityEditorArea" style="display:none; border-top:1px dashed #444; padding-top:10px; margin-top:10px;">
+                <label style="font-size:0.7rem; color:var(--ability);">発動条件</label>
+                <div class="cond-btn-group">
+                    <button class="cond-select-btn" onclick="setAbilityCondition('途中出場')">途中出場</button>
+                    <button class="cond-select-btn" onclick="setAbilityCondition('好調以上')">好調以上</button>
+                    <button class="cond-select-btn" onclick="setAbilityCondition('絶好調')">絶好調</button>
+                </div>
+                <input id="saCondition" type="hidden">
+                
+                <label style="font-size:0.7rem; color:var(--ability); display:block; margin-top:10px;">対象パラメータ (これら全てに数値が加算されます)</label>
+                <div id="saParamChecks" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(85px, 1fr)); gap:5px; margin-top:5px; background:#1e293b; padding:10px; border-radius:4px;"></div>
+
+                <div style="margin-top:5px; font-size:0.7rem; color:#ccc;">
+                    ※数値はレアリティに応じて自動計算されます (金:32~63, 銀:30~60, 銅:23~45)
+                </div>
+            </div>
+
+            <!-- スキル専用UI -->
+            <div id="skillEditorArea" style="display:none; border-top:1px dashed #444; padding-top:10px; margin-top:10px;">
+                <label style="font-size:0.7rem; color:var(--skill);">種類</label>
+                <select id="saSkillType" style="margin-bottom:5px;">
+                    <option value="">-- 選択してください --</option>
+                    <option>ダイレクトシュート</option><option>ヘディングシュート</option><option>直接FK</option>
+                    <option>ロングシュート</option><option>トラップ</option><option>ドリブル</option>
+                    <option>ロングパス</option><option>ショートパス</option><option>パス</option>
+                    <option>パスを届けるFK</option><option>クロス</option><option>コンタクト</option>
+                    <option>タックル</option><option>パスカット</option><option>GKセーブ</option>
+                </select>
+
+                <label style="font-size:0.7rem; color:var(--skill); display:block; margin-top:5px;">効果パラメータ (Lv1〜Lv5)</label>
+                <div class="param-header">
+                    <div>対象</div><div>Lv1</div><div>Lv2</div><div>Lv3</div><div>Lv4</div><div>Lv5</div><div></div>
+                </div>
+                <div id="saParamRows"></div>
+                <button class="btn btn-sm" onclick="addSkillParamRow()">+ パラメータ追加</button>
+
+                <div style="margin-top:10px;">
+                    <label style="font-size:0.7rem;">発動エリア</label>
+                    <div class="area-grid" id="saAreaGrid"></div>
+                </div>
+                
+                <input id="saNote" placeholder="備考 (発動条件など)" style="margin-top:10px;">
+            </div>
+
+            <!-- 共通: 効果対象(旧仕様互換表示用) -->
+            <div id="saTargetsLegacy" style="display:none; margin-top:10px; opacity:0.5;">
+                <label style="font-size:0.7rem;">(旧)効果対象タグ</label>
+                <div id="saTargets" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:5px;"></div>
+            </div>
+
+            <button class="btn btn-accent" style="margin-top:15px;" onclick="saveSA()">保存</button>
+            <button class="btn" style="margin-top:10px; background:#444;" onclick="toggleDisp('saListArea')">一覧を表示/非表示</button>
         </div>
-        <div id="saListArea" style="display:none;">
+
+        <div id="saListArea" style="display:block; margin-top:10px;">
             <div class="card-box"><textarea id="aiPasteSA" placeholder="JSON一括貼り付け" style="height:50px;"></textarea><button class="btn btn-sm" onclick="batchRegisterSA()">JSON保存</button></div>
             <div id="saList"></div>
         </div>

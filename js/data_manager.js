@@ -70,7 +70,12 @@ async function pushToGH(file, data, msg, rawContent = null) {
     try {
         const g = await fetch(url, { headers:{'Authorization':`token ${token}`} });
         
-        // 認証エラーチェック
+        if (g.status === 404) {
+            alert("リポジトリが見つかりません(404)。\nconfig.js の GITHUB_REPO 設定、またはlocalStorageの 'gh_repo' が正しいか確認してください。\n現在の設定: " + repo);
+            return false;
+        }
+        // ------------------------------------------
+
         if (g.status === 401 || g.status === 403) {
             alert("GitHub認証に失敗しました。トークンを確認してください。");
             return false;
@@ -111,38 +116,78 @@ async function pushToGH(file, data, msg, rawContent = null) {
 async function saveCardToGH() {
     const name = document.getElementById('editName').value;
     const title = document.getElementById('editTitle').value; 
-    if(!name) return;
-    const stats={}; 
-    document.querySelectorAll('.edit-val').forEach(i => {
-        if(i.value) stats[i.dataset.stat] = parseFloat(i.value);
-    });
-    const bonuses = [];
-    const rows = document.querySelectorAll('#editBonusList > div');
-    rows.forEach(r => {
-        const t = r.querySelector('.edit-b-type').value;
-        const v = parseFloat(r.querySelector('.edit-b-val').value);
-        if(t && v) bonuses.push({ type: t, value: v });
-    });
-    const legacyType = bonuses.length > 0 ? bonuses[0].type : "";
-    const legacyVal = bonuses.length > 0 ? bonuses[0].value : 0;
+    if(!name) return alert("名前を入力してください");
 
-    const growthRate = parseInt(document.getElementById('editGrowth').value);
+    const btn = document.getElementById('btnSaveCard');
+    if(btn) { btn.disabled = true; btn.innerText = "保存中..."; }
 
-    const nc = { 
-        title, name, rarity: document.getElementById('editRarity').value, 
-        bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
-        abilities: [document.getElementById('editAbilityName').value], stats,
-        growth_rate: growthRate
-    };
+    try {
+        // 1. 画像アップロード処理 (ファイルが選択されている場合のみ)
+        const fileInput = document.getElementById('cardImgUpload');
+        if (fileInput && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const fileName = `${name}_${title}.png`;
+            
+            const toBase64 = file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
 
-    if (growthRate === 6) {
-        delete nc.growth_rate;
-    }
+            const contentBase64 = await toBase64(file);
+            const imgRes = await pushToGH(`../img/cards/${fileName}`, null, `Add image: ${fileName}`, contentBase64);
+            if (!imgRes) throw new Error("画像の保存に失敗しました");
+        }
 
-    const i = cardsDB.findIndex(x => x.name === name && x.title === title); 
-    if(i >= 0) cardsDB[i] = nc; else cardsDB.push(nc);
-    if(await pushToGH('cards.json', cardsDB, "Update Card")) { 
-        alert("保存成功"); renderCardList(); renderInventory(); 
+        // 2. JSONデータ構築
+        const stats = {}; 
+        document.querySelectorAll('.edit-val').forEach(i => {
+            if(i.value) stats[i.dataset.stat] = parseFloat(i.value);
+        });
+        
+        const bonuses = [];
+        const rows = document.querySelectorAll('#editBonusList > div');
+        rows.forEach(r => {
+            const t = r.querySelector('.edit-b-type').value;
+            const v = parseFloat(r.querySelector('.edit-b-val').value);
+            if(t && v) bonuses.push({ type: t, value: v });
+        });
+        // 互換性のため legacyType も残すが、基本は bonuses 配列を使用
+        const legacyType = bonuses.length > 0 ? bonuses[0].type : "";
+        const legacyVal = bonuses.length > 0 ? bonuses[0].value : 0;
+
+        const growthRate = parseInt(document.getElementById('editGrowth').value);
+
+        const nc = { 
+            title, name, rarity: document.getElementById('editRarity').value, 
+            bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
+            abilities: [document.getElementById('editAbilityName').value], 
+            stats,
+            growth_rate: growthRate
+        };
+
+        if (growthRate === 6) delete nc.growth_rate; // デフォルトは削除
+
+        // 既存データの更新または新規追加
+        // (カード名と称号が一致するものを更新)
+        const i = cardsDB.findIndex(x => x.name === name && x.title === title); 
+        if(i >= 0) cardsDB[i] = nc; else cardsDB.push(nc);
+
+        // 3. JSON保存
+        if(await pushToGH('cards.json', cardsDB, `Update Card: ${name}`)) { 
+            alert("保存しました"); 
+            renderCardList(); 
+            // ナビゲーション状態更新
+            currentEditCardIndex = (i >= 0) ? i : cardsDB.length - 1;
+            isCardEditorDirty = false;
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("エラーが発生しました: " + e.message);
+    } finally {
+        if(btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> 保存 (画像+データ)'; }
     }
 }
 
@@ -165,25 +210,46 @@ async function batchRegisterCards() {
     } catch(e) { alert("JSONエラー"); } 
 }
 
-// --- スキル/アビリティ保存 ---
 window.saveSA = async () => { 
     const type = document.getElementById('saType').value;
     const name = document.getElementById('saName').value; 
-    if(!name) return; 
-    const tgts = Array.from(document.querySelectorAll('input[name="sa_tgt"]:checked')).map(c => c.value); 
-    const data = { name, value: parseFloat(document.getElementById('saValue').value) || 0, targets: tgts }; 
+    const rarity = document.getElementById('saRarity').value;
+    if(!name) return alert("名称を入力してください"); 
+
+    const data = { name, rarity }; 
+
     if(type === 'skill'){ 
+        data.skill_type = document.getElementById('saSkillType').value;
+        data.note = document.getElementById('saNote').value;
         data.area = Array.from(document.querySelectorAll('.area-cell')).map(c => c.classList.contains('active') ? 1 : 0); 
-        const i = skillsDB.findIndex(s => s.name === name); 
+        
+        const params = [];
+        document.querySelectorAll('.param-input-group').forEach(grp => {
+            const stat = grp.querySelector('select').value;
+            const inputs = grp.querySelectorAll('input');
+            const vals = Array.from(inputs).map(inp => parseFloat(inp.value)||0);
+            if (stat) params.push({ stat: stat, values: vals });
+        });
+        data.params = params;
+
+        // DB更新
+        const i = skillsDB.findIndex(s => s.name === name && s.rarity === rarity); 
         if(i >= 0) skillsDB[i] = data; else skillsDB.push(data); 
-        await pushToGH('skills.json', skillsDB, "Update Skill"); 
+        await pushToGH('skills.json', skillsDB, `Update Skill: ${name} (${rarity})`); 
+
     } else { 
-        data.condition = document.getElementById('saCondition').value; 
-        const i = abilitiesDB.findIndex(a => a.name === name); 
+        // Ability
+        data.condition = document.getElementById('saCondition').value;
+        // チェックされたパラメータを取得
+        const targets = [];
+        document.querySelectorAll('.sa-param-check:checked').forEach(c => targets.push(c.value));
+        data.targets = targets;
+        
+        const i = abilitiesDB.findIndex(a => a.name === name && a.rarity === rarity); 
         if(i >= 0) abilitiesDB[i] = data; else abilitiesDB.push(data); 
-        await pushToGH('abilities.json', abilitiesDB, "Update Ability"); 
+        await pushToGH('abilities.json', abilitiesDB, `Update Ability: ${name} (${rarity})`); 
     } 
-    alert("保存完了"); renderSAList(); updateAutoComplete(); 
+    alert("保存完了"); renderSAList(); updateAutoComplete();
 };
 
 window.deleteSA = async (type, name) => { 
