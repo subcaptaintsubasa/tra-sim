@@ -163,11 +163,7 @@
     "bonus_value": 10,
     "abilities": [
       {
-<<<<<<< HEAD
-        "name": "",
-=======
         "name": "ゴールへ導くトラップ",
->>>>>>> e06a7418aa979b971aadf9124cf983975bdeaa37
         "rarity": "Silver"
       }
     ],
