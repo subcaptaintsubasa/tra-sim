@@ -732,9 +732,15 @@ window.addSkillParamRow = (target='', vals=[]) => {
 
 window.loadSA = (type, name, rarity) => { 
     const db = type === 'skill' ? skillsDB : abilitiesDB;
-    // 名前とレアリティで検索
     const item = db.find(i => i.name === name && (!rarity || i.rarity === rarity)); 
     if(!item) return; 
+
+    // --- ここを追加: 変更前の情報を保持 ---
+    const editor = document.getElementById('saEditor');
+    editor.dataset.originalName = item.name;
+    editor.dataset.originalRarity = item.rarity || 'Gold'; // デフォルトGold
+    editor.dataset.isEditMode = "true";
+    // -------------------------------------
 
     document.getElementById('saType').value = type;
     document.getElementById('saName').value = item.name; 
@@ -751,7 +757,6 @@ window.loadSA = (type, name, rarity) => {
         if (item.params && Array.isArray(item.params)) {
             item.params.forEach(p => addSkillParamRow(p.stat, p.values));
         } else if (item.value && item.targets) {
-            // 旧データ互換
             item.targets.forEach(t => addSkillParamRow(t, [item.value, item.value, item.value, item.value, item.value]));
         } else {
             addSkillParamRow();
@@ -764,9 +769,7 @@ window.loadSA = (type, name, rarity) => {
         });
 
     } else {
-        // Ability
         setAbilityCondition(item.condition || '');
-        // チェックボックス反映
         document.querySelectorAll('.sa-param-check').forEach(c => {
             c.checked = (item.targets && item.targets.includes(c.value));
         });

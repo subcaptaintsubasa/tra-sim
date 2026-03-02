@@ -210,46 +210,126 @@ async function batchRegisterCards() {
     } catch(e) { alert("JSONエラー"); } 
 }
 
+// --- スキル/アビリティ保存 (連動更新機能付き) ---
 window.saveSA = async () => { 
     const type = document.getElementById('saType').value;
-    const name = document.getElementById('saName').value; 
-    const rarity = document.getElementById('saRarity').value;
-    if(!name) return alert("名称を入力してください"); 
+    const newName = document.getElementById('saName').value; 
+    const newRarity = document.getElementById('saRarity').value;
+    
+    // 編集前の情報を取得
+    const editor = document.getElementById('saEditor');
+    const originalName = editor.dataset.originalName;
+    const originalRarity = editor.dataset.originalRarity;
+    const isEditMode = editor.dataset.isEditMode === "true";
 
-    const data = { name, rarity }; 
+    if(!newName) return alert("名称を入力してください"); 
 
-    if(type === 'skill'){ 
-        data.skill_type = document.getElementById('saSkillType').value;
-        data.note = document.getElementById('saNote').value;
-        data.area = Array.from(document.querySelectorAll('.area-cell')).map(c => c.classList.contains('active') ? 1 : 0); 
-        
-        const params = [];
-        document.querySelectorAll('.param-input-group').forEach(grp => {
-            const stat = grp.querySelector('select').value;
-            const inputs = grp.querySelectorAll('input');
-            const vals = Array.from(inputs).map(inp => parseFloat(inp.value)||0);
-            if (stat) params.push({ stat: stat, values: vals });
-        });
-        data.params = params;
+    // 保存ボタンを無効化
+    const btn = document.querySelector('#saEditor button.btn-accent');
+    if(btn) { btn.disabled = true; btn.innerText = "処理中..."; }
 
-        // DB更新
-        const i = skillsDB.findIndex(s => s.name === name && s.rarity === rarity); 
-        if(i >= 0) skillsDB[i] = data; else skillsDB.push(data); 
-        await pushToGH('skills.json', skillsDB, `Update Skill: ${name} (${rarity})`); 
+    try {
+        // 1. スキル/アビリティDBの更新
+        let targetDB = (type === 'skill') ? skillsDB : abilitiesDB;
+        const fileName = (type === 'skill') ? 'skills.json' : 'abilities.json';
 
-    } else { 
-        // Ability
-        data.condition = document.getElementById('saCondition').value;
-        // チェックされたパラメータを取得
-        const targets = [];
-        document.querySelectorAll('.sa-param-check:checked').forEach(c => targets.push(c.value));
-        data.targets = targets;
-        
-        const i = abilitiesDB.findIndex(a => a.name === name && a.rarity === rarity); 
-        if(i >= 0) abilitiesDB[i] = data; else abilitiesDB.push(data); 
-        await pushToGH('abilities.json', abilitiesDB, `Update Ability: ${name} (${rarity})`); 
-    } 
-    alert("保存完了"); renderSAList(); updateAutoComplete();
+        // 新しいデータオブジェクト作成
+        const data = { name: newName, rarity: newRarity }; 
+
+        if(type === 'skill'){ 
+            data.skill_type = document.getElementById('saSkillType').value;
+            data.note = document.getElementById('saNote').value;
+            data.area = Array.from(document.querySelectorAll('.area-cell')).map(c => c.classList.contains('active') ? 1 : 0); 
+            const params = [];
+            document.querySelectorAll('.param-input-group').forEach(grp => {
+                const stat = grp.querySelector('select').value;
+                const inputs = grp.querySelectorAll('input');
+                const vals = Array.from(inputs).map(inp => parseFloat(inp.value)||0);
+                if (stat) params.push({ stat: stat, values: vals });
+            });
+            data.params = params;
+        } else { 
+            data.condition = document.getElementById('saCondition').value; 
+            const targets = [];
+            document.querySelectorAll('.sa-param-check:checked').forEach(c => targets.push(c.value));
+            data.targets = targets;
+        }
+
+        // DB操作: 編集モードでキー(名前orレアリティ)が変わった場合、古いデータを削除する
+        if (isEditMode && (originalName !== newName || originalRarity !== newRarity)) {
+            const delIdx = targetDB.findIndex(i => i.name === originalName && i.rarity === originalRarity);
+            if (delIdx >= 0) targetDB.splice(delIdx, 1);
+        }
+
+        // 新規追加または上書き (同じキーがあれば上書き)
+        const existIdx = targetDB.findIndex(i => i.name === newName && i.rarity === newRarity);
+        if (existIdx >= 0) targetDB[existIdx] = data;
+        else targetDB.push(data);
+
+        // スキルDB保存
+        await pushToGH(fileName, targetDB, `Update ${type}: ${newName} (${newRarity})`);
+
+
+        // 2. カードデータの連動更新 (Cascade Update)
+        // 編集モードの場合のみ、既存カードのリンクを書き換える
+        if (isEditMode && confirm(`この${type}を持っているカードのデータも自動更新しますか？\n(対象: ${originalName})`)) {
+            let updatedCardCount = 0;
+
+            cardsDB.forEach(card => {
+                if (!card.abilities || card.abilities.length === 0) return;
+
+                let cardChanged = false;
+                
+                // abilities配列を走査して置換
+                card.abilities = card.abilities.map(ab => {
+                    // ケース1: 旧データ (文字列) の場合
+                    // 元の名前と一致していれば、新仕様のオブジェクトに変換する
+                    if (typeof ab === 'string') {
+                        if (ab === originalName) {
+                            cardChanged = true;
+                            return { name: newName, rarity: newRarity };
+                        }
+                        return ab;
+                    }
+
+                    // ケース2: 新データ (オブジェクト) の場合
+                    // 名前とレアリティが一致していれば、内容を更新する (名前変更などに対応)
+                    if (ab.name === originalName && ab.rarity === originalRarity) {
+                        cardChanged = true;
+                        return { name: newName, rarity: newRarity };
+                    }
+                    
+                    return ab;
+                });
+
+                if (cardChanged) updatedCardCount++;
+            });
+
+            if (updatedCardCount > 0) {
+                // カードDB保存
+                await pushToGH('cards.json', cardsDB, `Auto-update cards linked to ${newName}`);
+                alert(`保存完了しました。\n関連するカード ${updatedCardCount}枚 の情報も更新しました。`);
+            } else {
+                alert("保存完了しました。(関連カードなし)");
+            }
+        } else {
+            alert("保存完了しました。");
+        }
+
+        // 状態リセット
+        renderSAList();
+        updateAutoComplete();
+        // 編集モードフラグクリア
+        delete editor.dataset.originalName;
+        delete editor.dataset.originalRarity;
+        delete editor.dataset.isEditMode;
+
+    } catch(e) {
+        console.error(e);
+        alert("エラーが発生しました: " + e.message);
+    } finally {
+        if(btn) { btn.disabled = false; btn.innerHTML = "保存"; }
+    }
 };
 
 window.deleteSA = async (type, name) => { 
