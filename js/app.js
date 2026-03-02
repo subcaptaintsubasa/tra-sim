@@ -446,21 +446,22 @@ window.renderMyCardModalBody = (userData) => {
     });
     presetBtns += '</div>';
 
-    // スキルリスト生成
+    // スキルリスト生成 (新旧データ構造両対応)
     let skillListHtml = '';
     if (c.abilities && c.abilities.length > 0) {
-        c.abilities.forEach(name => {
-            // ここでスキルかアビリティか判定したいが、名前だけでは不明。
-            // openSaModal内でよしなに判定させるため、ここでは表示のみ構築。
-            // 暫定的にDBから引いてタイプ判定だけ行う（バッジ表示用）
-            const sObj = skillsDB.find(s=>s.name===name) || abilitiesDB.find(a=>a.name===name);
-            const isS = !!skillsDB.find(s=>s.name===name);
-            const typeBadge = `<span class="sa-badge sa-${saRarity.toLowerCase()}">${isS?'S':'A'}</span>`;
+        c.abilities.forEach(ab => {
+            // abが文字列なら旧データ、オブジェクトなら新データ
+            const isObj = (typeof ab === 'object' && ab !== null);
+            const saName = isObj ? ab.name : ab;
+            const saRarity = isObj ? ab.rarity : (rarity === 'SSR' ? 'Gold' : 'Silver'); // 旧データはカードに合わせる
+
+            const isS = !!skillsDB.find(s => s.name === saName); // バッジ表示用の簡易判定
+            const typeBadge = `<span class="sa-badge sa-${saRarity.toLowerCase()}">${isS ? 'S' : 'A'}</span>`;
             
             skillListHtml += `
-            <div class="modal-skill-row" onclick="openSaModal('${name}', '${saRarity}', ${skillLv})">
+            <div class="modal-skill-row" onclick="openSaModal('${saName}', '${saRarity}', ${skillLv})">
                 ${typeBadge}
-                <span style="font-weight:bold; flex:1;">${name}</span>
+                <span style="font-weight:bold; flex:1;">${saName}</span>
                 <span class="modal-skill-lv">Lv.${skillLv}</span>
             </div>`;
         });
@@ -615,16 +616,21 @@ window.renderViewModalBody = () => {
     });
     btnHtml += '</div>';
 
-    // スキルリスト生成
+    // スキルリスト生成 (新旧データ構造両対応)
     let skillListHtml = '';
     if (c.abilities && c.abilities.length > 0) {
-        c.abilities.forEach(name => {
-            const isS = !!skillsDB.find(s=>s.name===name);
-            const typeBadge = `<span class="sa-badge sa-${saRarity.toLowerCase()}">${isS?'S':'A'}</span>`;
+        c.abilities.forEach(ab => {
+            const isObj = (typeof ab === 'object' && ab !== null);
+            const saName = isObj ? ab.name : ab;
+            const saRarity = isObj ? ab.rarity : (rarity === 'SSR' ? 'Gold' : 'Silver');
+
+            const isS = !!skillsDB.find(s => s.name === saName);
+            const typeBadge = `<span class="sa-badge sa-${saRarity.toLowerCase()}">${isS ? 'S' : 'A'}</span>`;
+            
             skillListHtml += `
-            <div class="modal-skill-row" onclick="openSaModal('${name}', '${saRarity}', ${skillLv})">
+            <div class="modal-skill-row" onclick="openSaModal('${saName}', '${saRarity}', ${skillLv})">
                 ${typeBadge}
-                <span style="font-weight:bold; flex:1;">${name}</span>
+                <span style="font-weight:bold; flex:1;">${saName}</span>
                 <span class="modal-skill-lv">Lv.${skillLv}</span>
             </div>`;
         });
