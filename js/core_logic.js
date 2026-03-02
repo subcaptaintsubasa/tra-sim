@@ -84,6 +84,8 @@ window.runAutoSim = () => {
 
     // 2. ターゲットと目標Gapの整理
     const targetPct = parseInt(getVal('targetPct', 100)) / 100;
+    
+    // selectedTargetSkills/Abilities は "Name::Rarity" の形式になっている
     const allTargets = [...selectedTargetSkills, ...selectedTargetAbilities];
     
     const gaps = {};
@@ -116,8 +118,19 @@ window.runAutoSim = () => {
                 
                 const nCovered = new Set(node.covered);
                 if(card.original.abilities) {
-                    card.original.abilities.forEach(a => {
-                        if(allTargets.includes(a)) nCovered.add(a);
+                    card.original.abilities.forEach(ab => {
+                        // 新仕様対応: オブジェクトならそのまま使用、文字列ならカードレアリティから推測
+                        let name, rarity;
+                        if (typeof ab === 'object') {
+                            name = ab.name;
+                            rarity = ab.rarity;
+                        } else {
+                            name = ab;
+                            rarity = (card.original.rarity === 'SSR') ? 'Gold' : 'Silver';
+                        }
+                        
+                        const id = `${name}::${rarity}`;
+                        if(allTargets.includes(id)) nCovered.add(id);
                     });
                 }
 

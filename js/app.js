@@ -221,8 +221,6 @@ window.renderDatabase = () => {
     
     const currentMode = (typeof appMode !== 'undefined') ? appMode : 'view';
     document.body.setAttribute('data-app-mode', currentMode);
-    
-    // ボディに選択モード属性を付与(CSS制御用)
     document.body.setAttribute('data-select-mode', isSelectMode);
 
     // Active Filters Badge
@@ -231,7 +229,7 @@ window.renderDatabase = () => {
         afDiv.innerHTML = '';
         const badges = [];
         if(currentMode === 'mycards') badges.push("モード: 所持/育成");
-        if(isSelectMode) badges.push("★ 選択モード中"); // バッジ追加
+        if(isSelectMode) badges.push("★ 選択モード中");
         if(dbFilter.ownedOnly) badges.push("所持のみ");
         if(dbFilter.hasSkill) badges.push("スキル所持");
         if(dbFilter.hasAbility) badges.push("アビリティ所持");
@@ -242,6 +240,9 @@ window.renderDatabase = () => {
         
         afDiv.innerHTML = badges.map(l => `<span class="tag" style="background:#334155;">${l}</span>`).join('');
     }
+
+    // ヘルパー: スキル名を取り出す（文字列ならそのまま、オブジェクトならname）
+    const getSaName = (item) => (typeof item === 'object' && item !== null) ? item.name : item;
 
     const list = cardsDB.map((card, idx) => {
         const key = card.name + "_" + card.title;
@@ -257,9 +258,9 @@ window.renderDatabase = () => {
         if (!dbFilter.rarity[card.rarity]) return null;
         if (dbFilter.ownedOnly && !isOwned) return null;
 
-        if (dbFilter.hasSkill && !(card.abilities || []).some(a => skillsDB.some(s => s.name === a))) return null;
-        if (dbFilter.hasAbility && !(card.abilities || []).some(a => abilitiesDB.some(ab => ab.name === a))) return null;
-        if (dbFilter.skillText && !(card.abilities || []).some(a => a.toLowerCase().includes(dbFilter.skillText))) return null;
+        if (dbFilter.hasSkill && !(card.abilities || []).some(a => skillsDB.some(s => s.name === getSaName(a)))) return null;
+        if (dbFilter.hasAbility && !(card.abilities || []).some(a => abilitiesDB.some(ab => ab.name === getSaName(a)))) return null;
+        if (dbFilter.skillText && !(card.abilities || []).some(a => getSaName(a).toLowerCase().includes(dbFilter.skillText))) return null;
 
         if (dbFilter.pos.length > 0 || dbFilter.style.length > 0) {
             let isMatch = false;
@@ -314,8 +315,7 @@ window.renderDatabase = () => {
         return a.original.name.localeCompare(b.original.name, 'ja');
     });
 
-    // グローバル変数に保存（全選択機能用）
-window.lastRenderedItems = list;
+    window.lastRenderedItems = list;
     
     // Render
     list.forEach(item => {
@@ -323,7 +323,6 @@ window.lastRenderedItems = list;
         const imgPath = `img/cards/${c.name}_${c.title}.png`;
         const el = document.createElement('div');
         
-        // 選択モード時は .bulk-selected クラスを付与
         const isSelected = isSelectMode && selectedKeys.has(item.key);
         el.className = `db-card ${item.isFav ? 'fav' : ''} ${item.isOwned ? 'owned' : 'unowned'} ${isSelected ? 'bulk-selected' : ''}`;
         
@@ -349,6 +348,9 @@ window.lastRenderedItems = list;
                 const stats = getCardStatsAtLevel(c, dLvl, null, null, 1.0);
                 displayStats = Object.entries(stats).sort(([,a], [,b]) => b - a).slice(0, 3).map(([k,v]) => `${k}:${(v/10).toFixed(0)}`);
             }
+            // スキル表示の修正: オブジェクトの場合は名前を表示
+            const skillsStr = (c.abilities||[]).map(a => getSaName(a)).join(', ');
+            
             el.innerHTML = `
                 <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/333333/ffffff/300x400.png?text=No+Img'">
                 <div class="db-info">
@@ -360,33 +362,24 @@ window.lastRenderedItems = list;
                         </div>
                     </div>
                     <div class="list-stats">${displayStats.map(s => `<span>${s}</span>`).join('')}</div>
-                    <div class="list-skills" style="font-size:0.7rem; color:var(--skill); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${(c.abilities||[]).join(', ')}</div>
+                    <div class="list-skills" style="font-size:0.7rem; color:var(--skill); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${skillsStr}</div>
                 </div>
             `;
         }
         
         el.onclick = () => {
-        // ★ v1.3 追加ロジック
-        if (simSelectState.active) {
-            // シミュレータ選択モード: 常にMyCard詳細を開く (セットボタン用フラグ true)
-            // itemデータを適合させる
-            const modalItem = { 
-                original: c, 
-                key: item.key, 
-                isOwned: true, // 所持前提
-                level: item.level 
-            };
-            openMyCardDetailModal(modalItem, true); // true = fromSim
-            return;
-        }
-
-        if (isSelectMode) {
-            toggleBulkSelect(item.key);
-        } else {
-            if (currentMode === 'mycards') openMyCardDetailModal(item);
-            else openViewDetailModal(item);
-        }
-    };
+            if (simSelectState.active) {
+                const modalItem = { original: c, key: item.key, isOwned: true, level: item.level };
+                openMyCardDetailModal(modalItem, true);
+                return;
+            }
+            if (isSelectMode) {
+                toggleBulkSelect(item.key);
+            } else {
+                if (currentMode === 'mycards') openMyCardDetailModal(item);
+                else openViewDetailModal(item);
+            }
+        };
         grid.appendChild(el);
     });
 };
@@ -764,7 +757,13 @@ window.updateComparisonTable = () => {
         tbody += row;
     });
     // Skills
-    tbody += `<tr><td>スキル</td>` + compareTray.map(c => `<td style="font-size:0.6rem; white-space:normal; vertical-align:top;">${(c.abilities||[]).map(s=>`<div class="tag tag-skill" style="margin-bottom:2px;">${s}</div>`).join('')}</td>`).join('') + `</tr></tbody>`;
+    tbody += `<tr><td>スキル</td>` + compareTray.map(c => {
+        const skillHtml = (c.abilities||[]).map(s => {
+            const name = (typeof s === 'object' && s !== null) ? s.name : s;
+            return `<div class="tag tag-skill" style="margin-bottom:2px;">${name}</div>`;
+        }).join('');
+        return `<td style="font-size:0.6rem; white-space:normal; vertical-align:top;">${skillHtml}</td>`;
+    }).join('') + `</tr></tbody>`;
     table.innerHTML += tbody;
 };
 

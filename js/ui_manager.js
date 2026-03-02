@@ -138,9 +138,10 @@ window.expandSelection = () => {
 // --- ターゲットボタン選択 UI ---
 
 window.updateAutoComplete = () => {
+    // 3.2. 所持のみフィルタ
     const onlyOwned = document.getElementById('chkOnlyOwnedSkills')?.checked || false;
     
-    // 所持しているスキル/アビリティのセットを ID形式 (名前::レアリティ) で作成
+    // 所持しているスキル/アビリティのセットを作成 (ID形式: 名前::レアリティ)
     const ownedIds = new Set();
     if (onlyOwned) {
         cardsDB.forEach(c => {
@@ -150,7 +151,9 @@ window.updateAutoComplete = () => {
                     if (typeof ab === 'object') {
                         ownedIds.add(`${ab.name}::${ab.rarity}`);
                     } else {
-                        // 文字列データの場合の暫定対応
+                        // 旧データの場合は暫定的にGold/Silver両方を候補とする
+                        // (あるいはカードレアリティから推測したものを入れるのが正確だが、
+                        // ここでは「所持している可能性があるID」として広めに取る)
                         ownedIds.add(`${ab}::Gold`);
                         ownedIds.add(`${ab}::Silver`);
                     }
@@ -165,22 +168,27 @@ window.updateAutoComplete = () => {
         container.innerHTML = '';
         
         db.forEach(item => {
-            const saId = `${item.name}::${item.rarity}`;
+            // 未更新データ(rarityなし)はGoldとして扱う
+            const r = item.rarity || 'Gold';
+            const saId = `${item.name}::${r}`;
+            
             if (onlyOwned && !ownedIds.has(saId)) return;
 
             const btn = document.createElement('button');
             const isSelected = selectedArray.includes(saId);
-            const rarityClass = `sa-${(item.rarity || 'Gold').toLowerCase()}`;
             
-            // 選択時のクラス
+            // レアリティクラス
+            const rarityClass = `sa-${r.toLowerCase()}`;
             const selectedClass = type === 'skill' ? 'selected-skill' : 'selected-ability';
+            
             btn.className = `tag-btn-select ${isSelected ? selectedClass : ''}`;
             
-            // レアリティを示す左ボーダー
-            const rarityColor = item.rarity === 'Silver' ? '#cbd5e1' : (item.rarity === 'Bronze' ? '#d97706' : '#fbbf24');
+            // レアリティ色
+            const rarityColor = r === 'Silver' ? '#cbd5e1' : (r === 'Bronze' ? '#d97706' : '#fbbf24');
             btn.style.borderLeft = `4px solid ${rarityColor}`;
             
-            btn.innerHTML = `<span style="font-size:0.6rem; opacity:0.7;">${item.rarity[0]}</span> ${item.name}`;
+            // 頭文字 (G, S, B) と名前
+            btn.innerHTML = `<span style="font-size:0.6rem; opacity:0.7; margin-right:3px;">${r[0]}</span>${item.name}`;
             btn.onclick = () => toggleTarget(type, saId);
             container.appendChild(btn);
         });
@@ -189,11 +197,10 @@ window.updateAutoComplete = () => {
     renderButtons('skillTargetContainer', skillsDB, selectedTargetSkills, 'skill');
     renderButtons('abilityTargetContainer', abilitiesDB, selectedTargetAbilities, 'ability');
 
-    // Datalist更新 (Admin用)
     const l = document.getElementById('skillList'); 
     if (l) {
         l.innerHTML = ''; 
-        [...skillsDB, ...abilitiesDB].forEach(i => l.innerHTML += `<option value="${i.name}">`); 
+        [...skillsDB,...abilitiesDB].forEach(i => l.innerHTML += `<option value="${i.name}">`); 
     }
 };
 
