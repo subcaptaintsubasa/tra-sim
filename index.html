@@ -11,6 +11,10 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -171,9 +175,9 @@
                 機種変更時や、複数端末でのデータ共有にご利用ください。
             </p>
 
-            <!-- 未ログイン時 -->
+            <!-- 未ログイン時 (アイコン修正) -->
             <button id="gDriveAuthBtn" class="btn" style="background:#fff; color:#333; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:10px;" onclick="handleAuthClick()">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" alt="Google">
+                <i class="fa-brands fa-google" style="font-size:1.2rem;"></i>
                 Googleでログイン
             </button>
 
@@ -595,15 +599,16 @@
             <button class="btn-close" onclick="document.getElementById('bulkLevelModal').style.display='none'">×</button>
         </div>
         <div class="bulk-level-content">
-            <div class="bulk-val-display">Lv.<span id="bulkLevelVal">50</span></div>
-            <input type="range" id="bulkLevelSlider" min="1" max="50" value="50" style="width:100%; cursor:pointer;" oninput="document.getElementById('bulkLevelVal').innerText=this.value">
-            <div class="level-btn-group" style="width:100%;">
-                <button class="lvl-btn" onclick="setBulkLevelVal(1)">1</button>
-                <button class="lvl-btn" onclick="setBulkLevelVal(30)">30</button>
-                <button class="lvl-btn" onclick="setBulkLevelVal(35)">35</button>
-                <button class="lvl-btn" onclick="setBulkLevelVal(40)">40</button>
-                <button class="lvl-btn" onclick="setBulkLevelVal(45)">45</button>
-                <button class="lvl-btn" onclick="setBulkLevelVal(50)">50</button>
+            <p style="font-size:0.8rem; color:#ccc; text-align:center;">
+                限界突破数(凸)を一括適用します。<br>
+                <span style="font-size:0.7rem; color:#94a3b8;">(SSR: Lv30~50, SR: Lv25~45)</span>
+            </p>
+            <div class="level-btn-group" style="width:100%; flex-wrap:wrap; justify-content:center;">
+                <button class="lvl-btn" onclick="applyBulkLimitBreak(0)" style="flex:0 0 30%; margin:2px;">0凸 (無)</button>
+                <button class="lvl-btn" onclick="applyBulkLimitBreak(1)" style="flex:0 0 30%; margin:2px;">1凸</button>
+                <button class="lvl-btn" onclick="applyBulkLimitBreak(2)" style="flex:0 0 30%; margin:2px;">2凸</button>
+                <button class="lvl-btn" onclick="applyBulkLimitBreak(3)" style="flex:0 0 30%; margin:2px;">3凸</button>
+                <button class="lvl-btn" onclick="applyBulkLimitBreak(4)" style="flex:0 0 30%; margin:2px;">4凸 (完)</button>
             </div>
         </div>
         <div class="modal-footer">

@@ -467,12 +467,21 @@ body:not([data-view="database"]) {
     justify-content: center;
 }
 .comp-lvl-btn {
-    padding: 2px 4px;
-    font-size: 0.55rem;
+    padding: 6px 4px; /* タップ領域拡大 */
+    flex: 1; /* 横幅いっぱいに広げる */
+    font-size: 0.7rem; /* 文字サイズ拡大 */
     border: 1px solid #444;
     background: #0f172a;
     color: #ccc;
     cursor: pointer;
+    border-radius: 4px; /* 丸みを追加 */
+    margin: 0 1px;
+}
+.comp-lvl-btn.active {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+    font-weight: bold;
 }
 .comp-lvl-btn.active {
     background: var(--primary);
@@ -480,10 +489,21 @@ body:not([data-view="database"]) {
     border-color: var(--primary);
 }
 
+/* --- 修正: 文字切れ対策（折り返し・サイズ調整） --- */
 .filter-grid-params .chk-btn label {
-    padding: 8px 0;
-    font-size: 0.65rem; /* 少し小さく */
-    white-space: nowrap;
+    padding: 2px 0; /* 余白を詰める */
+    height: 38px;   /* 高さを固定して2行表示に対応 */
+    font-size: 0.6rem; /* 小さめ */
+    
+    /* 文字折り返し設定 */
+    white-space: normal; 
+    word-break: break-all;
+    line-height: 1.1; /* 行間を詰める */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 /* GK項目を目立たせる（JSでクラス付与） */
@@ -1199,3 +1219,16 @@ body[data-sim-selecting="true"] .drawer-overlay {
     padding: 0 5px;
 }
 .remove-skill-btn:hover { color: #ff0000; }
+
+/* --- v1.4 追加スタイル --- */
+
+/* シミュレータ: セレクターとスロットの間隔 */
+#selectionArea {
+    margin-bottom: 25px; /* 行間を広げる */
+}
+
+/* 一括選択モード中はヘッダーのモード切替を無効化するスタイル */
+body[data-select-mode="true"] .mode-switch-container {
+    opacity: 0.3;
+    pointer-events: none;
+}

@@ -40,12 +40,30 @@ window.onload = async () => {
         myCards = JSON.parse(localStorage.getItem('tra_my_cards') || '{}');
         profiles = JSON.parse(localStorage.getItem('tra_profiles') || '{}');
         
+        // シミュレータ目標値のキャッシュ読込
+        const cachedTarget = localStorage.getItem('tra_sim_target_pct');
+        if (cachedTarget) {
+            const el = document.getElementById('targetPct');
+            const disp = document.getElementById('targetPctDisp');
+            if(el && disp) {
+                el.value = cachedTarget;
+                disp.innerText = cachedTarget;
+            }
+        }
+
         // 初期化関数
         if(typeof renderProfileSelector === 'function') renderProfileSelector();
         if(typeof initStatInputs === 'function') initStatInputs();
         if(typeof initPosSelect === 'function') initPosSelect();
         if(typeof initEditors === 'function') initEditors();
         
+        // PWA Service Worker登録
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('SW registered!', reg))
+            .catch(err => console.log('SW failed', err));
+        }
+
         // データ取得
         await fetchAllDB();
         
@@ -113,6 +131,9 @@ window.switchView = (viewId) => {
 
 // --- Mode Management ---
 window.setAppMode = (mode) => {
+    // 一括選択モード中は切り替え禁止
+    if (isSelectMode) return; 
+
     if (typeof appMode !== 'undefined') appMode = mode;
     
     // タブボタンのスタイル切り替え
@@ -134,9 +155,13 @@ window.setAppMode = (mode) => {
     const btnViewType = document.getElementById('btnViewType');
     if(btnViewType) btnViewType.style.display = 'block'; // 両方で表示
 
+    // MyCardsモードに切り替えたらフィルタをリセット
+    if (mode === 'mycards') {
+        resetFilters();
+    }
+
     renderDatabase();
 };
-
 window.toggleViewType = () => {
     if (typeof viewType !== 'undefined') {
         viewType = (viewType === 'grid') ? 'list' : 'grid';
@@ -241,7 +266,7 @@ window.renderDatabase = () => {
         afDiv.innerHTML = badges.map(l => `<span class="tag" style="background:#334155;">${l}</span>`).join('');
     }
 
-    // ヘルパー: スキル名を取り出す（文字列ならそのまま、オブジェクトならname）
+    // ヘルパー: スキル名を取り出す
     const getSaName = (item) => (typeof item === 'object' && item !== null) ? item.name : item;
 
     const list = cardsDB.map((card, idx) => {
@@ -291,12 +316,18 @@ window.renderDatabase = () => {
 
         let sortScore = 0;
         if (dbFilter.sortParams.length > 0) {
-            let level = (card.rarity==='SSR'?50:45);
-            if (dbFilter.useMyLevel) level = isOwned ? (parseInt(userData.level)||1) : 1;
-            const tPos = dbFilter.pos[0] || null;
-            const tStyle = dbFilter.style[0] || null;
-            const stats = getCardStatsAtLevel(card, level, tPos, tStyle, 1.0);
-            dbFilter.sortParams.forEach(p => sortScore += (stats[p] || 0));
+            if (dbFilter.useMyLevel && !isOwned) {
+                // 所持レベル参照ON かつ 未所持の場合 -> スコア0
+                sortScore = 0;
+            } else {
+                let level = (card.rarity==='SSR'?50:45);
+                if (dbFilter.useMyLevel && isOwned) level = (parseInt(userData.level)||1);
+                
+                const tPos = dbFilter.pos[0] || null;
+                const tStyle = dbFilter.style[0] || null;
+                const stats = getCardStatsAtLevel(card, level, tPos, tStyle, 1.0);
+                dbFilter.sortParams.forEach(p => sortScore += (stats[p] || 0));
+            }
         }
 
         return { original: card, idx, key, isFav, isOwned, sortScore, level: (userData.level || 1) };
@@ -348,7 +379,6 @@ window.renderDatabase = () => {
                 const stats = getCardStatsAtLevel(c, dLvl, null, null, 1.0);
                 displayStats = Object.entries(stats).sort(([,a], [,b]) => b - a).slice(0, 3).map(([k,v]) => `${k}:${(v/10).toFixed(0)}`);
             }
-            // スキル表示の修正: オブジェクトの場合は名前を表示
             const skillsStr = (c.abilities||[]).map(a => getSaName(a)).join(', ');
             
             el.innerHTML = `
@@ -739,7 +769,7 @@ window.updateComparisonTable = () => {
     table.innerHTML += thead;
 
     const cardStats = compareTray.map((c, idx) => getCardStatsAtLevel(c, compCardStates[idx].level, null, null, 1.0));
-    const order = (typeof STATS_VERTICAL_ORDER !== 'undefined') ? STATS_VERTICAL_ORDER : ["決定力","キック力","走力"]; // Fallback
+    const order = (typeof STATS_VERTICAL_ORDER !== 'undefined') ? STATS_VERTICAL_ORDER : ["決定力","キック力","走力"]; 
 
     let tbody = `<tbody>`;
     order.forEach(statName => {
@@ -756,11 +786,24 @@ window.updateComparisonTable = () => {
         row += `</tr>`;
         tbody += row;
     });
-    // Skills
+    
+    // Skills (色分け・種別対応)
     tbody += `<tr><td>スキル</td>` + compareTray.map(c => {
         const skillHtml = (c.abilities||[]).map(s => {
-            const name = (typeof s === 'object' && s !== null) ? s.name : s;
-            return `<div class="tag tag-skill" style="margin-bottom:2px;">${name}</div>`;
+            let name, rarity;
+            if (typeof s === 'object' && s !== null) {
+                name = s.name; rarity = s.rarity;
+            } else {
+                name = s; rarity = (c.rarity === 'SSR') ? 'Gold' : 'Silver'; // 推測
+            }
+            
+            // スキルかアビリティかをDBから判定
+            const isSkill = !!skillsDB.find(k => k.name === name);
+            const tagClass = isSkill ? 'tag-skill' : 'tag-ability';
+            // レアリティ色
+            const borderCol = rarity === 'Silver' ? '#cbd5e1' : (rarity === 'Bronze' ? '#d97706' : '#fbbf24');
+            
+            return `<div class="tag ${tagClass}" style="margin-bottom:2px; border-left:3px solid ${borderCol}; text-align:left;">${name}</div>`;
         }).join('');
         return `<td style="font-size:0.6rem; white-space:normal; vertical-align:top;">${skillHtml}</td>`;
     }).join('') + `</tr></tbody>`;
@@ -802,6 +845,7 @@ window.openCardDetailModal = (item) => {
 
 // --- Filter Modal Logic (Restored) ---
 
+// --- フィルタボタン生成関数 (修正版: 文字数制限を撤廃) ---
 window.renderParamButtons = (targetId, nameAttr) => {
     const container = document.getElementById(targetId);
     if (!container) return;
@@ -820,7 +864,10 @@ window.renderParamButtons = (targetId, nameAttr) => {
         const isGk = gkStats.includes(s);
         div.className = `chk-btn param ${isGk ? 'param-gk' : ''}`;
         const id = `${nameAttr}_${s}`;
-        const labelText = s.length > 3 ? s.substring(0,3) : s;
+        
+        // ★修正: 文字数制限を削除し、そのままの名前(s)を表示する
+        const labelText = s; 
+        
         div.innerHTML = `<input type="checkbox" name="${nameAttr}" value="${s}" id="${id}"><label for="${id}">${labelText}</label>`;
         container.appendChild(div);
     });
@@ -1044,15 +1091,12 @@ window.toggleBulkSelectAll = (doSelect) => {
     updateBulkCount();
 };
 
-// 2. レベル変更モーダルを開く
+// 2. レベル変更モーダルを開く (修正版)
 window.openBulkLevelModal = () => {
+    // 選択チェック
     if (selectedKeys.size === 0) return alert("カードが選択されていません");
     
-    // モーダルのスライダー等を初期化
-    const defaultVal = 50;
-    document.getElementById('bulkLevelSlider').value = defaultVal;
-    document.getElementById('bulkLevelVal').innerText = defaultVal;
-    
+    // ★修正: スライダー初期化コードを削除し、単にモーダルを開くだけにする
     document.getElementById('bulkLevelModal').style.display = 'flex';
 };
 
@@ -1062,28 +1106,38 @@ window.setBulkLevelVal = (val) => {
     document.getElementById('bulkLevelVal').innerText = val;
 };
 
-// 4. 一括レベル適用実行
-window.applyBulkLevel = () => {
-    const lvl = parseInt(document.getElementById('bulkLevelSlider').value);
-    
-    if (!confirm(`${selectedKeys.size}枚のカードを Lv.${lvl} に設定しますか？`)) return;
+// 4. 一括凸適用実行 (新規追加)
+window.applyBulkLimitBreak = (lbIndex) => {
+    // lbIndex: 0=無凸 ... 4=完凸
+    if (!confirm(`${selectedKeys.size}枚のカードを ${lbIndex}凸 相当のレベルに設定しますか？\n(SSRならLv${lbIndex*5+30}, SRならLv${lbIndex*5+25})`)) return;
     
     selectedKeys.forEach(key => {
-        if (!myCards[key]) {
-            // 未所持データなら新規作成して所持済みにする
-            myCards[key] = { owned: true, level: lvl, favorite: false };
+        // カード情報を取得
+        const [name, title] = key.split('_'); 
+        const card = cardsDB.find(c => c.name === name && c.title === title);
+        const rarity = card ? card.rarity : 'SSR'; // デフォルトSSR扱い
+        
+        let newLvl = 1;
+        if (rarity === 'SSR') {
+            // SSR: 30, 35, 40, 45, 50
+            newLvl = 30 + (lbIndex * 5);
         } else {
-            // 既存データならレベル更新＆所持済みにする
-            myCards[key].level = lvl;
+            // SR: 25, 30, 35, 40, 45
+            newLvl = 25 + (lbIndex * 5);
+        }
+
+        if (!myCards[key]) {
+            myCards[key] = { owned: true, level: newLvl, favorite: false };
+        } else {
+            myCards[key].level = newLvl;
             myCards[key].owned = true; 
         }
     });
     
     saveInv(); // 保存
     
-    document.getElementById('bulkLevelModal').style.display = 'none'; // モーダル閉じる
+    document.getElementById('bulkLevelModal').style.display = 'none'; 
     alert("更新しました");
     
-    // 一括モードを終了して一覧を更新
     toggleSelectMode();
 };

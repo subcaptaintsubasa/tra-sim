@@ -44,7 +44,7 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
     }
     return result;
 }
-// --- オート編成 (最適化アルゴリズム) ---
+
 window.runAutoSim = () => {
     if(cardsDB.length === 0) return alert("カードデータがありません。");
     
@@ -83,9 +83,12 @@ window.runAutoSim = () => {
     if(ownedCards.length === 0) return alert("所持カードが選択されていません。「所持カード」タブで設定してください。");
 
     // 2. ターゲットと目標Gapの整理
-    const targetPct = parseInt(getVal('targetPct', 100)) / 100;
+    const targetPctVal = getVal('targetPct', 100);
+    // ★追加: キャッシュ保存
+    localStorage.setItem('tra_sim_target_pct', targetPctVal);
+
+    const targetPct = parseInt(targetPctVal) / 100;
     
-    // selectedTargetSkills/Abilities は "Name::Rarity" の形式になっている
     const allTargets = [...selectedTargetSkills, ...selectedTargetAbilities];
     
     const gaps = {};
@@ -119,7 +122,6 @@ window.runAutoSim = () => {
                 const nCovered = new Set(node.covered);
                 if(card.original.abilities) {
                     card.original.abilities.forEach(ab => {
-                        // 新仕様対応: オブジェクトならそのまま使用、文字列ならカードレアリティから推測
                         let name, rarity;
                         if (typeof ab === 'object') {
                             name = ab.name;
@@ -128,7 +130,6 @@ window.runAutoSim = () => {
                             name = ab;
                             rarity = (card.original.rarity === 'SSR') ? 'Gold' : 'Silver';
                         }
-                        
                         const id = `${name}::${rarity}`;
                         if(allTargets.includes(id)) nCovered.add(id);
                     });
