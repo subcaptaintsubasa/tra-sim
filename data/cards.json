@@ -772,7 +772,10 @@
     "rarity": "SR",
     "bonuses": [],
     "abilities": [
-      "驚異的なセービング"
+      {
+        "name": "驚異的なセービング",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "セービング": 7.3,
