@@ -1397,15 +1397,5 @@
       "ボールタッチ": 10.7
     },
     "growth_rate": 3
-  },
-  {
-    "title": "a",
-    "name": "a",
-    "rarity": "SSR",
-    "bonuses": [],
-    "bonus_type": "",
-    "bonus_value": 0,
-    "abilities": [],
-    "stats": {}
   }
 ]
