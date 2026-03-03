@@ -1330,7 +1330,10 @@
     "bonus_type": "アタッカー",
     "bonus_value": 30,
     "abilities": [
-      "失わないドリブラー"
+      {
+        "name": "失わないドリブラー",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "決定力": 5,
