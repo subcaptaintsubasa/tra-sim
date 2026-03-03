@@ -1384,7 +1384,10 @@
     "bonus_type": "ドリブラー",
     "bonus_value": 30,
     "abilities": [
-      "undefined"
+      {
+        "name": "技巧派ドリブラー",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "決定力": 0.7,
