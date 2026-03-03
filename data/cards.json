@@ -1215,7 +1215,10 @@
     "bonus_type": "サイドアタッカー",
     "bonus_value": 30,
     "abilities": [
-      "俊敏なドリブラー"
+      {
+        "name": "俊敏なドリブラー",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "決定力": 4.7,
