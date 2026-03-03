@@ -1305,7 +1305,10 @@
     "bonus_type": "ドリブラー",
     "bonus_value": 30,
     "abilities": [
-      "強引なフィニッシュ"
+      {
+        "name": "強引なフィニッシュ",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "ショートパス": 7.3,
