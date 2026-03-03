@@ -92,15 +92,6 @@
     "condition": "好調以上のとき"
   },
   {
-    "name": "冷静なランナー",
-    "value": 23,
-    "targets": [
-      "冷静さ",
-      "走力"
-    ],
-    "condition": "試合に後半から途中出場すると"
-  },
-  {
     "name": "精緻な指揮者",
     "rarity": "Gold",
     "condition": "好調以上",
@@ -343,6 +334,15 @@
     "targets": [
       "ロングパス",
       "マーク"
+    ]
+  },
+  {
+    "name": "冷静なランナー",
+    "rarity": "Bronze",
+    "condition": "途中出場",
+    "targets": [
+      "走力",
+      "冷静さ"
     ]
   }
 ]
