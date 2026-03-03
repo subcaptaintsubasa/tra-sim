@@ -1146,7 +1146,10 @@
     "rarity": "SR",
     "bonuses": [],
     "abilities": [
-      "強靭な守護神"
+      {
+        "name": "強靭な守護神",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "ロングパス": 4.3,
