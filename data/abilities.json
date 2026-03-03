@@ -65,15 +65,6 @@
     "condition": "好調以上のとき"
   },
   {
-    "name": "最初の起点",
-    "value": 30,
-    "targets": [
-      "1対1",
-      "ショートパス"
-    ],
-    "condition": "後半から途中出場"
-  },
-  {
     "name": "精緻な指揮者",
     "rarity": "Gold",
     "condition": "好調以上",
@@ -343,6 +334,15 @@
     "targets": [
       "ショートパス",
       "タックル"
+    ]
+  },
+  {
+    "name": "最初の起点",
+    "rarity": "Silver",
+    "condition": "途中出場",
+    "targets": [
+      "ショートパス",
+      "1対1"
     ]
   }
 ]
