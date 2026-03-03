@@ -10,12 +10,26 @@ function gapiLoaded() {
 }
 
 async function initializeGapiClient() {
-    await gapi.client.init({
-        apiKey: GDRIVE_CONFIG.API_KEY,
-        discoveryDocs: GDRIVE_CONFIG.DISCOVERY_DOCS,
-    });
-    gapiInited = true;
-    checkAuth();
+    try {
+        await gapi.client.init({
+            apiKey: GDRIVE_CONFIG.API_KEY,
+            // discoveryDocs: GDRIVE_CONFIG.DISCOVERY_DOCS, // 自動ロードをやめて明示的にロードする
+        });
+
+        // Drive API v3 を明示的にロード
+        // ConfigのURLを使用、なければ標準URLをフォールバックとして使用
+        const discoveryUrl = (typeof GDRIVE_CONFIG !== 'undefined' && GDRIVE_CONFIG.DISCOVERY_DOCS) 
+            ? GDRIVE_CONFIG.DISCOVERY_DOCS[0] 
+            : 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+            
+        await gapi.client.load(discoveryUrl);
+        
+        gapiInited = true;
+        checkAuth();
+    } catch (error) {
+        console.error("GAPI Init Error:", error);
+        updateStatus("API初期化エラー: " + JSON.stringify(error), false, false, true);
+    }
 }
 
 function gisLoaded() {
@@ -30,7 +44,7 @@ function gisLoaded() {
 
 function checkAuth() {
     if (gapiInited && gisInited) {
-        // ボタンを有効化したりする処理（ここではHTML側で制御）
+        // 認証チェック完了後の処理（必要であれば）
     }
 }
 
@@ -68,6 +82,11 @@ function handleSignoutClick() {
 async function saveToDrive() {
     updateStatus("保存中...", true);
     try {
+        // APIロードチェック
+        if (!gapi.client.drive) {
+            throw new Error("Drive APIがロードされていません。ページをリロードしてください。");
+        }
+
         // データをまとめる
         const data = {
             myCards: myCards,
@@ -111,7 +130,8 @@ async function saveToDrive() {
         if (response.ok) {
             updateStatus("バックアップ完了！", false, true);
         } else {
-            throw new Error("Upload failed");
+            const errText = await response.text();
+            throw new Error("Upload failed: " + errText);
         }
 
     } catch (err) {
@@ -126,6 +146,11 @@ async function restoreFromDrive() {
     
     updateStatus("検索中...", true);
     try {
+        // APIロードチェック
+        if (!gapi.client.drive) {
+            throw new Error("Drive APIがロードされていません。ページをリロードしてください。");
+        }
+
         const fileName = GDRIVE_CONFIG.BACKUP_FILE_NAME;
         const fileId = await findFileId(fileName);
 
@@ -171,11 +196,23 @@ async function restoreFromDrive() {
 
 // Helper: ファイルID検索
 async function findFileId(name) {
+    // APIロードチェック
+    if (!gapi.client.drive) {
+        throw new Error("Drive API not loaded");
+    }
+
     const response = await gapi.client.drive.files.list({
         q: `name = '${name}' and trashed = false`,
         fields: 'files(id, name)',
         spaces: 'drive'
     });
+    
+    // レスポンス構造チェック
+    if (!response || !response.result || !response.result.files) {
+        console.warn("Unexpected API response", response);
+        return null;
+    }
+
     const files = response.result.files;
     if (files && files.length > 0) {
         return files[0].id;
@@ -201,12 +238,6 @@ function updateStatus(msg, isLoading=false, isSuccess=false, isError=false) {
     }
 }
 
-// アプリ起動時にライブラリロードをキック
-// (window.onload等で呼ぶか、scriptタグのonloadで呼ぶ)
-// HTML側で以下のように設定すると良い:
-// <script src="..." onload="gapiLoaded()"></script>
-// <script src="..." onload="gisLoaded()"></script>
-// ここでは単純にwindowイベントに追加
 window.addEventListener('load', () => {
     if(typeof gapi !== 'undefined') gapiLoaded();
     if(typeof google !== 'undefined') gisLoaded();
