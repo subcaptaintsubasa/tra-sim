@@ -1085,7 +1085,10 @@
     "bonus_type": "攻撃的FB",
     "bonus_value": 35,
     "abilities": [
-      "絢爛なインターセプト"
+      {
+        "name": "絢爛なインターセプト",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "ショートパス": 1.3,
