@@ -38,15 +38,6 @@
     "condition": "好調以上のとき"
   },
   {
-    "name": "スピードクラッシャー",
-    "value": 30,
-    "targets": [
-      "タックル",
-      "走力"
-    ],
-    "condition": "好調以上のとき"
-  },
-  {
     "name": "精緻な指揮者",
     "rarity": "Gold",
     "condition": "好調以上",
@@ -343,6 +334,15 @@
     "targets": [
       "タックル",
       "キック力"
+    ]
+  },
+  {
+    "name": "スピードクラッシャー",
+    "rarity": "Silver",
+    "condition": "好調以上",
+    "targets": [
+      "タックル",
+      "走力"
     ]
   }
 ]
