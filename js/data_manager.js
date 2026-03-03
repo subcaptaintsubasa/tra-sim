@@ -70,34 +70,41 @@ async function pushToGH(file, data, msg, rawContent = null) {
     try {
         const g = await fetch(url, { headers:{'Authorization':`token ${token}`} });
         
-        if (g.status === 404) {
-            alert("リポジトリが見つかりません(404)。\nconfig.js の GITHUB_REPO 設定、またはlocalStorageの 'gh_repo' が正しいか確認してください。\n現在の設定: " + repo);
-            return false;
-        }
-        // ------------------------------------------
-
         if (g.status === 401 || g.status === 403) {
             alert("GitHub認証に失敗しました。トークンを確認してください。");
             return false;
         }
 
-        const sha = g.ok ? (await g.json()).sha : null;
+        // 404 は「ファイルがまだ存在しない（新規作成）」ケースなので、エラーにせず sha = null として進める
+        let sha = null;
+        if (g.ok) {
+            sha = (await g.json()).sha;
+        } else if (g.status !== 404) {
+            // 401, 403, 404 以外の予期せぬエラー
+            alert(`GitHub API エラー: ${g.status} ${g.statusText}`);
+            return false;
+        }
         
         const content = rawContent 
             ? rawContent 
             : btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
             
+        // 送信用ペイロードの構築（新規作成時は sha を含めない）
+        const payload = {
+            message: msg,
+            content: content
+        };
+        if (sha) {
+            payload.sha = sha;
+        }
+
         const res = await fetch(url, { 
             method:'PUT', 
             headers:{
                 'Authorization':`token ${token}`,
                 'Content-Type': 'application/json'
             }, 
-            body: JSON.stringify({ 
-                message: msg, 
-                sha: sha, 
-                content: content 
-            }) 
+            body: JSON.stringify(payload) 
         });
         
         if (!res.ok) {
