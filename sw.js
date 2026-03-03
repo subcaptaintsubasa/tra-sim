@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tra-sim-v1';
+const CACHE_NAME = 'tra-sim-v1.1'; // 更新時はここを変更すると確実です
 const ASSETS = [
   './',
   './index.html',
@@ -16,12 +16,29 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
+  // インストール時に待機せず即座にアクティブにする
+  self.skipWaiting();
+  
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
 });
 
+self.addEventListener('activate', (e) => {
+  // 古いキャッシュを削除し、すべてのクライアント(タブ)を即座に制御下に置く
+  e.waitUntil(
+    caches.keys().then((keyList) => {
+      return Promise.all(keyList.map((key) => {
+        if (key !== CACHE_NAME) {
+          return caches.delete(key);
+        }
+      }));
+    }).then(() => self.clients.claim())
+  );
+});
+
 self.addEventListener('fetch', (e) => {
+  // キャッシュ優先、なければネットワーク
   e.respondWith(
     caches.match(e.request).then((response) => response || fetch(e.request))
   );

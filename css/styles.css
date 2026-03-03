@@ -1232,3 +1232,40 @@ body[data-select-mode="true"] .mode-switch-container {
     opacity: 0.3;
     pointer-events: none;
 }
+
+/* --- Phase 5: Native App Feel Adjustments --- */
+
+/* 全要素でタップ時のハイライト色を透明にする */
+* {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+/* テキスト選択の無効化 (アプリっぽくするため) */
+body {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none;   /* Safari */
+    -khtml-user-select: none;    /* Konqueror HTML */
+    -moz-user-select: none;      /* Firefox */
+    -ms-user-select: none;       /* Internet Explorer/Edge */
+    user-select: none;           /* Non-prefixed version */
+}
+
+/* 入力フォーム内のテキストは選択可能にする */
+input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* ボタンを押したときのアニメーション効果（青枠の代わり） */
+.btn:active, .icon-btn:active, .chk-btn label:active, .drawer-item:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+/* チェックボックス付きラベルの挙動調整 */
+.chk-btn label {
+    touch-action: manipulation; /* ダブルタップズームの防止 */
+}
