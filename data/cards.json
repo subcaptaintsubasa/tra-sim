@@ -812,7 +812,10 @@
     "rarity": "SR",
     "bonuses": [],
     "abilities": [
-      "力強いボールキープ"
+      {
+        "name": "力強いボールキープ",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "走力": 4.3,
@@ -923,7 +926,10 @@
       }
     ],
     "abilities": [
-      "力強いボールキープ"
+      {
+        "name": "力強いボールキープ",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "コンタクト": 4.7,
