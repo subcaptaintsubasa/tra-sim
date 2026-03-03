@@ -455,7 +455,10 @@
     "rarity": "SR",
     "bonuses": [],
     "abilities": [
-      "パワフルキッカー"
+      {
+        "name": "パワフルキッカー",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "決定力": 4.7,
@@ -1271,7 +1274,10 @@
     "bonus_type": "ポストプレーヤー",
     "bonus_value": 30,
     "abilities": [
-      "パワフルキッカー"
+      {
+        "name": "パワフルキッカー",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "タックル": 0.2,
