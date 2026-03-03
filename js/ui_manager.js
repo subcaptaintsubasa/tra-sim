@@ -24,7 +24,7 @@ function initStatInputs() {
                 <input type="number" placeholder="現在" id="now_${s}" onchange="updateCalc()" style="font-size:0.7rem; padding:4px;">
                 <input type="number" placeholder="最大" id="max_${s}" onchange="updateCalc()" style="font-size:0.7rem; padding:4px;">
             </div>
-            <div id="gap_${s}" style="text-align:right; font-size:0.7rem; color:#64748b;">残: -</div>
+            <div id="gap_${s}" style="text-align:right; font-size:0.7rem; color:#64748b;">差: -</div>
         `;
         statElements[s] = wrapper;
     });
@@ -291,7 +291,7 @@ window.updateCalc = () => {
 function renderResults(totals_x10, saMap, missingTargets) {
     const resDiv = document.getElementById('totalResults');
     if (!resDiv) return;
-    resDiv.innerHTML = '<h4>特練 上昇値 vs Gap</h4>';
+    resDiv.innerHTML = '<h4>パラメーター上昇値</h4>';
     
     const pos = selectedPos;
     if (!pos) {
@@ -328,7 +328,7 @@ function renderResults(totals_x10, saMap, missingTargets) {
 
     const saDiv = document.getElementById('saResults');
     if (!saDiv) return;
-    let header = '<h4>予定スキル/アビ</h4>';
+    let header = '<h4>習得スキル/アビ</h4>';
     
     if(missingTargets.length > 0) {
         header += `<div style="color:#ef4444; font-size:0.7rem;">⚠ 未充足あり</div>`;

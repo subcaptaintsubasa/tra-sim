@@ -394,7 +394,7 @@ window.openMyCardDetailModal = (item, fromSim = false) => {
     if (!modal) return;
     modal.classList.add('mycards-mode');
     
-    document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title} (育成)`;
+    document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title} (Mycards)`;
     renderMyCardModalBody(userData);
 
     // --- 4. シミュレータからの呼び出し時のフッター制御 ---
@@ -548,10 +548,10 @@ window.toggleMyCardOwnedFromModal = () => {
     if(btn) {
         if(isNowOwned) {
             btn.className = "btn btn-accent";
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> <span id="btnToggleOwnText">所持しています</span>';
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> <span id="btnToggleOwnText">所持</span>';
         } else {
             btn.className = "btn btn-primary";
-            btn.innerHTML = '<i class="fa-solid fa-plus"></i> <span id="btnToggleOwnText">未所持にする</span>';
+            btn.innerHTML = '<i class="fa-solid fa-plus"></i> <span id="btnToggleOwnText">未所持</span>';
         }
     }
     renderDatabase();
@@ -670,13 +670,13 @@ function updateDetailButtons() {
     if (!currentModalItem) return;
     const btnFav = document.getElementById('btnFav');
     if(btnFav) {
-        if (currentModalItem.isFav) { btnFav.innerHTML = '<i class="fa-solid fa-heart"></i> 済'; btnFav.classList.add('active'); } 
+        if (currentModalItem.isFav) { btnFav.innerHTML = '<i class="fa-solid fa-heart"></i> 登録中'; btnFav.classList.add('active'); } 
         else { btnFav.innerHTML = '<i class="fa-regular fa-heart"></i> お気に入り'; btnFav.classList.remove('active'); }
     }
     const btnOwned = document.getElementById('btnOwned');
     if(btnOwned) {
-        if (currentModalItem.isOwned) { btnOwned.innerHTML = '所持済'; btnOwned.style.background = '#22c55e'; btnOwned.style.color = '#000'; } 
-        else { btnOwned.innerHTML = '未所持にする'; btnOwned.style.background = '#334155'; btnOwned.style.color = '#fff'; }
+        if (currentModalItem.isOwned) { btnOwned.innerHTML = '所持'; btnOwned.style.background = '#22c55e'; btnOwned.style.color = '#000'; } 
+        else { btnOwned.innerHTML = '未所持'; btnOwned.style.background = '#334155'; btnOwned.style.color = '#fff'; }
     }
 }
 

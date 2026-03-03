@@ -21,8 +21,8 @@
     <button id="btnDrawer" class="icon-btn" onclick="toggleDrawer()"><i class="fa-solid fa-bars"></i></button>
     
     <div class="mode-switch-container">
-        <button id="btnModeView" class="mode-btn active" onclick="setAppMode('view')">図鑑</button>
-        <button id="btnModeMy" class="mode-btn" onclick="setAppMode('mycards')">所持</button>
+        <button id="btnModeView" class="mode-btn active" onclick="setAppMode('view')">Index</button>
+        <button id="btnModeMy" class="mode-btn" onclick="setAppMode('mycards')">Mycards</button>
     </div>
 
     <div class="header-tools">
@@ -33,7 +33,7 @@
 
         <div class="search-bar">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" id="globalSearch" placeholder="名前・称号..." oninput="filterDatabase()">
+            <input type="text" id="globalSearch" placeholder="名前・称号で検索" oninput="filterDatabase()">
             <button id="searchClearBtn" class="search-clear-btn" onclick="clearSearch()">
                 <i class="fa-solid fa-xmark"></i>
             </button>
@@ -86,7 +86,7 @@
     <div id="view-sim" class="view-content">
         <div class="card-box" style="border-color: #3b82f6;">
             <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleDisp('inputContentArea')">
-                <label style="color:#3b82f6; font-weight:bold;">▼ 選手ステータス / ポジション設定</label>
+                <label style="color:#3b82f6; font-weight:bold;">▼ 選手情報設定</label>
                 <span style="font-size:0.8rem;">開閉</span>
             </div>
             <div id="inputContentArea" style="display:block;">
@@ -107,7 +107,7 @@
                 <div style="margin-top:10px; border-bottom:1px dashed #334155; padding-bottom:10px;">
                     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                         <input type="file" id="ocrUpload" accept="image/*" style="display:none;" onchange="handleOCR(this)">
-                        <button class="btn" style="background:#3b82f6; width:auto; font-size:0.75rem; padding:5px 15px;" onclick="document.getElementById('ocrUpload').click()">画像読込 (OCR)</button>
+                        <button class="btn" style="background:#3b82f6; width:auto; font-size:0.75rem; padding:5px 15px;" onclick="document.getElementById('ocrUpload').click()">画像から自動入力</button>
                         <span id="ocrStatus" style="font-size:0.7rem; color:var(--skill);"></span>
                         <div style="margin-left: auto; display:flex; gap:5px;">
                             <button class="btn btn-sm btn-accent" style="width:auto;" onclick="openSaveModal()">💾 保存</button>
@@ -120,16 +120,16 @@
         </div>
         <div id="selectionArea" class="selector-container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label style="color:var(--accent); font-weight:bold; font-size:0.8rem;">育成ターゲット設定</label>
+        <label style="color:var(--accent); font-weight:bold; font-size:0.8rem;">スキル/アビリティ指定</label>
         <!-- 【追加】所持のみチェックボックス -->
         <label style="font-size:0.7rem; cursor:pointer;">
             <input type="checkbox" id="chkOnlyOwnedSkills" onchange="updateAutoComplete()"> 所持のみ表示
         </label>
     </div>
     <div style="margin-top:5px;">
-        <label style="font-size:0.7rem; color:var(--skill);">必須スキル</label>
+        <label style="font-size:0.7rem; color:var(--skill);">必須スキル（最大３つ）</label>
                 <div id="skillTargetContainer" class="tag-selector-grid"></div>
-                <label style="font-size:0.7rem; color:var(--ability); margin-top:8px; display:block;">必須アビリティ</label>
+                <label style="font-size:0.7rem; color:var(--ability); margin-top:8px; display:block;">必須アビリティ（最大３つ）</label>
                 <div id="abilityTargetContainer" class="tag-selector-grid"></div>
             </div>
         </div>
@@ -145,12 +145,12 @@
                 <input type="hidden" id="conditionMod" value="1.0">
             </div>
             <div class="card-box" style="margin-bottom:0; border: 2px solid var(--skill);">
-                <label style="color:var(--skill); font-weight:bold; font-size:0.8rem;">🤖 最適化オート編成</label>
+                <label style="color:var(--skill); font-weight:bold; font-size:0.8rem;">目標（GAPの何％を目標にするか）</label>
                 <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
                     <input type="range" id="targetPct" min="50" max="120" value="100" step="5" oninput="document.getElementById('targetPctDisp').innerText=this.value">
                     <span id="targetPctDisp" style="font-size:0.7rem; min-width:25px;">100</span>%
                 </div>
-                <button class="btn" style="background:var(--skill); color:#000; font-size:0.75rem; padding:5px;" onclick="runAutoSim()">所持カードから最適化</button>
+                <button class="btn" style="background:var(--skill); color:#000; font-size:0.75rem; padding:5px;" onclick="runAutoSim()">実行</button>
             </div>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -419,7 +419,7 @@
 
                 <!-- スキル/アビリティ所持 -->
                 <div class="filter-group">
-                    <div class="filter-group-title">習得スキル (いずれか所持)</div>
+                    <div class="filter-group-title">習得スキル </div>
                     <div class="filter-chips">
                         <div class="chk-btn"><input type="checkbox" id="f_has_skill"><label for="f_has_skill">スキル所持</label></div>
                         <div class="chk-btn"><input type="checkbox" id="f_has_ability"><label for="f_has_ability">アビリティ所持</label></div>
@@ -428,7 +428,7 @@
 
                 <!-- ポジション & スタイル -->
                 <div class="filter-group">
-                    <div class="filter-group-title">適性・ボーナス (OR検索)</div>
+                    <div class="filter-group-title">ボーナス</div>
                     <div class="filter-grid-compact" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-bottom:5px;">
                         <div class="chk-btn"><input type="checkbox" name="f_pos" value="CF" id="fp_cf"><label for="fp_cf">CF</label></div>
                         <div class="chk-btn"><input type="checkbox" name="f_pos" value="LW" id="fp_lw"><label for="fp_lw">LW</label></div>
@@ -465,7 +465,7 @@
                 <!-- 強化パラメータ -->
                 <div class="filter-group">
                     <div class="filter-group-title">
-                        <span>強化パラメータ (指定項目を持つか)</span>
+                        <span>パラメータ</span>
                         <div style="background:#0f172a; border-radius:4px; padding:2px; display:flex; gap:5px; margin-left:10px;">
                             <label style="font-size:0.65rem; padding:2px 6px; color:#fff;"><input type="radio" name="f_logic" value="OR" checked> OR</label>
                             <label style="font-size:0.65rem; padding:2px 6px; color:#fff;"><input type="radio" name="f_logic" value="AND"> AND</label>
@@ -480,7 +480,7 @@
             <div id="tab-sort" class="filter-tab-content" style="display:none;">
                 <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;">
                     選択したステータスの<b>合計値</b>が高い順に並び替えます。<br>
-                    ※「絞り込み」タブで選択したポジション/スタイルボーナスが計算に適用されます。
+                    ※「絞り込み」タブで選択したボーナスが計算に適用されます。
                 </p>
                 
                 <div class="filter-group">
@@ -504,7 +504,7 @@
         </div>
         <div class="modal-footer">
             <button class="btn" style="background:#444;" onclick="resetFilters()">リセット</button>
-            <button class="btn btn-primary" onclick="applyFilters()">適用して閉じる</button>
+            <button class="btn btn-primary" onclick="applyFilters()">完了</button>
         </div>
     </div>
 </div>
