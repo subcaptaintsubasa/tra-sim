@@ -74,15 +74,6 @@
     "condition": "後半から途中出場"
   },
   {
-    "name": "反撃のパサー",
-    "value": 23,
-    "targets": [
-      "ショートパス",
-      "タックル"
-    ],
-    "condition": "好調以上のとき"
-  },
-  {
     "name": "精緻な指揮者",
     "rarity": "Gold",
     "condition": "好調以上",
@@ -343,6 +334,15 @@
     "targets": [
       "決定力",
       "走力"
+    ]
+  },
+  {
+    "name": "反撃のパサー",
+    "rarity": "Bronze",
+    "condition": "好調以上",
+    "targets": [
+      "ショートパス",
+      "タックル"
     ]
   }
 ]
