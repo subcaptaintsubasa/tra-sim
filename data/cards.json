@@ -1357,7 +1357,10 @@
     "bonus_type": "ストッパー",
     "bonus_value": 30,
     "abilities": [
-      "反攻のロングパサー"
+      {
+        "name": "反攻のロングパサー",
+        "rarity": "Bronze"
+      }
     ],
     "stats": {
       "ショートパス": 2.7,
