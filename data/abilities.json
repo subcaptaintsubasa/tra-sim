@@ -19,15 +19,6 @@
     "condition": "試合に後半から途中出場すると"
   },
   {
-    "name": "ムービングスナイパー",
-    "value": 30,
-    "targets": [
-      "冷静さ",
-      "敏捷性"
-    ],
-    "condition": "好調以上のとき"
-  },
-  {
     "name": "精緻な指揮者",
     "rarity": "Gold",
     "condition": "好調以上",
@@ -352,6 +343,15 @@
     "targets": [
       "決定力",
       "走力"
+    ]
+  },
+  {
+    "name": "ムービングスナイパー",
+    "rarity": "Silver",
+    "condition": "好調以上",
+    "targets": [
+      "敏捷性",
+      "冷静さ"
     ]
   }
 ]
