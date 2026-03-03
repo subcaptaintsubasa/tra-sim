@@ -47,15 +47,6 @@
     "condition": "好調以上のとき"
   },
   {
-    "name": "反撃のキッカー",
-    "value": 30,
-    "targets": [
-      "キック力",
-      "タックル"
-    ],
-    "condition": "絶好調のとき"
-  },
-  {
     "name": "精緻な指揮者",
     "rarity": "Gold",
     "condition": "好調以上",
@@ -343,6 +334,15 @@
     "targets": [
       "ロングパス",
       "セービング"
+    ]
+  },
+  {
+    "name": "反撃のキッカー",
+    "rarity": "Gold",
+    "condition": "絶好調",
+    "targets": [
+      "タックル",
+      "キック力"
     ]
   }
 ]
