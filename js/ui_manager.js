@@ -288,48 +288,78 @@ window.updateCalc = () => {
     renderSimSlots(pos, style);
 };
 
+// --- js/core_logic.js (renderResults) ---
+
 function renderResults(totals_x10, saMap, missingTargets) {
     const resDiv = document.getElementById('totalResults');
     if (!resDiv) return;
-    resDiv.innerHTML = '<h4>パラメーター上昇値</h4>';
-    
+    resDiv.innerHTML = '';
+
     const pos = selectedPos;
     if (!pos) {
-        resDiv.innerHTML += '<p style="font-size:0.7rem; color:#64748b;">ポジションを選択してください</p>';
+        resDiv.innerHTML = '<p style="font-size:0.7rem; color:#64748b;">ポジションを選択してください</p>';
         return;
     }
+
     const isGK = (pos === 'GK');
-    const currentViewStats = STATS.filter(s => !DEF_STATS.includes(s));
-    if (isGK) currentViewStats.push(...GK_STATS);
-    else currentViewStats.push(...DEF_STATS);
+    const displayOrder = isGK 
+        ? STATS.filter(s => !DEF_STATS.includes(s)).concat(GK_STATS)
+        : STATS;
 
-    const displayOrder = [...STATS].filter(s => currentViewStats.includes(s) || (isGK && GK_MAP[s]));
-
-    displayOrder.forEach(sOrig => {
-        const s = (isGK && GK_MAP[sOrig]) ? GK_MAP[sOrig] : sOrig;
-        if (!currentViewStats.includes(s)) return;
+    let totalGain = 0;
+    let totalGap = 0;
+    let totalSatisfied = 0;
+    let rowsHtml = '';
+    
+    displayOrder.forEach(s => {
         const now = parseFloat(document.getElementById(`now_${s}`).value) || 0;
         const max = parseFloat(document.getElementById(`max_${s}`).value) || 0;
-        const gap = (max > 0 && now > 0) ? (max - now) : null;
+        const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
+        const targetVal = max * targetPct;
+        const gap = Math.max(0, targetVal - now);
+        const gain = (totals_x10[s] || 0) / 10;
         
-        const gapEl = document.getElementById(`gap_${s}`);
-        if(gapEl) gapEl.innerHTML = gap !== null ? `残: <b>${gap.toFixed(1)}</b>` : `残: -`;
-
-        if(totals_x10[s] > 0) {
-            const finalVal = totals_x10[s] / 10;
-            let color = "#fff";
-            if(gap !== null) {
-                if(finalVal > gap) color = "#ef4444"; 
-                else if(finalVal >= gap * 0.9) color = "#22c55e";
-            }
-            resDiv.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.85rem; border-bottom:1px solid #333; padding:2px 0;"><span>${s}</span><b style="color:${color}">+${finalVal.toFixed(1)}</b></div>`; 
+        if (max > 0) {
+            totalGap += gap;
+            totalGain += gain;
+            totalSatisfied += Math.min(gain, gap);
         }
+
+        const remain = Math.max(0, gap - gain);
+        let pct = (gap > 0) ? Math.min(100, (gain / gap) * 100) : 100;
+        let barClass = 'res-bar-fill';
+        if (gain > gap && gap > 0) barClass += ' overflow';
+        if (pct >= 100) barClass += ' complete';
+
+        if (max === 0 && gain === 0) return;
+
+        rowsHtml += `
+            <div class="res-row">
+                <div class="res-name">${s}</div>
+                <div class="res-val" style="color:${gain>0?'#fff':'#666'}">+${gain.toFixed(0)}</div>
+                <div class="res-bar-container">
+                    <div class="${barClass}" style="width:${pct}%"></div>
+                </div>
+                <div class="res-remain">${remain > 0 ? '残'+remain.toFixed(0) : 'OK'}</div>
+            </div>
+        `;
     });
 
+    const totalPct = (totalGap > 0) ? (totalSatisfied / totalGap * 100) : 0;
+    const summaryHtml = `
+        <div class="res-summary">
+            <div class="res-sum-title">目標達成率</div>
+            <div class="res-sum-val">${totalPct.toFixed(1)}%</div>
+            <div class="res-sum-sub">上昇合計: ${totalGain.toFixed(0)} / 必要合計: ${totalGap.toFixed(0)}</div>
+        </div>
+    `;
+
+    resDiv.innerHTML = summaryHtml + rowsHtml;
+
+    // スキル表示（既存ロジック維持）
     const saDiv = document.getElementById('saResults');
     if (!saDiv) return;
     let header = '<h4>習得スキル/アビ</h4>';
-    
     if(missingTargets.length > 0) {
         header += `<div style="color:#ef4444; font-size:0.7rem;">⚠ 未充足あり</div>`;
     } else if (selectedTargetSkills.length > 0 || selectedTargetAbilities.length > 0) {
@@ -337,17 +367,17 @@ function renderResults(totals_x10, saMap, missingTargets) {
     }
     saDiv.innerHTML = header;
 
-    // saMapの内容をループ表示
     Object.values(saMap).forEach(item => {
         const isS = !!skillsDB.find(s => s.name === item.name);
         const type = isS ? 'S' : 'A';
         const saId = `${item.name}::${item.rarity}`;
         const isTarget = selectedTargetSkills.includes(saId) || selectedTargetAbilities.includes(saId);
         const hlStyle = isTarget ? 'border:1px solid var(--accent); background:rgba(34,197,94,0.1);' : '';
+        const rarityClass = item.rarity ? `sa-${item.rarity.toLowerCase()}` : '';
         
         saDiv.innerHTML += `
         <div class="clickable-sa" onclick="openSaModal('${item.name}', '${item.rarity}', ${item.level})" style="display:flex; align-items:center; margin-bottom:5px; width:100%; padding:6px; border-radius:4px; border:1px solid #334155; background:#1e293b; ${hlStyle}">
-            <span class="sa-badge sa-${item.rarity.toLowerCase()}">${type}</span>
+            <span class="sa-badge ${rarityClass}">${type}</span>
             <b style="font-size:0.85rem; flex:1;">${item.name}</b>
             <span style="font-size:0.7rem; color:var(--primary); font-weight:bold;">Lv.${item.level}</span>
         </div>`;
@@ -1559,3 +1589,69 @@ window.renderSimCardPicker = () => {
     });
 };
 
+// --- js/ui_manager.js 末尾に追加 ---
+
+// --- 育成モード & 結果表示拡張 ---
+
+// 現在のシミュレーションモード
+let currentSimMode = 'balanced';
+let customWeightsOrder = []; // ["決定力", "走力", ...] 
+
+// モード切替
+window.setSimMode = (mode) => {
+    currentSimMode = mode;
+    
+    // ボタンのスタイル更新
+    document.querySelectorAll('.sim-mode-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btnMode${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
+    
+    // カスタム設定ボタンの表示制御
+    const btnConfig = document.getElementById('btnCustomConfig');
+    if(btnConfig) btnConfig.style.display = (mode === 'custom') ? 'block' : 'none';
+};
+
+// カスタム設定モーダル制御
+window.openCustomWeightModal = () => {
+    const container = document.getElementById('customWeightRows');
+    container.innerHTML = '';
+    
+    // 対象ステータス一覧
+    const isGK = (selectedPos === 'GK');
+    const stats = isGK 
+        ? STATS.filter(s => !DEF_STATS.includes(s)).concat(GK_STATS)
+        : STATS;
+
+    for(let i=1; i<=5; i++) {
+        const row = document.createElement('div');
+        row.className = 'cw-row';
+        
+        let options = `<option value="">-- 指定なし --</option>`;
+        stats.forEach(s => {
+            // 既に保存されている設定があれば反映
+            const isSelected = (customWeightsOrder[i-1] === s) ? 'selected' : '';
+            options += `<option value="${s}" ${isSelected}>${s}</option>`;
+        });
+
+        row.innerHTML = `
+            <div class="cw-rank">${i}位</div>
+            <select class="cw-select" id="cw_rank_${i}">${options}</select>
+        `;
+        container.appendChild(row);
+    }
+    
+    document.getElementById('customWeightModal').style.display = 'flex';
+};
+
+window.closeCustomWeightModal = () => {
+    document.getElementById('customWeightModal').style.display = 'none';
+};
+
+window.saveCustomWeights = () => {
+    customWeightsOrder = [];
+    for(let i=1; i<=5; i++) {
+        const val = document.getElementById(`cw_rank_${i}`).value;
+        if(val) customWeightsOrder.push(val);
+    }
+    closeCustomWeightModal();
+    alert("設定を保存しました。");
+};

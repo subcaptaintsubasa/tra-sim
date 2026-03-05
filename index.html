@@ -170,20 +170,39 @@
                 </div>
                 <input type="hidden" id="conditionMod" value="1.0">
             </div>
+            
+            <!-- ★ここを改修: 目標設定とモード選択 -->
             <div class="card-box" style="margin-bottom:0; border: 2px solid var(--skill);">
-                <label style="color:var(--skill); font-weight:bold; font-size:0.8rem;">目標（GAPの何％を目標にするか）</label>
-                <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
-                    <input type="range" id="targetPct" min="50" max="120" value="100" step="5" oninput="document.getElementById('targetPctDisp').innerText=this.value">
+                <label style="color:var(--skill); font-weight:bold; font-size:0.8rem;">育成方針</label>
+                
+                <!-- モード選択ボタン -->
+                <div class="sim-mode-group">
+                    <button class="sim-mode-btn active" onclick="setSimMode('balanced')" id="btnModeBalanced">バランス</button>
+                    <button class="sim-mode-btn" onclick="setSimMode('ovr')" id="btnModeOvr">総合値</button>
+                    <button class="sim-mode-btn" onclick="setSimMode('custom')" id="btnModeCustom">特化</button>
+                </div>
+
+                <!-- カスタム設定ボタン (初期非表示) -->
+                <button id="btnCustomConfig" class="btn btn-sm" style="display:none; margin-top:5px; background:#334155;" onclick="openCustomWeightModal()">
+                    <i class="fa-solid fa-gear"></i> 優先項目設定
+                </button>
+
+                <div style="display:flex; align-items:center; gap:5px; margin-top:5px; border-top:1px dashed #333; padding-top:5px;">
+                    <span style="font-size:0.7rem;">目標:</span>
+                    <input type="range" id="targetPct" min="50" max="120" value="100" step="5" style="flex:1;" oninput="document.getElementById('targetPctDisp').innerText=this.value">
                     <span id="targetPctDisp" style="font-size:0.7rem; min-width:25px;">100</span>%
                 </div>
-                <button class="btn" style="background:var(--skill); color:#000; font-size:0.75rem; padding:5px;" onclick="runAutoSim()">実行</button>
+                <button class="btn" style="background:var(--skill); color:#000; font-size:0.75rem; padding:5px; margin-top:5px;" onclick="runAutoSim()">実行</button>
             </div>
         </div>
+        
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <!-- 結果表示エリア (クラスは維持、中身はJSで書き換え) -->
             <div id="totalResults" class="card-box"></div>
             <div id="saResults" class="card-box"></div>
         </div>
     </div>
+
 
     <!-- 3. データバックアップ -->
     <div id="view-backup" class="view-content">
@@ -673,6 +692,28 @@
                 </label>
             </div>
             <button class="btn btn-primary" onclick="closeWarningModal()">確認しました</button>
+        </div>
+    </div>
+</div>
+
+<!-- カスタム特化育成設定モーダル -->
+<div id="customWeightModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width:350px;">
+        <div class="modal-header">
+            <h4>特化育成設定</h4>
+            <button class="btn-close" onclick="closeCustomWeightModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:0.75rem; color:#ccc; margin-bottom:10px;">
+                優先的に上げたいステータスを選択してください。<br>
+                (1位が最も重視されます)
+            </p>
+            <div id="customWeightRows">
+                <!-- JSで生成: 1位〜5位のプルダウン -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="saveCustomWeights()">設定を保存</button>
         </div>
     </div>
 </div>

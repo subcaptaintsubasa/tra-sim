@@ -45,120 +45,126 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
     return result;
 }
 
+// 重み取得ヘルパー
+function getStatWeight(statName, mode, playStyle) {
+    if (mode === 'balanced') return 1.0;
+    if (mode === 'ovr') {
+        const styleIcon = STYLE_ICONS[playStyle];
+        const weights = OVR_WEIGHTS[styleIcon];
+        return (weights && weights[statName] !== undefined) ? weights[statName] : 0;
+    }
+    if (mode === 'custom') {
+        const idx = customWeightsOrder.indexOf(statName);
+        if (idx === 0) return 10.0;
+        if (idx === 1) return 8.0;
+        if (idx === 2) return 6.0;
+        if (idx === 3) return 4.0;
+        if (idx === 4) return 2.0;
+        return 1.0;
+    }
+    return 1.0;
+}
+
 window.runAutoSim = () => {
     if(cardsDB.length === 0) return alert("カードデータがありません。");
     
     const simPos = selectedPos;
     const simStyle = selectedStyle;
-    
-    if (!simPos || !simStyle) {
-        return alert("ポジションとスタイルを選択してください。");
-    }
+    if (!simPos || !simStyle) return alert("ポジションとスタイルを選択してください。");
 
-    const getVal = (id, defaultVal = 0) => {
-        const el = document.getElementById(id);
-        return el ? el.value : defaultVal;
-    };
+    // 設定値取得
+    const conditionMod = parseFloat(document.getElementById('conditionMod').value || 1.0);
+    const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
+    localStorage.setItem('tra_sim_target_pct', document.getElementById('targetPct').value);
 
-    const conditionMod = parseFloat(getVal('conditionMod', 1.0));
     const isGK = (simPos === 'GK');
+    const relevantStats = isGK 
+        ? STATS.filter(s => !DEF_STATS.includes(s)).concat(GK_STATS) 
+        : STATS;
 
-    // 1. 所持済みカードの有効ステータスを事前に計算
-    const ownedCards = cardsDB.map((c, idx) => {
+    // 1. 候補カードのリストアップ
+    const candidateCards = [];
+    cardsDB.forEach((c, idx) => {
         const k = c.name + "_" + c.title;
         const inv = myCards[k];
-        if (!inv || !inv.owned) return null;
-        
-        const rawVals = getCardStatsAtLevel(c, parseInt(inv.level), simPos, simStyle, conditionMod);
-        const filteredVals = {};
-        for (let s in rawVals) {
-            if (isGK && DEF_STATS.includes(s)) continue;
-            if (!isGK && GK_STATS.includes(s)) continue;
-            filteredVals[s] = rawVals[s];
+        if (inv && inv.owned) {
+            const rawVals = getCardStatsAtLevel(c, parseInt(inv.level), simPos, simStyle, conditionMod);
+            const vals = {};
+            relevantStats.forEach(s => { if (rawVals[s]) vals[s] = rawVals[s]; });
+            
+            candidateCards.push({
+                originalIndex: idx,
+                original: c,
+                vals: vals,
+                skillIds: (c.abilities||[]).map(ab => {
+                    const n = (typeof ab === 'object') ? ab.name : ab;
+                    const r = (typeof ab === 'object') ? ab.rarity : (c.rarity==='SSR'?'Gold':'Silver');
+                    return `${n}::${r}`;
+                })
+            });
         }
-
-        return { id: idx, original: c, vals: filteredVals };
-    }).filter(x => x !== null);
-
-    if(ownedCards.length === 0) return alert("所持カードが選択されていません。「所持カード」タブで設定してください。");
-
-    // 2. ターゲットと目標Gapの整理
-    const targetPctVal = getVal('targetPct', 100);
-    // ★追加: キャッシュ保存
-    localStorage.setItem('tra_sim_target_pct', targetPctVal);
-
-    const targetPct = parseInt(targetPctVal) / 100;
-    
-    const allTargets = [...selectedTargetSkills, ...selectedTargetAbilities];
-    
-    const gaps = {};
-    const relevantStats = isGK ? STATS.filter(s => !DEF_STATS.includes(s)).concat(GK_STATS) : STATS;
-
-    relevantStats.forEach(s => {
-        const now = parseFloat(getVal(`now_${s}`, 0)) || 0;
-        const max = parseFloat(getVal(`max_${s}`, 0)) || 0;
-        gaps[s] = (max > 0) ? Math.max(0, max - now) * targetPct : 999999;
     });
 
-    const getScore = (sums) => {
-        let sc = 0; 
+    if(candidateCards.length === 0) return alert("所持カードがありません。");
+
+    // 2. 目標(Gap)と重み(Weight)の計算
+    const gaps = {};
+    const weights = {}; 
+
+    relevantStats.forEach(s => {
+        const now = (parseFloat(document.getElementById(`now_${s}`).value) || 0) * 10; 
+        const max = (parseFloat(document.getElementById(`max_${s}`).value) || 0) * 10;
+        let gap = 0;
+        if (max > 0) gap = Math.max(0, (max * targetPct) - now);
+        gaps[s] = gap;
+        weights[s] = getStatWeight(s, currentSimMode, simStyle);
+    });
+
+    const calculateScore = (currentSums) => {
+        let score = 0;
         relevantStats.forEach(s => {
-            sc += Math.min((sums[s]||0)/10, gaps[s]);
-        }); 
-        return sc;
+            const gain = currentSums[s] || 0;
+            const gap = gaps[s];
+            const effectiveGain = Math.min(gain, gap);
+            score += effectiveGain * weights[s];
+        });
+        return score;
     };
 
-    // 3. ビームサーチ
-    const WIDTH = 300;
-    let beam = [{ idxs: [], sums: {}, score: 0, covered: new Set() }];
+    // 3. ビームサーチ実行
+    const BEAM_WIDTH = 200;
+    let beam = [{ indices: [], sums: {}, score: 0, skillSet: new Set() }];
 
-    for(let step = 0; step < 6; step++) {
-        let next = [];
-        for(const node of beam) {
-            for(const card of ownedCards) {
-                const nSums = { ...node.sums };
-                for(const s in card.vals) nSums[s] = (nSums[s]||0) + card.vals[s];
-                
-                const nCovered = new Set(node.covered);
-                if(card.original.abilities) {
-                    card.original.abilities.forEach(ab => {
-                        let name, rarity;
-                        if (typeof ab === 'object') {
-                            name = ab.name;
-                            rarity = ab.rarity;
-                        } else {
-                            name = ab;
-                            rarity = (card.original.rarity === 'SSR') ? 'Gold' : 'Silver';
-                        }
-                        const id = `${name}::${rarity}`;
-                        if(allTargets.includes(id)) nCovered.add(id);
-                    });
-                }
+    for (let slot = 0; slot < 6; slot++) {
+        let nextBeam = [];
+        for (const node of beam) {
+            for (let i = 0; i < candidateCards.length; i++) {
+                const card = candidateCards[i];
+                const newSums = { ...node.sums };
+                for (const s in card.vals) newSums[s] = (newSums[s] || 0) + card.vals[s];
+                const newSkillSet = new Set(node.skillSet);
+                card.skillIds.forEach(id => newSkillSet.add(id));
+                const newScore = calculateScore(newSums);
 
-                next.push({ 
-                    idxs: [...node.idxs, card.id], 
-                    sums: nSums, 
-                    score: getScore(nSums),
-                    covered: nCovered
+                nextBeam.push({
+                    indices: [...node.indices, i],
+                    sums: newSums,
+                    score: newScore,
+                    skillSet: newSkillSet
                 });
             }
         }
-        next.sort((a,b) => {
-            if(a.covered.size !== b.covered.size) return b.covered.size - a.covered.size;
-            return b.score - a.score;
-        });
-        beam = next.slice(0, WIDTH);
+        nextBeam.sort((a, b) => b.score - a.score);
+        beam = nextBeam.slice(0, BEAM_WIDTH);
     }
 
-    if(beam.length > 0) {
-        const best = beam[0];
-        selectedSlots = best.idxs.map(i => cardsDB[i]);
-        if (typeof updateCalc === 'function') updateCalc();
-        
-        if (allTargets.length > 0 && best.covered.size < allTargets.length) {
-            alert(`最適化完了。注意：一部の必須項目を埋めることができませんでした。`);
-        } else {
-            alert(`最適化完了！ (スコア: ${best.score.toFixed(1)})`);
-        }
+    if (beam.length > 0) {
+        const bestNode = beam[0];
+        selectedSlots = bestNode.indices.map(idx => candidateCards[idx].original);
+        updateCalc();
+        const modeName = currentSimMode === 'balanced' ? 'バランス' : (currentSimMode === 'ovr' ? '総合値重視' : 'カスタム特化');
+        alert(`【${modeName}モード】最適化完了\n評価スコア: ${bestNode.score.toFixed(0)}`);
+    } else {
+        alert("有効な組み合わせが見つかりませんでした。");
     }
 };

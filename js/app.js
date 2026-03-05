@@ -277,7 +277,8 @@ window.resetFilters = () => {
     // 4. リスト再描画
     renderDatabase();
 };
-// --- Database Render Logic ---
+// --- js/app.js ---
+
 window.renderDatabase = () => {
     const grid = document.getElementById('dbGrid');
     if(!grid) return;
@@ -421,11 +422,28 @@ window.renderDatabase = () => {
                 const stats = getCardStatsAtLevel(c, dLvl, null, null, 1.0);
                 displayStats = Object.entries(stats).sort(([,a], [,b]) => b - a).slice(0, 3).map(([k,v]) => `${k}:${(v/10).toFixed(0)}`);
             }
-            const skillsStr = (c.abilities||[]).map(a => getSaName(a)).join(', ');
+            
+            // Skill Tag Generation
+            const skillsHtml = (c.abilities || []).map(ab => {
+                let name, rarity;
+                if (typeof ab === 'object' && ab !== null) {
+                    name = ab.name;
+                    rarity = ab.rarity || 'Gold';
+                } else {
+                    name = ab;
+                    rarity = (c.rarity === 'SSR') ? 'Gold' : 'Silver';
+                }
+                const isSkill = !!skillsDB.find(s => s.name === name);
+                const typeChar = isSkill ? 'S' : 'A';
+                const typeClass = isSkill ? 'type-S' : 'type-A';
+                const borderClass = rarity === 'Silver' ? 'bd-silver' : (rarity === 'Bronze' ? 'bd-bronze' : 'bd-gold');
+
+                return `<div class="skill-tag-chip ${borderClass}"><span class="skill-type-icon ${typeClass}">${typeChar}</span>${name}</div>`;
+            }).join('');
             
             el.innerHTML = `
                 <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/333333/ffffff/300x400.png?text=No+Img'">
-                <div class="db-info">
+                <div class="db-info" style="overflow:hidden;">
                     <div style="display:flex; justify-content:space-between; width:100%;">
                         <div class="db-name" style="font-weight:bold;">${c.name} <span style="font-size:0.7em; color:#999;">${c.title}</span></div>
                         <div class="db-badges">
@@ -433,8 +451,8 @@ window.renderDatabase = () => {
                             ${item.isOwned ? `<span class="badge" style="background:#22c55e;color:#000;">Lv.${item.level}</span>` : ''}
                         </div>
                     </div>
-                    <div class="list-stats">${displayStats.map(s => `<span>${s}</span>`).join('')}</div>
-                    <div class="list-skills" style="font-size:0.7rem; color:var(--skill); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${skillsStr}</div>
+                    <div class="list-stats" style="margin-bottom:4px;">${displayStats.map(s => `<span>${s}</span>`).join('')}</div>
+                    <div class="skill-tag-container">${skillsHtml || '<span style="font-size:0.7rem; color:#666;">なし</span>'}</div>
                 </div>
             `;
         }

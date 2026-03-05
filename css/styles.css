@@ -1269,3 +1269,132 @@ input, textarea, [contenteditable="true"] {
 .chk-btn label {
     touch-action: manipulation; /* ダブルタップズームの防止 */
 }
+
+/* --- Phase 6: UI Improvements --- */
+
+/* Skill Tags in List View */
+.skill-tag-container {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none; /* Firefox */
+    padding-bottom: 2px;
+}
+.skill-tag-container::-webkit-scrollbar { 
+    display: none; /* Chrome/Safari */
+}
+.skill-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #0f172a;
+    border: 1px solid #444;
+    color: #ccc;
+    flex-shrink: 0;
+}
+.skill-tag-chip.bd-gold { border-color: #fbbf24; color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+.skill-tag-chip.bd-silver { border-color: #cbd5e1; color: #cbd5e1; background: rgba(203, 213, 225, 0.1); }
+.skill-tag-chip.bd-bronze { border-color: #d97706; color: #d97706; background: rgba(217, 119, 6, 0.1); }
+
+.skill-type-icon {
+    font-weight: bold;
+    margin-right: 4px;
+    font-size: 0.6rem;
+    width: 12px;
+    text-align: center;
+    display: inline-block;
+}
+.type-S { color: var(--skill); }
+.type-A { color: var(--ability); }
+
+/* Simulator Mode Selector */
+.sim-mode-group {
+    display: flex;
+    background: #000;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    padding: 3px;
+    margin-top: 5px;
+}
+.sim-mode-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    padding: 8px 0;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: 0.2s;
+    font-weight: bold;
+}
+.sim-mode-btn.active {
+    background: var(--primary);
+    color: #000;
+    box-shadow: 0 0 5px rgba(0, 242, 255, 0.3);
+}
+
+/* Result Progress Bars */
+.res-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.75rem;
+}
+.res-name { width: 70px; color: #ccc; }
+.res-val { width: 45px; text-align: right; font-weight: bold; margin-right: 8px; }
+.res-bar-container {
+    flex: 1;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    margin-right: 8px;
+}
+.res-bar-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.5s ease;
+}
+.res-bar-fill.overflow { background: #ef4444; } /* あふれ */
+.res-bar-fill.complete { background: #22c55e; } /* 完了 */
+.res-remain { width: 50px; text-align: right; font-size: 0.7rem; color: #94a3b8; }
+
+.res-summary {
+    background: rgba(0, 242, 255, 0.1);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.res-sum-title { font-size: 0.7rem; color: var(--primary); margin-bottom: 2px; }
+.res-sum-val { font-size: 1.2rem; font-weight: bold; color: #fff; }
+.res-sum-sub { font-size: 0.7rem; color: #aaa; }
+
+/* Custom Weight Modal */
+.cw-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    background: #1e293b;
+    padding: 8px;
+    border-radius: 6px;
+}
+.cw-rank {
+    width: 30px;
+    font-weight: bold;
+    color: var(--primary);
+}
+.cw-select {
+    flex: 1;
+    background: #000;
+    border: 1px solid #334155;
+    color: #fff;
+    padding: 5px;
+    border-radius: 4px;
+}
