@@ -290,9 +290,13 @@ window.updateCalc = () => {
 
 // --- js/core_logic.js (renderResults) ---
 
-function renderResults(totals_x10, saMap, missingTargets) {
+// --- js/ui_manager.js (renderResults) ---
+
+window.renderResults = (totals_x10, saMap, missingTargets) => {
     const resDiv = document.getElementById('totalResults');
     if (!resDiv) return;
+    
+    // 初期化
     resDiv.innerHTML = '';
 
     const pos = selectedPos;
@@ -301,22 +305,29 @@ function renderResults(totals_x10, saMap, missingTargets) {
         return;
     }
 
+    // 対象ステータスの決定
     const isGK = (pos === 'GK');
     const displayOrder = isGK 
         ? STATS.filter(s => !DEF_STATS.includes(s)).concat(GK_STATS)
         : STATS;
 
+    // 全体集計用
     let totalGain = 0;
     let totalGap = 0;
     let totalSatisfied = 0;
+
+    // 各行のHTML生成
     let rowsHtml = '';
     
     displayOrder.forEach(s => {
         const now = parseFloat(document.getElementById(`now_${s}`).value) || 0;
         const max = parseFloat(document.getElementById(`max_${s}`).value) || 0;
+        
+        // Gap計算 (バーの進捗率用): (最大 * 目標%) - 現在
         const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
         const targetVal = max * targetPct;
         const gap = Math.max(0, targetVal - now);
+        
         const gain = (totals_x10[s] || 0) / 10;
         
         if (max > 0) {
@@ -325,12 +336,17 @@ function renderResults(totals_x10, saMap, missingTargets) {
             totalSatisfied += Math.min(gain, gap);
         }
 
-        const remain = Math.max(0, gap - gain);
+        // ★修正箇所: 「残」は目標%に関係なく、純粋なカンストまでの残り値を表示
+        // 残 = 最大値 - (現在値 + 上昇値)
+        const remain = Math.max(0, max - (now + gain));
+
+        // 進捗率 (分母がGap。Gapが0なら100%とする)
         let pct = (gap > 0) ? Math.min(100, (gain / gap) * 100) : 100;
         let barClass = 'res-bar-fill';
-        if (gain > gap && gap > 0) barClass += ' overflow';
+        if (gain > gap && gap > 0) barClass += ' overflow'; // 目標超過
         if (pct >= 100) barClass += ' complete';
 
+        // ゼロなら表示を薄くする等の処理（今回はすべて表示）
         if (max === 0 && gain === 0) return;
 
         rowsHtml += `
@@ -340,12 +356,14 @@ function renderResults(totals_x10, saMap, missingTargets) {
                 <div class="res-bar-container">
                     <div class="${barClass}" style="width:${pct}%"></div>
                 </div>
-                <div class="res-remain">${remain > 0 ? '残'+remain.toFixed(0) : 'OK'}</div>
+                <div class="res-remain">${remain > 0 ? '残'+remain.toFixed(0) : 'MAX'}</div>
             </div>
         `;
     });
 
+    // サマリー表示
     const totalPct = (totalGap > 0) ? (totalSatisfied / totalGap * 100) : 0;
+    
     const summaryHtml = `
         <div class="res-summary">
             <div class="res-sum-title">目標達成率</div>
@@ -382,7 +400,8 @@ function renderResults(totals_x10, saMap, missingTargets) {
             <span style="font-size:0.7rem; color:var(--primary); font-weight:bold;">Lv.${item.level}</span>
         </div>`;
     });
-}
+};
+
 function renderSimSlots(pos, style) {
     const g = document.getElementById('simSlots');
     if (!g) return;
