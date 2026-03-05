@@ -182,10 +182,15 @@
                     <button class="sim-mode-btn" onclick="setSimMode('custom')" id="btnModeCustom">特化</button>
                 </div>
 
-                <!-- カスタム設定ボタン (初期非表示) -->
+                <!-- カスタム設定ボタン (既存) -->
                 <button id="btnCustomConfig" class="btn btn-sm" style="display:none; margin-top:5px; background:#334155;" onclick="openCustomWeightModal()">
                     <i class="fa-solid fa-gear"></i> 優先項目設定
                 </button>
+
+                <!-- ★新規追加: 総合値モード用クレジットリンク -->
+                <div id="ovrCreditsLink" style="display:none; text-align:right; margin-top:5px; font-size:0.7rem; color:#3b82f6; cursor:pointer; text-decoration:underline;" onclick="openCreditsModal()">
+                    powered by strange story storage
+                </div>
 
                 <div style="display:flex; align-items:center; gap:5px; margin-top:5px; border-top:1px dashed #333; padding-top:5px;">
                     <span style="font-size:0.7rem;">目標:</span>
@@ -714,6 +719,29 @@
         </div>
         <div class="modal-footer">
             <button class="btn btn-primary" onclick="saveCustomWeights()">設定を保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 参考情報クレジットモーダル -->
+<div id="creditsModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width:350px;">
+        <div class="modal-header">
+            <h4>参考情報</h4>
+            <button class="btn-close" onclick="closeCreditsModal()">×</button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding:20px;">
+            <p style="font-size:0.8rem; color:#ccc; margin-bottom:20px; line-height:1.6;">
+                総合値計算ロジックは<br>以下の情報を参考に作成されました。
+            </p>
+            
+            <a href="https://note.com/kbierhoff/n/n82fe92781a0d?sub_rt=share_pb" target="_blank" class="btn" style="background:#fff; color:#333; border:1px solid #ccc; margin-bottom:10px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <i class="fa-solid fa-book"></i> 参考Note記事を読む
+            </a>
+            
+            <a href="https://x.com/St_St_Storage?s=20" target="_blank" class="btn" style="background:#000; color:#fff; border:1px solid #333; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <i class="fa-brands fa-x-twitter"></i> @St_St_Storage
+            </a>
         </div>
     </div>
 </div>

@@ -1597,17 +1597,24 @@ window.renderSimCardPicker = () => {
 let currentSimMode = 'balanced';
 let customWeightsOrder = []; // ["決定力", "走力", ...] 
 
+// --- js/ui_manager.js ---
+
 // モード切替
 window.setSimMode = (mode) => {
     currentSimMode = mode;
     
     // ボタンのスタイル更新
     document.querySelectorAll('.sim-mode-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`btnMode${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
+    const activeBtn = document.getElementById(`btnMode${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
+    if(activeBtn) activeBtn.classList.add('active');
     
     // カスタム設定ボタンの表示制御
     const btnConfig = document.getElementById('btnCustomConfig');
     if(btnConfig) btnConfig.style.display = (mode === 'custom') ? 'block' : 'none';
+
+    // ★新規追加: 総合値モード用クレジットリンクの表示制御
+    const creditsLink = document.getElementById('ovrCreditsLink');
+    if(creditsLink) creditsLink.style.display = (mode === 'ovr') ? 'block' : 'none';
 };
 
 // カスタム設定モーダル制御
@@ -1654,4 +1661,15 @@ window.saveCustomWeights = () => {
     }
     closeCustomWeightModal();
     alert("設定を保存しました。");
+};
+
+// --- js/ui_manager.js 末尾に追加 ---
+
+// クレジットモーダル制御
+window.openCreditsModal = () => {
+    document.getElementById('creditsModal').style.display = 'flex';
+};
+
+window.closeCreditsModal = () => {
+    document.getElementById('creditsModal').style.display = 'none';
 };
