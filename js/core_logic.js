@@ -120,7 +120,8 @@ window.runAutoSim = () => {
         weights[s] = getStatWeight(s, currentSimMode, simStyle);
     });
 
-    const calculateScore = (currentSums) => {
+    // ▼修正箇所：引数に skillSet を追加し、必須スキルの不足を減点する処理を追加
+    const calculateScore = (currentSums, skillSet) => {
         let score = 0;
         relevantStats.forEach(s => {
             const gain = currentSums[s] || 0;
@@ -128,6 +129,13 @@ window.runAutoSim = () => {
             const effectiveGain = Math.min(gain, gap);
             score += effectiveGain * weights[s];
         });
+
+        // 必須スキル/アビリティの不足ペナルティ (-100000点で絶対選ばれないようにする)
+        let missing = 0;
+        selectedTargetSkills.forEach(id => { if (!skillSet.has(id)) missing++; });
+        selectedTargetAbilities.forEach(id => { if (!skillSet.has(id)) missing++; });
+        score -= missing * 100000; 
+
         return score;
     };
 
@@ -142,9 +150,11 @@ window.runAutoSim = () => {
                 const card = candidateCards[i];
                 const newSums = { ...node.sums };
                 for (const s in card.vals) newSums[s] = (newSums[s] || 0) + card.vals[s];
+                
                 const newSkillSet = new Set(node.skillSet);
                 card.skillIds.forEach(id => newSkillSet.add(id));
-                const newScore = calculateScore(newSums);
+                
+                const newScore = calculateScore(newSums, newSkillSet);
 
                 nextBeam.push({
                     indices: [...node.indices, i],
@@ -163,7 +173,15 @@ window.runAutoSim = () => {
         selectedSlots = bestNode.indices.map(idx => candidateCards[idx].original);
         updateCalc();
         const modeName = currentSimMode === 'balanced' ? 'バランス' : (currentSimMode === 'ovr' ? '総合値重視' : 'カスタム特化');
-        alert(`【${modeName}モード】最適化完了\n評価スコア: ${bestNode.score.toFixed(0)}`);
+        
+        // スマホ自動モード時のスライド制御
+        if (window.innerWidth <= 768 && document.body.getAttribute('data-mobile-sim') === 'auto') {
+            document.body.classList.remove('sim-no-result'); // 結果ができたのでナビを表示許可
+            if (typeof slideSimPane === 'function') slideSimPane('right');
+        } else {
+            // PC等の場合はアラート表示のみ
+            alert(`【${modeName}モード】最適化完了\n※不足スキル等による減点を引いた評価スコア: ${bestNode.score.toFixed(0)}`);
+        }
     } else {
         alert("有効な組み合わせが見つかりませんでした。");
     }

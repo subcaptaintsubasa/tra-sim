@@ -51,6 +51,17 @@ window.onload = async () => {
             }
         }
 
+        // 初期モード設定
+        if (typeof setAppMode === 'function') setAppMode('view');
+        
+        // --- スマホシミュレーター用 初期設定を追加 ---
+        document.body.setAttribute('data-mobile-sim', 'manual');
+        document.body.classList.add('sim-no-result');
+        // ----------------------------------------
+
+        // 初期ビュー設定
+        switchView('database');
+
         // 初期化関数
         if(typeof renderProfileSelector === 'function') renderProfileSelector();
         if(typeof initStatInputs === 'function') initStatInputs();

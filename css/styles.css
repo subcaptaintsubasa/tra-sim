@@ -1398,3 +1398,165 @@ input, textarea, [contenteditable="true"] {
     padding: 5px;
     border-radius: 4px;
 }
+
+/* --- Phase 7: Mobile Sim Layout --- */
+
+/* 共通：スマホ用の新規要素はPCでは非表示 */
+.sim-mobile-toggle,
+.inline-stat-res,
+.mobile-target-btn-container,
+.sim-nav-btn {
+    display: none;
+}
+
+/* スマホ表示時における画面全体の横揺れ（スクロール）防止 */
+html, body {
+    overflow-x: hidden;
+    position: relative;
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    /* 共通スマホ表示 */
+    .sim-mobile-toggle {
+        display: flex !important;
+    }
+    
+    /* PC用の実行ボタンを消す */
+    .pc-only-btn {
+        display: none !important;
+    }
+
+    #simConfigRow, #simResultsRow {
+        display: flex !important;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* ------------------------------------- */
+    /* ステータス入力欄 (グリッド) の最適化  */
+    /* ------------------------------------- */
+    .stat-item {
+        padding: 3px !important;
+    }
+    .stat-item label {
+        font-size: 0.55rem !important; /* 省略せず表示できるサイズに限界まで縮小 */
+        letter-spacing: -0.05em;
+        white-space: nowrap;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        margin-bottom: 2px !important;
+        display: block;
+        text-align: center;
+    }
+    .stat-input-row {
+        flex-direction: column !important; /* 枠の潰れ防止のため常に縦並び */
+        gap: 1px !important;
+    }
+    .stat-input-row input {
+        padding: 1px !important;
+        font-size: 0.65rem !important;
+        text-align: center;
+        height: 20px;
+    }
+    
+    /* ------------------------------------- */
+    /* 手動モード (Manual)                   */
+    /* ------------------------------------- */
+    body[data-mobile-sim="manual"] #simPolicy { display: none !important; }
+    body[data-mobile-sim="manual"] #simTargets { display: none !important; }
+    body[data-mobile-sim="manual"] .mobile-target-btn-container { display: none !important; }
+    body[data-mobile-sim="manual"] #btnMobileAutoRun { display: none !important; }
+    body[data-mobile-sim="manual"] #totalResults { display: none !important; }
+    body[data-mobile-sim="manual"] .inline-stat-res { display: flex !important; }
+    
+    /* 手動モード結果のインライン表示サイズ調整 */
+    .inline-stat-res {
+        flex-direction: column;
+        align-items: center;
+        font-size: 0.6rem;
+        line-height: 1.1;
+        margin-top: 3px !important;
+        gap: 1px;
+    }
+
+    /* Flex Order を用いた並び替え (手動モード) */
+    body[data-mobile-sim="manual"] #simSliderContainer {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        transform: none !important; /* スライドを無効化 */
+    }
+    body[data-mobile-sim="manual"] .sim-pane { display: contents; width: 100%; }
+    
+    body[data-mobile-sim="manual"] #simPlayerInfo { order: 1; margin-bottom:15px; }
+    body[data-mobile-sim="manual"] #simConfigRow { order: 2; }
+    body[data-mobile-sim="manual"] #simSlotsContainer { order: 3; }
+    body[data-mobile-sim="manual"] #simResultsRow { order: 4; }
+
+    /* ------------------------------------- */
+    /* 自動モード (Auto) スライダー          */
+    /* ------------------------------------- */
+    /* .sim-pane の中にいる時だけ非表示にする（モーダル内に移動したら表示される） */
+    body[data-mobile-sim="auto"] .sim-pane #simTargets { display: none !important; }
+    body[data-mobile-sim="auto"] .mobile-target-btn-container { display: block !important; }
+    body[data-mobile-sim="auto"] #btnMobileAutoRun { display: block !important; width: 100%; }
+    
+    /* 左右スライドコンテナ (幅200%で画面2枚分確保) */
+    body[data-mobile-sim="auto"] #simSliderContainer {
+        display: flex;
+        width: 200%;
+        transition: transform 0.3s ease;
+    }
+    body[data-mobile-sim="auto"] .sim-pane {
+        width: 50%; /* 親の200%に対する50% = 画面幅100% */
+        padding: 0 10px; 
+        box-sizing: border-box;
+    }
+    
+    /* スライド状態 (左へ50% = 1画面分移動) */
+    body[data-mobile-sim="auto"].sim-slide-right #simSliderContainer {
+        transform: translateX(-50%);
+    }
+
+    /* ナビゲーションボタン */
+    body[data-mobile-sim="auto"] .sim-nav-btn {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 45px;
+        height: 45px;
+        background: rgba(0, 0, 0, 0.7);
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        border-radius: 50%;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        backdrop-filter: blur(2px);
+        font-size: 1.2rem;
+    }
+    body[data-mobile-sim="auto"] #simNavLeft { left: 5px; }
+    body[data-mobile-sim="auto"] #simNavRight { right: 5px; }
+    
+    /* 状態に応じたナビボタン非表示制御 */
+    body[data-mobile-sim="auto"]:not(.sim-slide-right) #simNavLeft { display: none !important; }
+    body[data-mobile-sim="auto"].sim-slide-right #simNavRight { display: none !important; }
+    
+    /* 結果がない場合はRightボタンを隠す */
+    body[data-mobile-sim="auto"].sim-no-result #simNavRight { display: none !important; }
+}
+
+/* 自動モード結果専用モーダル ボーナスハイライト */
+.bonus-highlight {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--accent);
+    color: #fff;
+    font-weight: bold;
+}
+.bonus-inactive {
+    opacity: 0.5;
+    filter: grayscale(1);
+    border: 1px solid #333;
+}

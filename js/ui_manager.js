@@ -18,13 +18,19 @@ function initStatInputs() {
         wrapper.className = `stat-item ${isGk ? 'gk-stat' : ''} ${isDef ? 'def-stat' : ''}`;
         wrapper.style.cssText = `background:#0f172a; padding:5px; border-radius:4px; ${isGk ? 'display:none;' : ''}`;
         
+        // スマホ手動用インライン表示：+値と残りをdivで明確に分ける
         wrapper.innerHTML = `
             <label>${s}</label>
-            <div style="display:flex; gap:2px;">
+            <div class="stat-input-row" style="display:flex; gap:2px;">
                 <input type="number" placeholder="現在" id="now_${s}" onchange="updateCalc()" style="font-size:0.7rem; padding:4px;">
                 <input type="number" placeholder="最大" id="max_${s}" onchange="updateCalc()" style="font-size:0.7rem; padding:4px;">
             </div>
-            <div id="gap_${s}" style="text-align:right; font-size:0.7rem; color:#64748b;">差: -</div>
+            <div id="gap_${s}" class="stat-gap" style="text-align:right; font-size:0.7rem; color:#64748b; display:none;">差: -</div>
+            <!-- インライン結果表示用 (スマホ手動モード時のみ表示) -->
+            <div id="inline_res_${s}" class="inline-stat-res">
+                <div id="inline_gain_${s}" style="color:var(--primary); font-weight:bold;">+0</div>
+                <div id="inline_remain_${s}" style="color:#94a3b8;">残0</div>
+            </div>
         `;
         statElements[s] = wrapper;
     });
@@ -288,9 +294,6 @@ window.updateCalc = () => {
     renderSimSlots(pos, style);
 };
 
-// --- js/core_logic.js (renderResults) ---
-
-// --- js/ui_manager.js (renderResults) ---
 
 window.renderResults = (totals_x10, saMap, missingTargets) => {
     const resDiv = document.getElementById('totalResults');
@@ -305,25 +308,21 @@ window.renderResults = (totals_x10, saMap, missingTargets) => {
         return;
     }
 
-    // 対象ステータスの決定
     const isGK = (pos === 'GK');
     const displayOrder = isGK 
         ? STATS.filter(s => !DEF_STATS.includes(s)).concat(GK_STATS)
         : STATS;
 
-    // 全体集計用
     let totalGain = 0;
     let totalGap = 0;
     let totalSatisfied = 0;
 
-    // 各行のHTML生成
     let rowsHtml = '';
     
     displayOrder.forEach(s => {
         const now = parseFloat(document.getElementById(`now_${s}`).value) || 0;
         const max = parseFloat(document.getElementById(`max_${s}`).value) || 0;
         
-        // Gap計算 (バーの進捗率用): (最大 * 目標%) - 現在
         const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
         const targetVal = max * targetPct;
         const gap = Math.max(0, targetVal - now);
@@ -336,17 +335,19 @@ window.renderResults = (totals_x10, saMap, missingTargets) => {
             totalSatisfied += Math.min(gain, gap);
         }
 
-        // ★修正箇所: 「残」は目標%に関係なく、純粋なカンストまでの残り値を表示
-        // 残 = 最大値 - (現在値 + 上昇値)
         const remain = Math.max(0, max - (now + gain));
 
-        // 進捗率 (分母がGap。Gapが0なら100%とする)
+        // 手動モード用インライン表示の更新
+        const inlineGain = document.getElementById(`inline_gain_${s}`);
+        const inlineRemain = document.getElementById(`inline_remain_${s}`);
+        if(inlineGain) inlineGain.innerText = '+' + gain.toFixed(0);
+        if(inlineRemain) inlineRemain.innerText = (remain > 0) ? '残'+remain.toFixed(0) : 'MAX';
+
         let pct = (gap > 0) ? Math.min(100, (gain / gap) * 100) : 100;
         let barClass = 'res-bar-fill';
-        if (gain > gap && gap > 0) barClass += ' overflow'; // 目標超過
+        if (gain > gap && gap > 0) barClass += ' overflow';
         if (pct >= 100) barClass += ' complete';
 
-        // ゼロなら表示を薄くする等の処理（今回はすべて表示）
         if (max === 0 && gain === 0) return;
 
         rowsHtml += `
@@ -361,7 +362,6 @@ window.renderResults = (totals_x10, saMap, missingTargets) => {
         `;
     });
 
-    // サマリー表示
     const totalPct = (totalGap > 0) ? (totalSatisfied / totalGap * 100) : 0;
     
     const summaryHtml = `
@@ -374,7 +374,7 @@ window.renderResults = (totals_x10, saMap, missingTargets) => {
 
     resDiv.innerHTML = summaryHtml + rowsHtml;
 
-    // スキル表示（既存ロジック維持）
+    // スキル表示
     const saDiv = document.getElementById('saResults');
     if (!saDiv) return;
     let header = '<h4>習得スキル/アビ</h4>';
@@ -406,24 +406,38 @@ function renderSimSlots(pos, style) {
     const g = document.getElementById('simSlots');
     if (!g) return;
     g.innerHTML = '';
-        selectedSlots.forEach((c, i) => {
+    selectedSlots.forEach((c, i) => {
         const div = document.createElement('div');
-        // ★変更: 新しい関数を呼ぶ
-        div.onclick = () => startSimCardSelection(i);
+        
+        div.onclick = () => {
+            const isMobileAuto = window.innerWidth <= 768 && document.body.getAttribute('data-mobile-sim') === 'auto';
+            if (isMobileAuto && c) {
+                // 自動モード結果用閲覧モーダル
+                openAutoSimResultModal(c, i); 
+            } else {
+                startSimCardSelection(i);
+            }
+        };
         
         if (c) {
             div.className = 'slot-active';
-            div.style.cssText = "height:90px; border-radius:8px; cursor:pointer;";
             
-            // ボーナス計算
             let bVal = 0;
             if (pos && style) {
                 if (c.bonuses && Array.isArray(c.bonuses) && c.bonuses.length > 0) {
                     c.bonuses.forEach(b => { 
-                        if(b.type===pos || b.type===style) bVal += b.value; 
+                        let validPosBonuses = [pos];
+                        if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[pos]) {
+                            validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[pos]);
+                        }
+                        if(validPosBonuses.includes(b.type) || b.type === style) bVal += b.value; 
                     });
                 } else if (c.bonus_type) {
-                    if(c.bonus_type === pos || c.bonus_type === style) bVal += (c.bonus_value||0);
+                    let validPosBonuses = [pos];
+                    if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[pos]) {
+                        validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[pos]);
+                    }
+                    if(validPosBonuses.includes(c.bonus_type) || c.bonus_type === style) bVal += (c.bonus_value||0);
                 }
             }
             const bText = bVal > 0 ? `+${bVal}%` : '';
@@ -440,7 +454,6 @@ function renderSimSlots(pos, style) {
             `;
         } else {
             div.className = 'slot-empty';
-            // style指定はCSSクラス(.slot-empty)に任せるため削除し、クラスのみ適用
             div.removeAttribute('style'); 
             
             div.innerHTML = `
@@ -1691,4 +1704,149 @@ window.openCreditsModal = () => {
 
 window.closeCreditsModal = () => {
     document.getElementById('creditsModal').style.display = 'none';
+};
+
+// --- スマホ用 シミュレーターモード制御 ---
+window.setMobileSimMode = (mode) => {
+    // manual or auto
+    document.body.setAttribute('data-mobile-sim', mode);
+    
+    // ボタンの見た目切り替え
+    const btnManual = document.getElementById('btnSimManual');
+    const btnAuto = document.getElementById('btnSimAuto');
+    if (btnManual) btnManual.classList.toggle('active', mode === 'manual');
+    if (btnAuto) btnAuto.classList.toggle('active', mode === 'auto');
+
+    // 初期化 (自動モードにした時は左に戻す)
+    document.body.classList.remove('sim-slide-right');
+};
+
+window.slideSimPane = (direction) => {
+    if (direction === 'right') {
+        document.body.classList.add('sim-slide-right');
+    } else {
+        document.body.classList.remove('sim-slide-right');
+    }
+};
+
+window.openMobileTargetModal = () => {
+    const src = document.getElementById('simTargets');
+    const dest = document.getElementById('mobileTargetModalBody');
+    if (src && dest) {
+        // DOM移動 (中身のイベントも維持される)
+        dest.appendChild(src);
+        src.style.display = 'block'; 
+    }
+    document.getElementById('mobileTargetModal').style.display = 'flex';
+};
+
+window.closeMobileTargetModal = () => {
+    const src = document.getElementById('simTargets');
+    const origParent = document.getElementById('simPaneLeft');
+    if (src && origParent) {
+        // スマホ用の特定要素の手前に戻す
+        const ref = document.querySelector('.mobile-target-btn-container');
+        origParent.insertBefore(src, ref);
+        src.style.display = ''; 
+    }
+    document.getElementById('mobileTargetModal').style.display = 'none';
+};
+
+// 自動モード結果専用モーダル
+let autoSimCurrentCardKey = null;
+
+window.openAutoSimResultModal = (card, slotIndex) => {
+    const key = card.name + "_" + card.title;
+    autoSimCurrentCardKey = key;
+    const invData = myCards[key] || { level: 1, favorite: false };
+    const level = invData.level;
+
+    const modal = document.getElementById('autoSimResultModal');
+    document.getElementById('asrmTitle').innerText = `[${card.rarity}] ${card.title}`;
+    
+    // お気に入りボタンの初期状態
+    const btnFav = document.getElementById('asrmBtnFav');
+    if (btnFav) {
+        if (invData.favorite) { btnFav.innerHTML = '<i class="fa-solid fa-heart"></i> 登録中'; btnFav.classList.add('active'); } 
+        else { btnFav.innerHTML = '<i class="fa-regular fa-heart"></i> お気に入り'; btnFav.classList.remove('active'); }
+    }
+
+    const imgPath = `img/cards/${card.name}_${card.title}.png`;
+    
+    // ボーナス判定 (現在の設定に対する合致)
+    let bHtml = '';
+    const pos = selectedPos;
+    const style = selectedStyle;
+    
+    let validPosBonuses = [pos];
+    if (pos && typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[pos]) {
+        validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[pos]);
+    }
+
+    if (card.bonuses && Array.isArray(card.bonuses)) {
+        bHtml = card.bonuses.map(b => {
+            const isActive = validPosBonuses.includes(b.type) || b.type === style;
+            const cName = isActive ? 'bonus-highlight' : 'bonus-inactive';
+            return `<span class="tag ${cName}" style="margin-right:4px;">${b.type}+${b.value}%</span>`;
+        }).join('');
+    } else if (card.bonus_type) {
+        const isActive = validPosBonuses.includes(card.bonus_type) || card.bonus_type === style;
+        const cName = isActive ? 'bonus-highlight' : 'bonus-inactive';
+        bHtml = `<span class="tag ${cName}">${card.bonus_type}+${card.bonus_value}%</span>`;
+    }
+    if (!bHtml) bHtml = '<span style="font-size:0.7rem; color:#666;">なし</span>';
+
+    // スキルリスト生成
+    let skillListHtml = '';
+    const skillLv = getSkillLevelFromCardLevel(card.rarity, level);
+    if (card.abilities && card.abilities.length > 0) {
+        card.abilities.forEach(ab => {
+            const isObj = (typeof ab === 'object' && ab !== null);
+            const saName = isObj ? ab.name : ab;
+            const saRarity = isObj ? ab.rarity : (card.rarity === 'SSR' ? 'Gold' : 'Silver');
+            const isS = !!skillsDB.find(s => s.name === saName);
+            const typeBadge = `<span class="sa-badge sa-${saRarity.toLowerCase()}">${isS ? 'S' : 'A'}</span>`;
+            
+            skillListHtml += `
+            <div class="modal-skill-row" onclick="openSaModal('${saName}', '${saRarity}', ${skillLv})">
+                ${typeBadge}
+                <span style="font-weight:bold; flex:1;">${saName}</span>
+                <span class="modal-skill-lv">Lv.${skillLv}</span>
+            </div>`;
+        });
+    }
+
+    // ステータス生成 (素のステータス)
+    const stats = getCardStatsAtLevel(card, level, null, null, 1.0);
+    const statHtml = renderStatGridHTML(card.stats, stats);
+
+    document.getElementById('asrmBody').innerHTML = `
+        <div style="display:flex; gap:15px; margin-bottom:10px;">
+            <img src="${imgPath}" style="width:90px; height:120px; object-fit:cover; border-radius:6px; border:1px solid #444;" onerror="this.src='https://placehold.jp/90x120.png?text=NoImg'">
+            <div style="flex:1;">
+                <div style="font-weight:bold; font-size:1.1rem; line-height:1.3;">${card.name}</div>
+                <div style="font-size:0.7rem; color:#fbbf24; margin-bottom:5px;">計算適用Lv: ${level}</div>
+                <div style="margin-bottom:8px;">${bHtml}</div>
+                <div>${skillListHtml}</div>
+            </div>
+        </div>
+        <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
+            <div class="stat-grid">${statHtml}</div>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+};
+
+window.toggleAutoSimResultFav = () => {
+    if(!autoSimCurrentCardKey) return;
+    if(!myCards[autoSimCurrentCardKey]) myCards[autoSimCurrentCardKey] = { level: 1, owned: false };
+    myCards[autoSimCurrentCardKey].favorite = !myCards[autoSimCurrentCardKey].favorite;
+    saveInv(); 
+    
+    const btnFav = document.getElementById('asrmBtnFav');
+    if(btnFav) {
+        if (myCards[autoSimCurrentCardKey].favorite) { btnFav.innerHTML = '<i class="fa-solid fa-heart"></i> 登録中'; btnFav.classList.add('active'); } 
+        else { btnFav.innerHTML = '<i class="fa-regular fa-heart"></i> お気に入り'; btnFav.classList.remove('active'); }
+    }
 };
