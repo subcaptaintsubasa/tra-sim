@@ -1673,29 +1673,5 @@
       "マーク": 2,
       "スタミナ": 3.7
     }
-  },
-  {
-    "title": "35",
-    "name": "a",
-    "rarity": "SSR",
-    "bonuses": [
-      {
-        "type": "cf",
-        "value": 35
-      }
-    ],
-    "bonus_type": "cf",
-    "bonus_value": 35,
-    "special_effects": [
-      {
-        "type": "覚醒Pt",
-        "value": 500
-      }
-    ],
-    "abilities": [],
-    "stats": {
-      "パスカット": 5,
-      "冷静さ": 10
-    }
   }
 ]
