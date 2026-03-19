@@ -1687,12 +1687,7 @@
     "bonus_type": "ドリブラー",
     "bonus_value": 20,
     "special_effects": [],
-    "abilities": [
-      {
-        "name": "俊敏なる大砲",
-        "rarity": "Gold"
-      }
-    ],
+    "abilities": [],
     "stats": {
       "突破力": 2.7,
       "走力": 1.7,
@@ -1715,12 +1710,7 @@
     "bonus_type": "攻撃的FB",
     "bonus_value": 35,
     "special_effects": [],
-    "abilities": [
-      {
-        "name": "俊敏なる大砲",
-        "rarity": "Gold"
-      }
-    ],
+    "abilities": [],
     "stats": {
       "ショートパス": 0.7,
       "走力": 0.5,
@@ -1745,12 +1735,7 @@
     "bonus_type": "ラインブレーカー",
     "bonus_value": 45,
     "special_effects": [],
-    "abilities": [
-      {
-        "name": "俊敏なる大砲",
-        "rarity": "Gold"
-      }
-    ],
+    "abilities": [],
     "stats": {
       "決定力": 2.5,
       "突破力": 0.2,
@@ -1760,6 +1745,34 @@
       "敏捷性": 11.7,
       "ボールタッチ": 0.3,
       "スタミナ": 1.8
+    }
+  },
+  {
+    "title": "【チアフルサポート】",
+    "name": "井上里奈",
+    "rarity": "SR",
+    "bonuses": [
+      {
+        "type": "オーソドックスGK",
+        "value": 100
+      }
+    ],
+    "bonus_type": "オーソドックスGK",
+    "bonus_value": 100,
+    "special_effects": [
+      {
+        "type": "覚醒Pt",
+        "value": 500
+      }
+    ],
+    "abilities": [],
+    "stats": {
+      "キック力": 3,
+      "ロングパス": 3,
+      "コンタクト": 0.8,
+      "スタミナ": 2.8,
+      "反応速度": 1.2,
+      "1対1": 2.2
     }
   }
 ]
