@@ -1689,8 +1689,8 @@
     "special_effects": [],
     "abilities": [
       {
-        "name": "勝機を生み出すフィード",
-        "rarity": "Silver"
+        "name": "俊敏なる大砲",
+        "rarity": "Gold"
       }
     ],
     "stats": {
@@ -1717,8 +1717,8 @@
     "special_effects": [],
     "abilities": [
       {
-        "name": "勝機を生み出すフィード",
-        "rarity": "Silver"
+        "name": "俊敏なる大砲",
+        "rarity": "Gold"
       }
     ],
     "stats": {
@@ -1730,6 +1730,36 @@
       "キック精度": 4.3,
       "マーク": 0.8,
       "スタミナ": 8.8
+    }
+  },
+  {
+    "title": "【パリに衝撃を与える猛襲】",
+    "name": "ランダル・コロ・ムアニ",
+    "rarity": "SSR",
+    "bonuses": [
+      {
+        "type": "ラインブレーカー",
+        "value": 45
+      }
+    ],
+    "bonus_type": "ラインブレーカー",
+    "bonus_value": 45,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "俊敏なる大砲",
+        "rarity": "Gold"
+      }
+    ],
+    "stats": {
+      "決定力": 2.5,
+      "突破力": 0.2,
+      "走力": 3.7,
+      "キック力": 1.8,
+      "コンタクト": 3,
+      "敏捷性": 11.7,
+      "ボールタッチ": 0.3,
+      "スタミナ": 1.8
     }
   }
 ]
