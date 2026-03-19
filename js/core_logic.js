@@ -6,7 +6,6 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
     let bonusTotal = 0;
 
     // ★修正: ターゲットポジションに対応するボーナス群を取得
-    // targetPos="LM" なら validPosBonuses=["LM", "WM", "SM"] となる
     let validPosBonuses = [targetPos];
     if (targetPos && typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[targetPos]) {
         validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[targetPos]);
@@ -15,7 +14,6 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
     // ボーナス計算
     if (card.bonuses && Array.isArray(card.bonuses) && card.bonuses.length > 0) {
         card.bonuses.forEach(b => {
-            // 定義されたポジション群、またはスタイルが一致すれば加算
             if (validPosBonuses.includes(b.type) || b.type === targetStyle) {
                 bonusTotal += b.value;
             }
@@ -42,6 +40,36 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
         
         result[s] = val_x10;
     }
+
+    // 特殊効果の計算
+    const calculatedSE = {};
+    if (card.special_effects && Array.isArray(card.special_effects)) {
+        card.special_effects.forEach(se => {
+            const d1 = se.value;
+            if (!d1) return;
+
+            // 覚醒Pt等の成長率 (現時点では一律2倍として定義)
+            let seGrowthRate = 2.0;
+            
+            const d1_int = Math.round(d1 * 10);
+            const N = Math.round(d1 * seGrowthRate);
+            const growthMax = (N * 10 - d1_int);
+            const growthCurrent = Math.floor(growthMax * (useLevel - 1) / (maxLevel - 1));
+            const vBase_x10 = d1_int + growthCurrent;
+            // コンディションの影響は受けず、ボーナスの倍率のみ恩恵を受ける仕様
+            const val_x10 = Math.round(vBase_x10 * bonusMult);
+            
+            calculatedSE[se.type] = val_x10;
+        });
+    }
+
+    Object.defineProperty(result, '_special_effects', {
+        value: calculatedSE,
+        enumerable: false,
+        writable: true,
+        configurable: true
+    });
+
     return result;
 }
 

@@ -164,11 +164,20 @@ async function saveCardToGH() {
         const legacyType = bonuses.length > 0 ? bonuses[0].type : "";
         const legacyVal = bonuses.length > 0 ? bonuses[0].value : 0;
 
+        const special_effects = [];
+        const seRows = document.querySelectorAll('#editSpecialEffectList > div');
+        seRows.forEach(r => {
+            const t = r.querySelector('.edit-se-type').value;
+            const v = parseFloat(r.querySelector('.edit-se-val').value);
+            if(t && v) special_effects.push({ type: t, value: v });
+        });
+
         const growthRate = parseInt(document.getElementById('editGrowth').value);
 
         const nc = { 
             title, name, rarity: document.getElementById('editRarity').value, 
             bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
+            special_effects: special_effects,
             
             // ★修正箇所: 入力欄の値ではなく、リスト変数を使用する
             abilities: currentEditingSkills, 

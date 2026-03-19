@@ -327,10 +327,17 @@
                     <div id="skillSuggestions" class="skill-suggestions"></div>
                 </div>
                 <!-- 選択されたスキルがここに並ぶ -->
-                <div id="linkedSkillsList" class="linked-skills-list"></div>                <div style="margin-top:10px; border:1px dashed #555; padding:5px; border-radius:4px;">
+                <div id="linkedSkillsList" class="linked-skills-list"></div>
+                <div style="margin-top:10px; border:1px dashed #555; padding:5px; border-radius:4px;">
                     <label style="font-size:0.7rem;">ボーナス条件</label>
                     <div id="editBonusList"></div>
                     <button class="btn btn-sm" onclick="addBonusRow()" style="margin-top:5px;">+ 条件追加</button>
+                </div>
+
+                <div style="margin-top:10px; border:1px dashed #555; padding:5px; border-radius:4px;">
+                    <label style="font-size:0.7rem;">特殊効果 (覚醒Ptなど)</label>
+                    <div id="editSpecialEffectList"></div>
+                    <button class="btn btn-sm" onclick="addSpecialEffectRow()" style="margin-top:5px;">+ 特殊効果追加</button>
                 </div>
 
                 <!-- ステータス -->
@@ -492,10 +499,11 @@
 
                 <!-- スキル/アビリティ所持 -->
                 <div class="filter-group">
-                    <div class="filter-group-title">習得スキル </div>
+                    <div class="filter-group-title">習得スキル・特殊効果</div>
                     <div class="filter-chips">
                         <div class="chk-btn"><input type="checkbox" id="f_has_skill"><label for="f_has_skill">スキル所持</label></div>
                         <div class="chk-btn"><input type="checkbox" id="f_has_ability"><label for="f_has_ability">アビリティ所持</label></div>
+                        <div class="chk-btn"><input type="checkbox" id="f_has_special"><label for="f_has_special">覚醒Pt所持</label></div>
                     </div>
                 </div>
 

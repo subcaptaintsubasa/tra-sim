@@ -236,13 +236,14 @@ window.updateCalc = () => {
     const style = selectedStyle;
     
     if (!pos || !style) {
-        renderResults({}, {}, []); // saMapを空オブジェクトに
+        renderResults({}, {}, [], {}); // saMap等を空で渡す
         renderSimSlots(null, null);
         return;
     }
 
     const isGK = (pos === 'GK');
     const totals_x10 = {};
+    const specialEffects_x10 = {};
     
     // スキル情報を収集するマップ (Key: "名前::レアリティ", Value: {name, rarity, maxSkillLv})
     const saMap = {};
@@ -259,6 +260,12 @@ window.updateCalc = () => {
             if (isGK && DEF_STATS.includes(s)) continue;
             if (!isGK && GK_STATS.includes(s)) continue;
             totals_x10[s] = (totals_x10[s] || 0) + vals[s];
+        }
+
+        if (vals._special_effects) {
+            for (let se in vals._special_effects) {
+                specialEffects_x10[se] = (specialEffects_x10[se] || 0) + vals._special_effects[se];
+            }
         }
 
         // スキル情報の正規化とレベル抽出
@@ -290,12 +297,12 @@ window.updateCalc = () => {
         ...selectedTargetAbilities.filter(id => !saMap[id])
     ];
 
-    renderResults(totals_x10, saMap, missingTargets);
+    renderResults(totals_x10, saMap, missingTargets, specialEffects_x10);
     renderSimSlots(pos, style);
 };
 
 
-window.renderResults = (totals_x10, saMap, missingTargets) => {
+window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = {}) => {
     const resDiv = document.getElementById('totalResults');
     if (!resDiv) return;
     
@@ -372,7 +379,21 @@ window.renderResults = (totals_x10, saMap, missingTargets) => {
         </div>
     `;
 
-    resDiv.innerHTML = summaryHtml + rowsHtml;
+    let seHtml = '';
+    const seKeys = Object.keys(specialEffects_x10);
+    if (seKeys.length > 0) {
+        seHtml += '<div style="margin-top: 10px; padding: 5px 10px; background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary); border-radius: 6px;">';
+        seHtml += '<div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-bottom: 3px;">特殊効果</div>';
+        seKeys.forEach(k => {
+            seHtml += `<div style="display:flex; justify-content:space-between; font-size:0.75rem; border-bottom:1px dashed #334155; padding:2px 0;">
+                <span style="color:#fbbf24;">${k}</span>
+                <span style="font-weight:bold; color:#fff;">+${(specialEffects_x10[k]/10).toFixed(1)}</span>
+            </div>`;
+        });
+        seHtml += '</div>';
+    }
+
+    resDiv.innerHTML = summaryHtml + rowsHtml + seHtml;
 
     // スキル表示
     const saDiv = document.getElementById('saResults');
@@ -796,6 +817,7 @@ window.loadCardToEditor = (d) => {
         document.getElementById('editName').value = '';
         document.getElementById('editTitle').value = '';
         document.getElementById('editBonusList').innerHTML = '';
+        document.getElementById('editSpecialEffectList').innerHTML = '';
         document.getElementById('editGrowth').value = "6"; 
         
         // スキルリストリセット (新規作成時は空)
@@ -850,6 +872,13 @@ window.loadCardToEditor = (d) => {
         addBonusRow(d.bonus_type, d.bonus_value);
     }
 
+    // 特殊効果
+    const seList = document.getElementById('editSpecialEffectList');
+    seList.innerHTML = '';
+    if (d.special_effects) {
+        d.special_effects.forEach(se => addSpecialEffectRow(se.type, se.value));
+    }
+
     // 画像プレビュー (GitHub URL)
     const prev = document.getElementById('editCardPreview');
     prev.src = `img/cards/${d.name}_${d.title}.png`;
@@ -870,6 +899,17 @@ window.addBonusRow = (type='', val='') => {
                      <input class="edit-b-val" type="number" placeholder="%" value="${val}" style="width:60px;">
                      <button class="btn btn-sm" style="background:#ef4444;" onclick="this.parentElement.remove()">×</button>`;
     document.getElementById('editBonusList').appendChild(div);
+};
+
+window.addSpecialEffectRow = (type='覚醒Pt', val='') => {
+    const div = document.createElement('div');
+    div.style.cssText = "display:flex; gap:5px; margin-bottom:3px;";
+    div.innerHTML = `<select class="edit-se-type" style="flex:1;">
+                        <option value="覚醒Pt" ${type==='覚醒Pt'?'selected':''}>覚醒Pt</option>
+                     </select>
+                     <input class="edit-se-val" type="number" placeholder="数値" value="${val}" style="width:60px;">
+                     <button class="btn btn-sm" style="background:#ef4444;" onclick="this.parentElement.remove()">×</button>`;
+    document.getElementById('editSpecialEffectList').appendChild(div);
 };
 
 // --- スキル/アビリティ編集系 ---

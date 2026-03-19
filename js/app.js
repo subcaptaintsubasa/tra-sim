@@ -8,6 +8,7 @@ var dbFilter = {
     ownedOnly: false,
     hasSkill: false,
     hasAbility: false,
+    hasSpecial: false,
     skillText: '',
     pos: [], 
     style: [], 
@@ -255,6 +256,7 @@ window.resetFilters = () => {
         ownedOnly: false,
         hasSkill: false,
         hasAbility: false,
+        hasSpecial: false,
         skillText: '',
         pos: [], 
         style: [], 
@@ -312,6 +314,7 @@ window.renderDatabase = () => {
         if(dbFilter.ownedOnly) badges.push("所持のみ");
         if(dbFilter.hasSkill) badges.push("スキル所持");
         if(dbFilter.hasAbility) badges.push("アビリティ所持");
+        if(dbFilter.hasSpecial) badges.push("覚醒Pt所持");
         if(dbFilter.skillText) badges.push(`Skill:"${dbFilter.skillText}"`);
         if(dbFilter.pos.length) badges.push(`Pos:${dbFilter.pos.join(',')}`);
         if(dbFilter.style.length) badges.push(`Style:${dbFilter.style.join(',')}`);
@@ -339,6 +342,7 @@ window.renderDatabase = () => {
 
         if (dbFilter.hasSkill && !(card.abilities || []).some(a => skillsDB.some(s => s.name === getSaName(a)))) return null;
         if (dbFilter.hasAbility && !(card.abilities || []).some(a => abilitiesDB.some(ab => ab.name === getSaName(a)))) return null;
+        if (dbFilter.hasSpecial && !(card.special_effects && card.special_effects.some(se => se.type === '覚醒Pt'))) return null;
         if (dbFilter.skillText && !(card.abilities || []).some(a => getSaName(a).toLowerCase().includes(dbFilter.skillText))) return null;
 
         if (dbFilter.pos.length > 0 || dbFilter.style.length > 0) {
@@ -586,6 +590,7 @@ window.renderMyCardModalBody = (userData) => {
         </div>
         <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
             <div class="stat-grid" id="mcStatGrid">${renderStatGridHTML(c.stats, stats)}</div>
+            <div id="mcSpecialEffects">${renderSpecialEffectsHTML(stats._special_effects)}</div>
         </div>
     `;
     
@@ -623,6 +628,8 @@ window.updateMyCardLevel = (newLevel, isSliderInput = false) => {
 
     const stats = getCardStatsAtLevel(c, level, null, null, 1.0);
     document.getElementById('mcStatGrid').innerHTML = renderStatGridHTML(c.stats, stats);
+    const seDiv = document.getElementById('mcSpecialEffects');
+    if(seDiv) seDiv.innerHTML = renderSpecialEffectsHTML(stats._special_effects);
 
     document.querySelectorAll('.lvl-btn').forEach(btn => {
         const btnLvl = parseInt(btn.dataset.lvl);
@@ -745,6 +752,7 @@ window.renderViewModalBody = () => {
         ${btnHtml}
         <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
             <div class="stat-grid">${renderStatGridHTML(c.stats, stats)}</div>
+            ${renderSpecialEffectsHTML(stats._special_effects)}
         </div>
     `;
 };
@@ -814,6 +822,16 @@ function renderStatGridHTML(baseStats, currentStats) {
     }).join('');
 }
 
+function renderSpecialEffectsHTML(calculatedSE) {
+    if (!calculatedSE || Object.keys(calculatedSE).length === 0) return '';
+    let html = '<div style="margin-top:8px; border-top:1px dashed #334155; padding-top:8px;">';
+    html += '<div style="font-size:0.7rem; color:#94a3b8; margin-bottom:4px;">特殊効果</div>';
+    Object.entries(calculatedSE).forEach(([k, v]) => {
+        html += `<div style="display:flex; justify-content:space-between; font-size:0.75rem;"><span style="color:#fbbf24;">${k}</span><span style="font-weight:bold; color:#fff;">${(v/10).toFixed(1)}</span></div>`;
+    });
+    html += '</div>';
+    return html;
+}
 // --- Comparison (Same as before) ---
 window.runComparison = () => {
     if(compareTray.length < 1) return alert("比較するカードを選択してください");
@@ -967,6 +985,7 @@ window.openFilterModal = () => {
     
     if(document.getElementById('f_has_skill')) document.getElementById('f_has_skill').checked = dbFilter.hasSkill;
     if(document.getElementById('f_has_ability')) document.getElementById('f_has_ability').checked = dbFilter.hasAbility;
+    if(document.getElementById('f_has_special')) document.getElementById('f_has_special').checked = dbFilter.hasSpecial;
 
     const setChecks = (name, vals) => {
         document.querySelectorAll(`input[name="${name}"]`).forEach(el => {
@@ -1010,6 +1029,7 @@ window.applyFilters = () => {
     
     if(document.getElementById('f_has_skill')) dbFilter.hasSkill = document.getElementById('f_has_skill').checked;
     if(document.getElementById('f_has_ability')) dbFilter.hasAbility = document.getElementById('f_has_ability').checked;
+    if(document.getElementById('f_has_special')) dbFilter.hasSpecial = document.getElementById('f_has_special').checked;
 
     const getChecks = (name) => {
         const arr = [];
