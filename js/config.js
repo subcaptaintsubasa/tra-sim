@@ -182,3 +182,7 @@ const SIM_MODES = {
     OVR: 'ovr',
     CUSTOM: 'custom'
 };
+
+// --- 新カード判定用初期カード数 ---
+// この数値よりcardsDB.lengthが多い場合、超過分が新カードと判定されます
+const INITIAL_CARD_COUNT = 62;

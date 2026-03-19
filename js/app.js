@@ -1,6 +1,15 @@
 // --- Global State ---
 var currentView = 'database';
 
+// 代用カード検索用ステート
+var substituteSearch = { 
+    active: false, 
+    targetCard: null, 
+    criteria: 'params', 
+    ownedOnly: false, 
+    useBonus: false 
+};
+
 // フィルタ条件
 var dbFilter = { 
     text: '', 
@@ -102,6 +111,9 @@ window.onload = async () => {
 
         // データ取得
         await fetchAllDB();
+        
+        // 新カードアナウンスのチェック
+        if (typeof checkNewCards === 'function') checkNewCards();
         
         // 開発者ログイン状態チェック
         if (typeof checkDevLogin === 'function') checkDevLogin();
@@ -309,6 +321,18 @@ window.renderDatabase = () => {
     if(afDiv) {
         afDiv.innerHTML = '';
         const badges = [];
+
+        // 代用検索バッジ
+        if (substituteSearch.active && substituteSearch.targetCard) {
+            const critName = substituteSearch.criteria === 'params' ? 'パラメータ' : (substituteSearch.criteria === 'skills' ? 'スキル/アビ' : '特殊効果');
+            const targetName = substituteSearch.targetCard.original.name;
+            afDiv.innerHTML += `
+                <span class="tag" style="background:var(--primary); color:#000; cursor:pointer; font-weight:bold;" onclick="clearSubstituteSearch()">
+                    🔍 代用検索: ${targetName} (${critName}) <i class="fa-solid fa-xmark"></i>
+                </span>
+            `;
+        }
+
         if(currentMode === 'mycards') badges.push("モード: 所持/育成");
         if(isSelectMode) badges.push("★ 選択モード中");
         if(dbFilter.ownedOnly) badges.push("所持のみ");
@@ -320,7 +344,7 @@ window.renderDatabase = () => {
         if(dbFilter.style.length) badges.push(`Style:${dbFilter.style.join(',')}`);
         if(dbFilter.sortParams.length) badges.push(`Sort:${dbFilter.sortParams.join('+')}`);
         
-        afDiv.innerHTML = badges.map(l => `<span class="tag" style="background:#334155;">${l}</span>`).join('');
+        afDiv.innerHTML += badges.map(l => `<span class="tag" style="background:#334155;">${l}</span>`).join('');
     }
 
     // ヘルパー: スキル名を取り出す
@@ -373,9 +397,20 @@ window.renderDatabase = () => {
         }
 
         let sortScore = 0;
-        if (dbFilter.sortParams.length > 0) {
+        let substScore = 0;
+
+        // 代用検索処理
+        if (substituteSearch.active && substituteSearch.targetCard) {
+            if (substituteSearch.ownedOnly && !isOwned) return null;
+            // 検索元自身は除外する
+            if (key === substituteSearch.targetCard.key) return null;
+
+            const targetObj = { original: card, key: key, level: (userData.level || (card.rarity==='SSR'?50:45)) };
+            substScore = calculateSubstituteScore(substituteSearch.targetCard, targetObj, substituteSearch.criteria, substituteSearch.useBonus);
+            
+            if (substScore <= 0) return null; // 0%は非表示にする
+        } else if (dbFilter.sortParams.length > 0) {
             if (dbFilter.useMyLevel && !isOwned) {
-                // 所持レベル参照ON かつ 未所持の場合 -> スコア0
                 sortScore = 0;
             } else {
                 let level = (card.rarity==='SSR'?50:45);
@@ -388,11 +423,14 @@ window.renderDatabase = () => {
             }
         }
 
-        return { original: card, idx, key, isFav, isOwned, sortScore, level: (userData.level || 1) };
+        return { original: card, idx, key, isFav, isOwned, sortScore, substScore, level: (userData.level || 1) };
     }).filter(item => item !== null);
     
     // Sort Logic
     list.sort((a, b) => {
+        if (substituteSearch.active) {
+            return b.substScore - a.substScore; // 代用検索はスコア降順
+        }
         if (currentMode === 'mycards') {
             if (a.isOwned !== b.isOwned) return b.isOwned - a.isOwned;
         }
@@ -416,6 +454,7 @@ window.renderDatabase = () => {
         el.className = `db-card ${item.isFav ? 'fav' : ''} ${item.isOwned ? 'owned' : 'unowned'} ${isSelected ? 'bulk-selected' : ''}`;
         
         if (vType === 'grid') {
+            let substBadge = substituteSearch.active ? `<span class="badge" style="background:var(--primary);color:#000;">一致:${item.substScore.toFixed(1)}%</span>` : '';
             el.innerHTML = `
                 <div class="fav-icon"><i class="fa-solid fa-heart"></i></div>
                 <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/333333/ffffff/300x400.png?text=No+Img'">
@@ -425,12 +464,15 @@ window.renderDatabase = () => {
                         <span class="badge ${c.rarity}">${c.rarity}</span>
                         ${item.isOwned ? `<span class="badge" style="background:#22c55e;color:#000;">Lv.${item.level}</span>` : ''}
                         ${item.sortScore > 0 ? `<span style="color:#fbbf24;font-weight:bold;margin-left:2px;">${(item.sortScore/10).toFixed(1)}</span>` : ''}
+                        ${substBadge}
                     </div>
                 </div>
             `;
         } else {
             let displayStats = [];
-            if (dbFilter.sortParams.length > 0) {
+            if (substituteSearch.active) {
+                displayStats.push(`一致率: ${item.substScore.toFixed(1)}%`);
+            } else if (dbFilter.sortParams.length > 0) {
                 displayStats.push(`合計:${(item.sortScore/10).toFixed(1)}`);
             } else {
                 const dLvl = (currentMode === 'mycards' && item.isOwned) ? item.level : (c.rarity==='SSR'?50:45);
@@ -466,7 +508,7 @@ window.renderDatabase = () => {
                             ${item.isOwned ? `<span class="badge" style="background:#22c55e;color:#000;">Lv.${item.level}</span>` : ''}
                         </div>
                     </div>
-                    <div class="list-stats" style="margin-bottom:4px;">${displayStats.map(s => `<span>${s}</span>`).join('')}</div>
+                    <div class="list-stats" style="margin-bottom:4px;">${displayStats.map(s => `<span style="${substituteSearch.active ? 'color:var(--primary); font-weight:bold;' : ''}">${s}</span>`).join('')}</div>
                     <div class="skill-tag-container">${skillsHtml || '<span style="font-size:0.7rem; color:#666;">なし</span>'}</div>
                 </div>
             `;
@@ -602,6 +644,7 @@ window.renderMyCardModalBody = (userData) => {
     const btnText = userData.owned ? '所持しています' : '未所持にする';
 
     footer.innerHTML = `
+        <button class="btn btn-icon" onclick="openSubstituteModal()"><i class="fa-solid fa-magnifying-glass"></i> 代用検索</button>
         <button class="btn btn-icon" onclick="addToTrayFromDetail()"><i class="fa-solid fa-scale-balanced"></i> 比較</button>
         <button id="btnToggleOwnFooter" class="btn ${btnClass}" onclick="toggleMyCardOwnedFromModal()">
             ${btnIcon} <span id="btnToggleOwnText">${btnText}</span>
@@ -691,6 +734,7 @@ window.openViewDetailModal = (item) => {
     // Viewモード用フッター
     modal.querySelector('.modal-footer').innerHTML = `
         <button class="btn btn-icon" id="btnFav" onclick="toggleDetailFav()"><i class="fa-regular fa-heart"></i> お気に入り</button>
+        <button class="btn btn-icon" onclick="openSubstituteModal()"><i class="fa-solid fa-magnifying-glass"></i> 代用検索</button>
         <button class="btn btn-icon" onclick="addToTrayFromDetail()"><i class="fa-solid fa-scale-balanced"></i> 比較</button>
         <button class="btn btn-primary" id="btnOwned" onclick="toggleDetailOwned()" style="flex:1;">所持にする</button>
     `;
@@ -1366,3 +1410,219 @@ window.handleOcrClick = () => {
         document.getElementById('ocrUpload').click();
     }
 };
+
+// ==========================================
+// --- v1.9 新機能ロジック ---
+// ==========================================
+
+// --- 新規追加カードのアナウンス機能 ---
+let newCardsToAnnounce = [];
+
+function checkNewCards() {
+    let viewedCardsStr = localStorage.getItem('tra_viewed_cards');
+    newCardsToAnnounce = [];
+
+    if (!viewedCardsStr) {
+        // 初回アクセス: 基準数(INITIAL_CARD_COUNT)を超える分を新カードとする
+        if (cardsDB.length > INITIAL_CARD_COUNT) {
+            newCardsToAnnounce = cardsDB.slice(INITIAL_CARD_COUNT);
+        }
+        // 今のINITIAL_CARD_COUNTまでのカードを「確認済み」として保存
+        let initialViewed = cardsDB.slice(0, INITIAL_CARD_COUNT).map(c => c.name + "_" + c.title);
+        localStorage.setItem('tra_viewed_cards', JSON.stringify(initialViewed));
+    } else {
+        // 2回目以降
+        let viewedArray = JSON.parse(viewedCardsStr);
+        cardsDB.forEach(c => {
+            const key = c.name + "_" + c.title;
+            if (!viewedArray.includes(key)) {
+                newCardsToAnnounce.push(c);
+            }
+        });
+    }
+
+    if (newCardsToAnnounce.length > 0) {
+        renderNewCardAnnounceModal();
+    }
+}
+
+function renderNewCardAnnounceModal() {
+    const body = document.getElementById('newCardAnnounceBody');
+    body.innerHTML = '';
+    
+    newCardsToAnnounce.forEach(c => {
+        const imgPath = `img/cards/${c.name}_${c.title}.png`;
+        const el = document.createElement('div');
+        el.className = 'db-card';
+        el.style.border = '1px solid #444';
+        el.innerHTML = `
+            <img src="${imgPath}" class="db-card-img" loading="lazy" onerror="this.src='https://placehold.jp/100x133.png?text=NoImg'">
+            <div class="db-info">
+                <div class="db-name">${c.name}</div>
+                <div class="db-badges">
+                    <span class="badge ${c.rarity}">${c.rarity}</span>
+                </div>
+            </div>
+        `;
+        body.appendChild(el);
+    });
+
+    document.getElementById('newCardAnnounceModal').style.display = 'flex';
+}
+
+window.closeNewCardAnnounceModal = () => {
+    let viewedCards = JSON.parse(localStorage.getItem('tra_viewed_cards') || '[]');
+    newCardsToAnnounce.forEach(c => {
+        const key = c.name + "_" + c.title;
+        if (!viewedCards.includes(key)) {
+            viewedCards.push(key);
+        }
+    });
+    localStorage.setItem('tra_viewed_cards', JSON.stringify(viewedCards));
+    document.getElementById('newCardAnnounceModal').style.display = 'none';
+};
+
+// --- 代用カード検索機能 ---
+
+window.openSubstituteModal = () => {
+    if (!currentModalItem) return;
+    substituteSearch.targetCard = currentModalItem;
+    document.getElementById('substituteSearchModal').style.display = 'flex';
+    toggleSubstBonusOption();
+};
+
+window.closeSubstituteSearchModal = () => {
+    document.getElementById('substituteSearchModal').style.display = 'none';
+};
+
+window.toggleSubstBonusOption = () => {
+    const criteriaEl = document.querySelector('input[name="subst_criteria"]:checked');
+    if(!criteriaEl) return;
+    const criteria = criteriaEl.value;
+    const bonusWrap = document.getElementById('subst_bonus_wrap');
+    if (bonusWrap) {
+        bonusWrap.style.display = (criteria === 'params') ? 'block' : 'none';
+    }
+};
+
+window.execSubstituteSearch = () => {
+    substituteSearch.criteria = document.querySelector('input[name="subst_criteria"]:checked').value;
+    substituteSearch.ownedOnly = document.getElementById('subst_owned_only').checked;
+    substituteSearch.useBonus = document.getElementById('subst_use_bonus').checked;
+    substituteSearch.active = true;
+
+    closeSubstituteSearchModal();
+    closeCardDetailModal(); // 詳細画面を閉じる
+
+    // 通常のフィルタをリセットして競合を防ぐ
+    resetFilters();
+    substituteSearch.active = true; // resetFiltersで消えるため再度trueに
+    
+    // スクロールを上部に戻す
+    window.scrollTo(0,0);
+
+    renderDatabase();
+};
+
+window.clearSubstituteSearch = () => {
+    substituteSearch.active = false;
+    substituteSearch.targetCard = null;
+    renderDatabase();
+};
+
+// スコア計算ロジック (0〜100を返す)
+function calculateSubstituteScore(baseCardObj, targetCardObj, criteria, useBonus) {
+    const baseC = baseCardObj.original;
+    const targetC = targetCardObj.original;
+
+    if (criteria === 'params') {
+        // パラメータ比較 (コサイン類似度 + 差の割合)
+        const baseLevel = baseCardObj.level || (baseC.rarity === 'SSR' ? 50 : 45);
+        const targetLevel = targetCardObj.level || (targetC.rarity === 'SSR' ? 50 : 45);
+
+        let basePos = null, baseStyle = null;
+        let targetPos = null, targetStyle = null;
+
+        if (useBonus) {
+            baseStyle = baseC.bonuses && baseC.bonuses.length > 0 ? baseC.bonuses[0].type : baseC.bonus_type;
+            basePos = Object.keys(POS_MAP).find(p => POS_MAP[p].includes(baseStyle)) || null;
+
+            targetStyle = targetC.bonuses && targetC.bonuses.length > 0 ? targetC.bonuses[0].type : targetC.bonus_type;
+            targetPos = Object.keys(POS_MAP).find(p => POS_MAP[p].includes(targetStyle)) || null;
+        }
+
+        const baseStats = getCardStatsAtLevel(baseC, baseLevel, basePos, baseStyle, 1.0);
+        const targetStats = getCardStatsAtLevel(targetC, targetLevel, targetPos, targetStyle, 1.0);
+
+        const allStats = [...STATS, ...GK_STATS];
+        
+        let dotProduct = 0, normBase = 0, normTarget = 0;
+        let sumBase = 0, sumTarget = 0;
+
+        allStats.forEach(s => {
+            // ペナルティ緩和のため基礎値+10を加算
+            const vB = (baseStats[s] || 0) + 10;
+            const vT = (targetStats[s] || 0) + 10;
+
+            dotProduct += vB * vT;
+            normBase += vB * vB;
+            normTarget += vT * vT;
+
+            sumBase += vB;
+            sumTarget += vT;
+        });
+
+        if (normBase === 0 || normTarget === 0) return 0;
+
+        const cosineSim = dotProduct / (Math.sqrt(normBase) * Math.sqrt(normTarget));
+        
+        let magnitudeSim = 0;
+        if (sumBase > 0) {
+            const diffRatio = Math.abs(sumBase - sumTarget) / sumBase;
+            magnitudeSim = Math.max(0, 1 - diffRatio);
+        }
+
+        // 類似度70%, スケール30%
+        return (cosineSim * 0.7 + magnitudeSim * 0.3) * 100;
+
+    } else if (criteria === 'skills') {
+        // スキル名比較
+        const getSaNames = (c) => (c.abilities || []).map(a => typeof a === 'object' ? a.name : a);
+        const baseSa = getSaNames(baseC);
+        const targetSa = getSaNames(targetC);
+
+        if (baseSa.length === 0) return 0;
+
+        let matchCount = 0;
+        baseSa.forEach(bName => {
+            if (targetSa.includes(bName)) matchCount++;
+        });
+
+        return (matchCount / baseSa.length) * 100;
+
+    } else if (criteria === 'special') {
+        // 特殊効果比較
+        const getSeTypeVal = (c) => {
+            let res = {};
+            (c.special_effects || []).forEach(se => res[se.type] = se.value);
+            return res;
+        };
+
+        const baseSe = getSeTypeVal(baseC);
+        const targetSe = getSeTypeVal(targetC);
+        const baseKeys = Object.keys(baseSe);
+
+        if (baseKeys.length === 0) return 0;
+
+        let totalScore = 0;
+        baseKeys.forEach(k => {
+            if (targetSe[k]) {
+                const ratio = Math.min(1, targetSe[k] / baseSe[k]);
+                totalScore += ratio;
+            }
+        });
+
+        return (totalScore / baseKeys.length) * 100;
+    }
+    return 0;
+}

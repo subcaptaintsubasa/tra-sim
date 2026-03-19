@@ -808,5 +808,50 @@
     </div>
 </div>
 
+<!-- 新規追加カードのアナウンスモーダル -->
+<div id="newCardAnnounceModal" class="modal-overlay" style="display:none; z-index: 3000;">
+    <div class="modal-content" style="max-width: 400px; max-height: 80vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+            <h4>✨ 新しいカードが追加されました！</h4>
+        </div>
+        <div class="modal-body" id="newCardAnnounceBody" style="padding:15px; overflow-y:auto; flex:1; display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
+            <!-- 新カードリストがここに入ります -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="closeNewCardAnnounceModal()">確認しました</button>
+        </div>
+    </div>
+</div>
+
+<!-- 代用カード検索設定モーダル -->
+<div id="substituteSearchModal" class="modal-overlay" style="display:none; z-index: 2500;">
+    <div class="modal-content" style="max-width: 350px;">
+        <div class="modal-header">
+            <h4>🔍 代用検索設定</h4>
+            <button class="btn-close" onclick="closeSubstituteSearchModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="card-box" style="margin-bottom:10px;">
+                <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); display:block; margin-bottom:5px;">検索基準</label>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:0.8rem; cursor:pointer;"><input type="radio" name="subst_criteria" value="params" checked onchange="toggleSubstBonusOption()"> パラメータ</label>
+                    <label style="font-size:0.8rem; cursor:pointer;"><input type="radio" name="subst_criteria" value="skills" onchange="toggleSubstBonusOption()"> スキル / アビリティ</label>
+                    <label style="font-size:0.8rem; cursor:pointer;"><input type="radio" name="subst_criteria" value="special" onchange="toggleSubstBonusOption()"> 特殊効果 (覚醒Ptなど)</label>
+                </div>
+            </div>
+            <div class="card-box">
+                <label style="font-size:0.8rem; font-weight:bold; color:var(--accent); display:block; margin-bottom:5px;">オプション</label>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:0.8rem; cursor:pointer;"><input type="checkbox" id="subst_owned_only"> 所持カードのみを対象にする</label>
+                    <label style="font-size:0.8rem; cursor:pointer;" id="subst_bonus_wrap"><input type="checkbox" id="subst_use_bonus"> 元カードのボーナス割合を計算に含める</label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="execSubstituteSearch()">検索実行</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
