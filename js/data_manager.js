@@ -179,8 +179,8 @@ async function saveCardToGH() {
             bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
             special_effects: special_effects,
             
-            // ★修正箇所: 入力欄の値ではなく、リスト変数を使用する
-            abilities: currentEditingSkills, 
+            // 参照切れを防ぐため、JSON変換によるディープコピーを行う
+            abilities: JSON.parse(JSON.stringify(currentEditingSkills)), 
             
             stats,
             growth_rate: growthRate

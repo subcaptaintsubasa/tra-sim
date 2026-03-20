@@ -144,6 +144,35 @@ window.onload = async () => {
             );
         }
 
+        // --- モーダルオーバーレイの背景クリックで閉じる処理を一括登録 ---
+        document.querySelectorAll('.modal-overlay, #profileModal, #cardModal').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                // オーバーレイの背景（黒い部分）自体がクリックされたか判定
+                if (e.target === this) {
+                    const closeBtn = this.querySelector('.btn-close');
+                    const iconCloseBtn = this.querySelector('.modal-tab-header .icon-btn'); // フィルタモーダル等の×ボタン
+                    
+                    if (closeBtn && closeBtn.style.display !== 'none') {
+                        closeBtn.click();
+                    } else if (iconCloseBtn) {
+                        iconCloseBtn.click();
+                    } else if (this.id === 'filterModal') {
+                        if (typeof closeFilterModal === 'function') closeFilterModal();
+                    } else if (this.id === 'cardDetailModal') {
+                        if (typeof closeCardDetailModal === 'function') closeCardDetailModal();
+                    } else if (this.id === 'warningModal') {
+                        if (typeof closeWarningModal === 'function') closeWarningModal();
+                    } else if (this.id === 'newCardAnnounceModal') {
+                        if (typeof closeNewCardAnnounceModal === 'function') closeNewCardAnnounceModal();
+                    } else if (this.id === 'profileModal') {
+                        if (typeof closeProfileModal === 'function') closeProfileModal();
+                    } else if (this.id === 'cardModal') {
+                        this.style.display = 'none';
+                    }
+                }
+            });
+        });
+
     } catch(e) {
         console.warn("初期化エラー:", e);
     }
@@ -541,9 +570,8 @@ window.openMyCardDetailModal = (item, fromSim = false) => {
     if (!modal) return;
     modal.classList.add('mycards-mode');
     
-    document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title} (Mycards)`;
+    document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.name}`;
     renderMyCardModalBody(userData);
-
     // --- 4. シミュレータからの呼び出し時のフッター制御 ---
     const footer = modal.querySelector('.modal-footer');
     if (fromSim) {
@@ -641,12 +669,12 @@ window.renderMyCardModalBody = (userData) => {
     // ... (footer生成コードは既存維持)
     const btnClass = userData.owned ? 'btn-accent' : 'btn-primary';
     const btnIcon = userData.owned ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>';
-    const btnText = userData.owned ? '所持しています' : '未所持にする';
+    const btnText = userData.owned ? '所持しています' : '所持に変更';
 
     footer.innerHTML = `
-        <button class="btn btn-icon" onclick="openSubstituteModal()"><i class="fa-solid fa-magnifying-glass"></i> 代用検索</button>
-        <button class="btn btn-icon" onclick="addToTrayFromDetail()"><i class="fa-solid fa-scale-balanced"></i> 比較</button>
-        <button id="btnToggleOwnFooter" class="btn ${btnClass}" onclick="toggleMyCardOwnedFromModal()">
+        <button class="btn btn-icon" onclick="openSubstituteModal()" style="white-space: nowrap;"><i class="fa-solid fa-magnifying-glass"></i> 代用検索</button>
+        <button class="btn btn-icon" onclick="addToTrayFromDetail()" style="white-space: nowrap;"><i class="fa-solid fa-scale-balanced"></i> 比較</button>
+        <button id="btnToggleOwnFooter" class="btn ${btnClass}" onclick="toggleMyCardOwnedFromModal()" style="flex: 2; padding: 10px 5px;">
             ${btnIcon} <span id="btnToggleOwnText">${btnText}</span>
         </button>
     `;
@@ -727,16 +755,16 @@ window.openViewDetailModal = (item) => {
     if (!modal) return;
     
     modal.classList.remove('mycards-mode');
-    document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.title}`;
+    document.getElementById('cdmTitle').innerText = `[${c.rarity}] ${c.name}`;
     
     renderViewModalBody();
     
     // Viewモード用フッター
     modal.querySelector('.modal-footer').innerHTML = `
-        <button class="btn btn-icon" id="btnFav" onclick="toggleDetailFav()"><i class="fa-regular fa-heart"></i> お気に入り</button>
-        <button class="btn btn-icon" onclick="openSubstituteModal()"><i class="fa-solid fa-magnifying-glass"></i> 代用検索</button>
-        <button class="btn btn-icon" onclick="addToTrayFromDetail()"><i class="fa-solid fa-scale-balanced"></i> 比較</button>
-        <button class="btn btn-primary" id="btnOwned" onclick="toggleDetailOwned()" style="flex:1;">所持にする</button>
+        <button class="btn btn-icon" id="btnFav" onclick="toggleDetailFav()" style="white-space: nowrap;"><i class="fa-regular fa-heart"></i> お気に入り</button>
+        <button class="btn btn-icon" onclick="openSubstituteModal()" style="white-space: nowrap;"><i class="fa-solid fa-magnifying-glass"></i> 代用検索</button>
+        <button class="btn btn-icon" onclick="addToTrayFromDetail()" style="white-space: nowrap;"><i class="fa-solid fa-scale-balanced"></i> 比較</button>
+        <button class="btn btn-primary" id="btnOwned" onclick="toggleDetailOwned()" style="flex:2; padding: 10px 5px;">所持にする</button>
     `;
     updateDetailButtons();
     modal.style.display = 'flex';

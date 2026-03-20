@@ -834,16 +834,16 @@
             <div class="card-box" style="margin-bottom:10px;">
                 <label style="font-size:0.8rem; font-weight:bold; color:var(--primary); display:block; margin-bottom:5px;">検索基準</label>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <label style="font-size:0.8rem; cursor:pointer;"><input type="radio" name="subst_criteria" value="params" checked onchange="toggleSubstBonusOption()"> パラメータ</label>
-                    <label style="font-size:0.8rem; cursor:pointer;"><input type="radio" name="subst_criteria" value="skills" onchange="toggleSubstBonusOption()"> スキル / アビリティ</label>
-                    <label style="font-size:0.8rem; cursor:pointer;"><input type="radio" name="subst_criteria" value="special" onchange="toggleSubstBonusOption()"> 特殊効果 (覚醒Ptなど)</label>
+                    <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="subst_criteria" value="params" style="width:auto; margin:0;" checked onchange="toggleSubstBonusOption()"> パラメータ</label>
+                    <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="subst_criteria" value="skills" style="width:auto; margin:0;" onchange="toggleSubstBonusOption()"> スキル / アビリティ</label>
+                    <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="subst_criteria" value="special" style="width:auto; margin:0;" onchange="toggleSubstBonusOption()"> 特殊効果 (覚醒Ptなど)</label>
                 </div>
             </div>
             <div class="card-box">
                 <label style="font-size:0.8rem; font-weight:bold; color:var(--accent); display:block; margin-bottom:5px;">オプション</label>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <label style="font-size:0.8rem; cursor:pointer;"><input type="checkbox" id="subst_owned_only"> 所持カードのみを対象にする</label>
-                    <label style="font-size:0.8rem; cursor:pointer;" id="subst_bonus_wrap"><input type="checkbox" id="subst_use_bonus"> 元カードのボーナス割合を計算に含める</label>
+                    <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="subst_owned_only" style="width:auto; margin:0;"> 所持カードのみを対象にする</label>
+                    <label style="font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;" id="subst_bonus_wrap"><input type="checkbox" id="subst_use_bonus" style="width:auto; margin:0;"> 元カードのボーナス割合を計算に含める</label>
                 </div>
             </div>
         </div>
