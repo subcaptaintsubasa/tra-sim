@@ -138,7 +138,7 @@
     "rarity": "SSR",
     "bonuses": [
       {
-        "type": "ラインブレイカー",
+        "type": "ラインブレーカー",
         "value": 25
       }
     ],
@@ -596,7 +596,7 @@
     "rarity": "SR",
     "bonuses": [
       {
-        "type": "ラインブレイカー",
+        "type": "ラインブレーカー",
         "value": 25
       }
     ],
