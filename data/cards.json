@@ -1886,33 +1886,5 @@
       "反応速度": 1,
       "1対1": 1.8
     }
-  },
-  {
-    "title": "",
-    "name": "テスト",
-    "rarity": "SSR",
-    "bonuses": [
-      {
-        "type": "1",
-        "value": 1
-      }
-    ],
-    "bonus_type": "1",
-    "bonus_value": 1,
-    "special_effects": [
-      {
-        "type": "覚醒Pt",
-        "value": 1
-      }
-    ],
-    "abilities": [
-      {
-        "name": "俊敏なドリブラー",
-        "rarity": "Bronze"
-      }
-    ],
-    "stats": {
-      "決定力": 1
-    }
   }
 ]
