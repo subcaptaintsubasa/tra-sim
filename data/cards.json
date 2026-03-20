@@ -1902,5 +1902,16 @@
       }
     ],
     "stats": {}
+  },
+  {
+    "title": "",
+    "name": "テスト2",
+    "rarity": "SSR",
+    "bonuses": [],
+    "bonus_type": "",
+    "bonus_value": 0,
+    "special_effects": [],
+    "abilities": [],
+    "stats": {}
   }
 ]
