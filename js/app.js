@@ -126,24 +126,6 @@ window.onload = async () => {
         
         updateTrayUI();
 
-        // --- 警告ダイアログのチェック (順次表示) ---
-        
-        // 1. プレリリース警告 (全員)
-        showWarning(
-            'warn_prerelease',
-            'プレリリース版について',
-            '本アプリは開発中のプレリリース版です。<br>機能の不具合やデータの誤りが含まれる可能性があります。<br>あらかじめご了承ください。<br><br>※お気づきの点は報告を頂けますと幸いです。'
-        );
-
-        // 2. スマホ未対応警告 (画面幅768px未満のみ)
-        if (window.innerWidth < 768) {
-            showWarning(
-                'warn_mobile_beta',
-                'モバイル表示について',
-                '現在、スマートフォンサイズへの最適化は完了していません。<br>表示崩れや操作しづらい箇所がある可能性があります。<br>PCまたはタブレットでの利用を推奨します。'
-            );
-        }
-
         // --- モーダルオーバーレイの背景クリックで閉じる処理を一括登録 ---
         document.querySelectorAll('.modal-overlay, #profileModal, #cardModal').forEach(overlay => {
             overlay.addEventListener('click', function(e) {
