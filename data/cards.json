@@ -1687,12 +1687,7 @@
     "bonus_type": "ドリブラー",
     "bonus_value": 20,
     "special_effects": [],
-    "abilities": [
-      {
-        "name": "強引なフィニッシュ",
-        "rarity": "Bronze"
-      }
-    ],
+    "abilities": [],
     "stats": {
       "突破力": 2.7,
       "走力": 1.7,
@@ -1715,12 +1710,7 @@
     "bonus_type": "攻撃的FB",
     "bonus_value": 35,
     "special_effects": [],
-    "abilities": [
-      {
-        "name": "勝機を生み出すフィード",
-        "rarity": "Silver"
-      }
-    ],
+    "abilities": [],
     "stats": {
       "ショートパス": 0.7,
       "走力": 0.5,
@@ -1745,12 +1735,7 @@
     "bonus_type": "ラインブレーカー",
     "bonus_value": 45,
     "special_effects": [],
-    "abilities": [
-      {
-        "name": "俊敏なる大砲",
-        "rarity": "Gold"
-      }
-    ],
+    "abilities": [],
     "stats": {
       "決定力": 2.5,
       "突破力": 0.2,
@@ -1876,7 +1861,7 @@
   },
   {
     "title": "【ジャロロッソの砦】",
-    "name": "ミル・スヴィラール",
+    "name": "ミロ・スヴィラール",
     "rarity": "SR",
     "bonuses": [
       {
@@ -1900,6 +1885,34 @@
       "セービング": 7.5,
       "反応速度": 1,
       "1対1": 1.8
+    }
+  },
+  {
+    "title": "",
+    "name": "テスト",
+    "rarity": "SSR",
+    "bonuses": [
+      {
+        "type": "1",
+        "value": 1
+      }
+    ],
+    "bonus_type": "1",
+    "bonus_value": 1,
+    "special_effects": [
+      {
+        "type": "覚醒Pt",
+        "value": 1
+      }
+    ],
+    "abilities": [
+      {
+        "name": "俊敏なドリブラー",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "決定力": 1
     }
   }
 ]
