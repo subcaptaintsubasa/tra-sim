@@ -1690,8 +1690,12 @@ let customWeightsOrder = []; // ["決定力", "走力", ...]
 window.setSimMode = (mode) => {
     currentSimMode = mode;
     
-    // ボタンのスタイル更新
-    document.querySelectorAll('.sim-mode-btn').forEach(btn => btn.classList.remove('active'));
+    // ボタンのスタイル更新（レアリティボタンを巻き込まないように修正）
+    ['Balanced', 'Ovr', 'Custom'].forEach(m => {
+        const btn = document.getElementById(`btnMode${m}`);
+        if(btn) btn.classList.remove('active');
+    });
+    
     const activeBtn = document.getElementById(`btnMode${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
     if(activeBtn) activeBtn.classList.add('active');
     
