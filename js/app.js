@@ -641,10 +641,16 @@ window.renderMyCardModalBody = (userData) => {
             <div style="margin-top:5px;">${presetBtns}</div>
         </div>
         <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
+            <div id="mcTotalStat" style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px; text-align:right;"></div>
             <div class="stat-grid" id="mcStatGrid">${renderStatGridHTML(c.stats, stats)}</div>
             <div id="mcSpecialEffects">${renderSpecialEffectsHTML(stats._special_effects)}</div>
         </div>
     `;
+    
+    // 初回描画時の合計値セット
+    let totalStat = 0;
+    Object.keys(stats).forEach(k => { if([...STATS, ...GK_STATS].includes(k)) totalStat += stats[k]; });
+    document.getElementById('mcTotalStat').innerText = `総合計: ${Math.round(totalStat / 10)}`;
     
     // フッター更新 (既存コードと同じなので省略)
     const footer = document.querySelector('#cardDetailModal .modal-footer');
@@ -680,6 +686,13 @@ window.updateMyCardLevel = (newLevel, isSliderInput = false) => {
     if(slider && !isSliderInput) slider.value = level;
 
     const stats = getCardStatsAtLevel(c, level, null, null, 1.0);
+    
+    // 合計値再計算
+    let totalStat = 0;
+    Object.keys(stats).forEach(k => { if([...STATS, ...GK_STATS].includes(k)) totalStat += stats[k]; });
+    const totalEl = document.getElementById('mcTotalStat');
+    if(totalEl) totalEl.innerText = `総合計: ${Math.round(totalStat / 10)}`;
+
     document.getElementById('mcStatGrid').innerHTML = renderStatGridHTML(c.stats, stats);
     const seDiv = document.getElementById('mcSpecialEffects');
     if(seDiv) seDiv.innerHTML = renderSpecialEffectsHTML(stats._special_effects);
@@ -805,10 +818,16 @@ window.renderViewModalBody = () => {
         </div>
         ${btnHtml}
         <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
+            <div style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px; text-align:right;">総合計: <span id="viewTotalStat"></span></div>
             <div class="stat-grid">${renderStatGridHTML(c.stats, stats)}</div>
             ${renderSpecialEffectsHTML(stats._special_effects)}
         </div>
     `;
+    
+    // 合計値計算セット
+    let totalStat = 0;
+    Object.keys(stats).forEach(k => { if([...STATS, ...GK_STATS].includes(k)) totalStat += stats[k]; });
+    document.getElementById('viewTotalStat').innerText = Math.round(totalStat / 10);
 };
 
 window.updateViewLevel = (lvl) => {

@@ -322,7 +322,6 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
     const resDiv = document.getElementById('totalResults');
     if (!resDiv) return;
     
-    // 初期化
     resDiv.innerHTML = '';
 
     const pos = selectedPos;
@@ -342,12 +341,15 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
 
     let rowsHtml = '';
     
-    // Gapの再計算（表示用）
-    const gaps = calculateTargetGaps();
+    // Gapと最大Gap(100%時)を取得
+    const gapData = calculateTargetGaps();
+    const gaps = gapData.gaps;
+    const maxGaps = gapData.maxGaps;
+    const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
 
     displayOrder.forEach(s => {
-        // 先に四捨五入して整数化することで、表示上の「+1のズレ」を防ぐ
         const gap = Math.round(gaps[s] || 0); 
+        const maxGap = Math.round(maxGaps[s] || 0); 
         const gain = Math.round((totals_x10[s] || 0) / 10); 
         
         if (gap > 0) {
@@ -356,30 +358,27 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
             totalSatisfied += Math.min(gain, gap);
         }
 
-        const remain = Math.max(0, gap - gain);
+        // 残量は「最大Gap（100%時）」を基準に算出する
+        const remain = Math.max(0, maxGap - gain);
 
-        // 手動モード用インライン表示の更新 (スマホ用)
-        const inlineGain = document.getElementById(`inline_gain_${s}`);
-        const inlineRemain = document.getElementById(`inline_remain_${s}`);
-        if(inlineGain) inlineGain.innerText = '+' + gain.toFixed(0);
-        if(inlineRemain) inlineRemain.innerText = gap > 0 ? (remain > 0 ? '残'+remain.toFixed(0) : '達成') : '対象外';
+        let fillPct = (maxGap > 0) ? (gain / maxGap) * 100 : 0;
+        let targetLinePct = targetPct * 100; // 目安線の位置
 
-        let pct = (gap > 0) ? Math.min(100, (gain / gap) * 100) : 100;
         let barClass = 'res-bar-fill';
-        if (gain > gap && gap > 0) barClass += ' overflow';
-        if (pct >= 100) barClass += ' complete';
+        if (gain > maxGap && maxGap > 0) barClass += ' overflow'; // はみ出し判定も最大Gap基準に変更
+        if (gain >= gap && gap > 0) barClass += ' complete'; // 目標到達で緑色に
 
-        // GapもGainもないステータスは非表示
-        if (gap === 0 && gain === 0) return;
+        if (maxGap === 0 && gain === 0) return;
 
         rowsHtml += `
             <div class="res-row">
                 <div class="res-name">${s}</div>
                 <div class="res-val" style="color:${gain>0?'#fff':'#666'}">+${gain.toFixed(0)}</div>
                 <div class="res-bar-container">
-                    <div class="${barClass}" style="width:${pct}%"></div>
+                    <div class="${barClass}" style="width:${fillPct}%; border-radius:3px;"></div>
+                    <div class="res-bar-target-marker" style="left:${targetLinePct}%;"></div>
                 </div>
-                <div class="res-remain">${gap > 0 ? (remain > 0 ? '残'+remain.toFixed(0) : '達成') : '対象外'}</div>
+                <div class="res-remain">${maxGap > 0 ? (remain > 0 ? '残'+remain.toFixed(0) : 'MAX') : '対象外'}</div>
             </div>
         `;
     });
@@ -1821,7 +1820,8 @@ window.openAutoSimResultModal = (card, slotIndex) => {
     const level = invData.level;
 
     const modal = document.getElementById('autoSimResultModal');
-    document.getElementById('asrmTitle').innerText = `[${card.rarity}] ${card.title}`;
+    // タイトルを称号ではなく選手名に修正
+    document.getElementById('asrmTitle').innerText = `[${card.rarity}] ${card.name}`;
     
     // お気に入りボタンの初期状態
     const btnFav = document.getElementById('asrmBtnFav');
@@ -1878,6 +1878,11 @@ window.openAutoSimResultModal = (card, slotIndex) => {
     // ステータス生成 (素のステータス)
     const stats = getCardStatsAtLevel(card, level, null, null, 1.0);
     const statHtml = renderStatGridHTML(card.stats, stats);
+    
+    // パラメータ合計値の算出
+    let totalStat = 0;
+    Object.keys(stats).forEach(k => { if([...STATS, ...GK_STATS].includes(k)) totalStat += stats[k]; });
+    totalStat = Math.round(totalStat / 10);
 
     document.getElementById('asrmBody').innerHTML = `
         <div style="display:flex; gap:15px; margin-bottom:10px;">
@@ -1890,6 +1895,7 @@ window.openAutoSimResultModal = (card, slotIndex) => {
             </div>
         </div>
         <div style="background:#0f172a; padding:10px; border-radius:6px; border:1px solid #333;">
+            <div style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px; text-align:right;">総合計: ${totalStat}</div>
             <div class="stat-grid">${statHtml}</div>
         </div>
     `;

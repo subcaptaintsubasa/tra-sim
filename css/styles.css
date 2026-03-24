@@ -1351,9 +1351,17 @@ input, textarea, [contenteditable="true"] {
     height: 6px;
     background: #333;
     border-radius: 3px;
-    overflow: hidden;
+    /* overflow: hidden; はみ出し描画のため削除 */
     position: relative;
     margin-right: 8px;
+}
+.res-bar-target-marker {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 2px;
+    background-color: #fbbf24; /* 金色の目印 */
+    z-index: 10;
 }
 .res-bar-fill {
     height: 100%;
@@ -1467,8 +1475,7 @@ html, body {
     body[data-mobile-sim="manual"] #simTargets { display: none !important; }
     body[data-mobile-sim="manual"] .mobile-target-btn-container { display: none !important; }
     body[data-mobile-sim="manual"] #btnMobileAutoRun { display: none !important; }
-    body[data-mobile-sim="manual"] #totalResults { display: none !important; }
-    body[data-mobile-sim="manual"] .inline-stat-res { display: flex !important; }
+    /* totalResults の非表示を解除し、メーターを見せる */
     
     /* 手動モード結果のインライン表示サイズ調整 */
     .inline-stat-res {

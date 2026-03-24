@@ -135,9 +135,10 @@ window.runAutoSim = () => {
 
     if(candidateCards.length === 0) return alert("所持カードがありません。");
 
-    // 2. 目標(Gap)と重み(Weight)の計算
-    const gaps = calculateTargetGaps();
-    const weights = {}; 
+   // 2. 目標(Gap)と重み(Weight)の計算
+    const gapData = calculateTargetGaps();
+    const gaps = gapData.gaps;
+    const weights = {};
 
     relevantStats.forEach(s => {
         weights[s] = getStatWeight(s, currentSimMode, simStyle);
@@ -213,6 +214,7 @@ window.runAutoSim = () => {
 // 共通関数：必要Gapの算出（手動・自動の分岐）
 function calculateTargetGaps() {
     const gaps = {};
+    const maxGaps = {}; // 100%時の最大Gapを保持
     const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
     const isGK = (selectedPos === 'GK');
     const relevantStats = isGK 
@@ -221,10 +223,15 @@ function calculateTargetGaps() {
 
     relevantStats.forEach(s => {
         let gap = 0;
+        let maxGap = 0;
+        
         if (isManualGapMode) {
             const now = (parseFloat(document.getElementById(`now_${s}`).value) || 0) * 10;
             const max = (parseFloat(document.getElementById(`max_${s}`).value) || 0) * 10;
-            if (max > 0) gap = Math.max(0, (max * targetPct) - now);
+            if (max > 0) {
+                gap = Math.max(0, (max * targetPct) - now);
+                maxGap = Math.max(0, max - now);
+            }
         } else {
             if (!selectedPos) return;
             const targetRarity = selectedTargetRarity;
@@ -241,11 +248,13 @@ function calculateTargetGaps() {
                 }
             }
             
-            // テーブルから基本Gap値を取得し、目標％を乗算
             const baseGap = GAP_STAGE_TABLE[targetRarity][stage] || 0;
             gap = baseGap * targetPct;
+            maxGap = baseGap;
         }
         gaps[s] = gap;
+        maxGaps[s] = maxGap;
     });
-    return gaps;
+    
+    return { gaps, maxGaps };
 }
