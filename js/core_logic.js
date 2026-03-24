@@ -136,15 +136,10 @@ window.runAutoSim = () => {
     if(candidateCards.length === 0) return alert("所持カードがありません。");
 
     // 2. 目標(Gap)と重み(Weight)の計算
-    const gaps = {};
+    const gaps = calculateTargetGaps();
     const weights = {}; 
 
     relevantStats.forEach(s => {
-        const now = (parseFloat(document.getElementById(`now_${s}`).value) || 0) * 10; 
-        const max = (parseFloat(document.getElementById(`max_${s}`).value) || 0) * 10;
-        let gap = 0;
-        if (max > 0) gap = Math.max(0, (max * targetPct) - now);
-        gaps[s] = gap;
         weights[s] = getStatWeight(s, currentSimMode, simStyle);
     });
 
@@ -214,3 +209,43 @@ window.runAutoSim = () => {
         alert("有効な組み合わせが見つかりませんでした。");
     }
 };
+
+// 共通関数：必要Gapの算出（手動・自動の分岐）
+function calculateTargetGaps() {
+    const gaps = {};
+    const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
+    const isGK = (selectedPos === 'GK');
+    const relevantStats = isGK 
+        ? STATS.filter(s => !DEF_STATS.includes(s)).concat(GK_STATS) 
+        : STATS;
+
+    relevantStats.forEach(s => {
+        let gap = 0;
+        if (isManualGapMode) {
+            const now = (parseFloat(document.getElementById(`now_${s}`).value) || 0) * 10;
+            const max = (parseFloat(document.getElementById(`max_${s}`).value) || 0) * 10;
+            if (max > 0) gap = Math.max(0, (max * targetPct) - now);
+        } else {
+            if (!selectedPos) return;
+            const targetRarity = selectedTargetRarity;
+            const patternKey = GAP_POS_MAPPING[selectedPos];
+            
+            let stage = 1;
+            const stagesObj = POS_GAP_PATTERN[patternKey];
+            if (stagesObj) {
+                for (let stg = 5; stg >= 1; stg--) {
+                    if (stagesObj[stg] && stagesObj[stg].includes(s)) {
+                        stage = stg;
+                        break;
+                    }
+                }
+            }
+            
+            // テーブルから基本Gap値を取得し、目標％を乗算
+            const baseGap = GAP_STAGE_TABLE[targetRarity][stage] || 0;
+            gap = baseGap * targetPct;
+        }
+        gaps[s] = gap;
+    });
+    return gaps;
+}

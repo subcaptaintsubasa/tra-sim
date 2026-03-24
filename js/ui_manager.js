@@ -1,3 +1,19 @@
+window.selectTargetRarity = (rarity) => {
+    selectedTargetRarity = rarity;
+    document.querySelectorAll('[id^="btnRarity"]').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('btnRarity' + rarity).classList.add('active');
+    if (typeof updateCalc === 'function') updateCalc();
+};
+
+window.toggleManualGapMode = () => {
+    isManualGapMode = !isManualGapMode;
+    const container = document.getElementById('manualInputContainer');
+    if (container) {
+        container.style.display = isManualGapMode ? 'block' : 'none';
+    }
+    if (typeof updateCalc === 'function') updateCalc();
+};
+
 // --- 初期化系 UI構築 ---
 
 function initStatInputs() {
@@ -326,36 +342,35 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
 
     let rowsHtml = '';
     
+    // Gapの再計算（表示用）
+    const gaps = calculateTargetGaps();
+
     displayOrder.forEach(s => {
-        const now = parseFloat(document.getElementById(`now_${s}`).value) || 0;
-        const max = parseFloat(document.getElementById(`max_${s}`).value) || 0;
+        // 先に四捨五入して整数化することで、表示上の「+1のズレ」を防ぐ
+        const gap = Math.round(gaps[s] || 0); 
+        const gain = Math.round((totals_x10[s] || 0) / 10); 
         
-        const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
-        const targetVal = max * targetPct;
-        const gap = Math.max(0, targetVal - now);
-        
-        const gain = (totals_x10[s] || 0) / 10;
-        
-        if (max > 0) {
+        if (gap > 0) {
             totalGap += gap;
             totalGain += gain;
             totalSatisfied += Math.min(gain, gap);
         }
 
-        const remain = Math.max(0, max - (now + gain));
+        const remain = Math.max(0, gap - gain);
 
-        // 手動モード用インライン表示の更新
+        // 手動モード用インライン表示の更新 (スマホ用)
         const inlineGain = document.getElementById(`inline_gain_${s}`);
         const inlineRemain = document.getElementById(`inline_remain_${s}`);
         if(inlineGain) inlineGain.innerText = '+' + gain.toFixed(0);
-        if(inlineRemain) inlineRemain.innerText = (remain > 0) ? '残'+remain.toFixed(0) : 'MAX';
+        if(inlineRemain) inlineRemain.innerText = gap > 0 ? (remain > 0 ? '残'+remain.toFixed(0) : '達成') : '対象外';
 
         let pct = (gap > 0) ? Math.min(100, (gain / gap) * 100) : 100;
         let barClass = 'res-bar-fill';
         if (gain > gap && gap > 0) barClass += ' overflow';
         if (pct >= 100) barClass += ' complete';
 
-        if (max === 0 && gain === 0) return;
+        // GapもGainもないステータスは非表示
+        if (gap === 0 && gain === 0) return;
 
         rowsHtml += `
             <div class="res-row">
@@ -364,7 +379,7 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
                 <div class="res-bar-container">
                     <div class="${barClass}" style="width:${pct}%"></div>
                 </div>
-                <div class="res-remain">${remain > 0 ? '残'+remain.toFixed(0) : 'MAX'}</div>
+                <div class="res-remain">${gap > 0 ? (remain > 0 ? '残'+remain.toFixed(0) : '達成') : '対象外'}</div>
             </div>
         `;
     });

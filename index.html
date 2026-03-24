@@ -140,18 +140,39 @@
                                 <div id="styleGrid" class="style-grid" style="margin-top:5px;"></div>
                             </div>
                         </div>
+
+                        <!-- 追加: レアリティ選択 -->
                         <div style="margin-top:10px; border-bottom:1px dashed #334155; padding-bottom:10px;">
-                            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                                <input type="file" id="ocrUpload" accept="image/*" style="display:none;" onchange="handleOCR(this)">
-                                <button class="btn" style="background:#3b82f6; width:auto; font-size:0.75rem; padding:5px 15px;" onclick="handleOcrClick()">画像から自動入力</button>
-                                <span id="ocrStatus" style="font-size:0.7rem; color:var(--skill);"></span>
-                                <div style="margin-left: auto; display:flex; gap:5px;">
-                                    <button class="btn btn-sm btn-accent" style="width:auto;" onclick="openSaveModal()">💾 保存</button>
-                                    <button class="btn btn-sm btn-primary" style="width:auto;" onclick="openLoadModal()">📂 読込</button>
-                                </div>
+                            <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px;">排出時レアリティ</label>
+                            <div class="sim-mode-group">
+                                <button class="sim-mode-btn" id="btnRarity1" onclick="selectTargetRarity('1')">☆1</button>
+                                <button class="sim-mode-btn" id="btnRarity2" onclick="selectTargetRarity('2')">☆2</button>
+                                <button class="sim-mode-btn active" id="btnRarity3" onclick="selectTargetRarity('3')">☆3</button>
                             </div>
                         </div>
-                        <div id="statInputArea" class="stat-grid" style="margin-top:10px;"></div>
+
+                        <!-- 追加: トグルボタン -->
+                        <div style="margin-top:10px; text-align:right;">
+                            <button class="btn btn-sm" style="background:#1e293b; color:#94a3b8; border:1px solid #334155;" onclick="toggleManualGapMode()">
+                                <i class="fa-solid fa-gear"></i> 詳細設定（手動入力・OCR）を開く/閉じる
+                            </button>
+                        </div>
+
+                        <!-- 既存部分をラッパーで囲む -->
+                        <div id="manualInputContainer" style="display:none; margin-top:10px; border:1px solid #334155; padding:10px; border-radius:6px; background:#0f172a;">
+                            <div style="margin-bottom:10px; border-bottom:1px dashed #334155; padding-bottom:10px;">
+                                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                                    <input type="file" id="ocrUpload" accept="image/*" style="display:none;" onchange="handleOCR(this)">
+                                    <button class="btn" style="background:#3b82f6; width:auto; font-size:0.75rem; padding:5px 15px;" onclick="handleOcrClick()">画像から自動入力</button>
+                                    <span id="ocrStatus" style="font-size:0.7rem; color:var(--skill);"></span>
+                                    <div style="margin-left: auto; display:flex; gap:5px;">
+                                        <button class="btn btn-sm btn-accent" style="width:auto;" onclick="openSaveModal()">💾 保存</button>
+                                        <button class="btn btn-sm btn-primary" style="width:auto;" onclick="openLoadModal()">📂 読込</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="statInputArea" class="stat-grid"></div>
+                        </div>
                     </div>
                 </div>
 
