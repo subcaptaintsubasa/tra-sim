@@ -906,9 +906,26 @@ function renderSpecialEffectsHTML(calculatedSE) {
     return html;
 }
 // --- Comparison (Same as before) ---
+let compGlobalBonusOn = false;
+
+window.toggleCompGlobalBonus = (isOn) => {
+    compGlobalBonusOn = isOn;
+    updateComparisonTable();
+};
+
+window.toggleCompCardBonus = (idx, isOn) => {
+    if(compGlobalBonusOn) return; // 一括ONの時は個別の操作を無視
+    compCardStates[idx].bonusOn = isOn;
+    updateComparisonTable();
+};
 window.runComparison = () => {
     if(compareTray.length < 1) return alert("比較するカードを選択してください");
-    compCardStates = compareTray.map(c => ({ id: c.name + "_" + c.title, level: c.rarity === 'SSR' ? 50 : 45 }));
+    compGlobalBonusOn = false; // 開くたびに一括ボーナスをOFFにリセット
+    compCardStates = compareTray.map(c => ({ 
+        id: c.name + "_" + c.title, 
+        level: c.rarity === 'SSR' ? 50 : 45,
+        bonusOn: false 
+    }));
     updateComparisonTable();
     document.getElementById('comparisonModal').style.display = 'flex';
 };
@@ -918,57 +935,139 @@ window.updateComparisonTable = () => {
     if(!table) return;
     table.innerHTML = '';
     
-    let thead = `<thead><tr><th style="min-width:80px;">項目</th>`;
+    // ヘッダー生成 (一括ボーナストグル追加)
+    let thead = `<thead>
+        <tr>
+            <th style="min-width:120px;">
+                <div style="display:flex; flex-direction:column; align-items:flex-start; gap:6px; font-size:0.75rem; color:var(--primary); font-weight:bold;">
+                    <div>一括ボーナス適用</div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="compGlobalBonus" ${compGlobalBonusOn ? 'checked' : ''} onchange="toggleCompGlobalBonus(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </th>`;
+            
     compareTray.forEach((c, idx) => {
         const state = compCardStates[idx];
         const imgPath = `img/cards/${c.name}_${c.title}.png`;
         const levels = c.rarity === 'SSR' ? [30,35,40,45,50] : [25,30,35,40,45];
         const labels = ["0","1","2","3","完"];
         let btnHtml = `<div class="comp-lvl-btns">` + levels.map((lvl, i) => `<button class="comp-lvl-btn ${lvl===state.level?'active':''}" onclick="updateCompCardLevel(${idx}, ${lvl})">${labels[i]}</button>`).join('') + `</div>`;
-        thead += `<th><div class="comp-card-header"><img src="${imgPath}" onerror="this.src='https://placehold.jp/50x65.png'"><div class="comp-card-name">${c.name}</div><div class="comp-card-ctrl"><span style="font-size:0.6rem;">Lv.${state.level}</span>${btnHtml}</div></div></th>`;
+        
+        // 個別ボーナスの具体的なテキストを生成
+        let bonusText = 'なし';
+        if (c.bonuses && c.bonuses.length > 0) {
+            bonusText = c.bonuses.map(b => `${b.type}+${b.value}%`).join(', ');
+        } else if (c.bonus_type) {
+            bonusText = `${c.bonus_type}+${c.bonus_value}%`;
+        }
+
+        // 個別ボーナストグル生成
+        const disabled = compGlobalBonusOn ? 'disabled' : '';
+        const isChecked = compGlobalBonusOn || state.bonusOn;
+        const opacity = compGlobalBonusOn ? '0.4' : '1';
+        
+        let bToggleHtml = `
+            <div style="margin-top:6px; opacity:${opacity}; background:#0f172a; border-radius:4px; padding:4px 2px; text-align:center;">
+                <div style="font-size:0.55rem; color:#94a3b8; margin-bottom:4px; white-space:normal; line-height:1.1; min-height:14px; display:flex; align-items:center; justify-content:center;">${bonusText}</div>
+                <label class="toggle-switch" style="${disabled ? 'cursor:not-allowed;' : 'cursor:pointer;'}">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} ${disabled} onchange="toggleCompCardBonus(${idx}, this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        `;
+
+        thead += `<th><div class="comp-card-header"><img src="${imgPath}" onerror="this.src='https://placehold.jp/50x65.png'"><div class="comp-card-name">${c.name}</div><div class="comp-card-ctrl"><span style="font-size:0.6rem;">Lv.${state.level}</span>${btnHtml}${bToggleHtml}</div></div></th>`;
     });
     thead += `</tr></thead>`;
     table.innerHTML += thead;
 
-    const cardStats = compareTray.map((c, idx) => getCardStatsAtLevel(c, compCardStates[idx].level, null, null, 1.0));
-    const order = (typeof STATS_VERTICAL_ORDER !== 'undefined') ? STATS_VERTICAL_ORDER : ["決定力","キック力","走力"]; 
+    // 各カードのステータス取得 (ボーナス適用処理)
+    const cardStats = compareTray.map((c, idx) => {
+        const state = compCardStates[idx];
+        const isBonus = compGlobalBonusOn || state.bonusOn;
+        const rawStats = getCardStatsAtLevel(c, state.level, null, null, 1.0);
+        
+        if (!isBonus) return rawStats;
+
+        // ボーナスONの場合、カードの持つ全ボーナスを加算して倍率をかける
+        let bonusTotal = 0;
+        if (c.bonuses && Array.isArray(c.bonuses)) {
+            c.bonuses.forEach(b => bonusTotal += b.value);
+        } else if (c.bonus_type) {
+            bonusTotal += (c.bonus_value || 0);
+        }
+        
+        const bonusMult = 1 + (bonusTotal / 100);
+        const bonusStats = {};
+        for(let s in rawStats) {
+            if(s === '_special_effects') {
+                bonusStats[s] = rawStats[s];
+                continue;
+            }
+            bonusStats[s] = Math.round(rawStats[s] * bonusMult);
+        }
+        return bonusStats;
+    });
+
+    // カテゴリ定義
+    const COMP_CATEGORIES = [
+        { label: 'SHO', color: '#ef4444', stats: ['決定力', 'キック力', '冷静さ'] },
+        { label: 'PAS', color: '#eab308', stats: ['ショートパス', 'ロングパス', 'キック精度'] },
+        { label: 'DRB', color: '#22c55e', stats: ['突破力', 'キープ力', 'ボールタッチ'] },
+        { label: 'DEF①', color: '#3b82f6', stats: ['タックル', 'パスカット', 'マーク'] },
+        { label: 'DEF②', color: '#8b5cf6', stats: ['セービング', '反応速度', '1対1'] },
+        { label: 'PHY', color: '#f97316', stats: ['ジャンプ', 'コンタクト', 'スタミナ'] },
+        { label: 'SPD', color: '#06b6d4', stats: ['走力', '敏捷性'] }
+    ];
 
     let tbody = `<tbody>`;
-    order.forEach(statName => {
-        const isAllZero = cardStats.every(st => !st[statName]);
-        if (isAllZero) return;
-        let maxVal = -1;
-        cardStats.forEach(st => { if((st[statName]||0) > maxVal) maxVal = st[statName]||0; });
-        let row = `<tr><td>${statName}</td>`;
-        cardStats.forEach(st => {
-            const val = st[statName] || 0;
-            const classAttr = (val > 0 && val === maxVal) ? 'comp-val comp-win' : 'comp-val';
-            row += `<td class="${classAttr}" style="${val===0?'color:#444;':''}">${val > 0 ? (val/10).toFixed(1) : '-'}</td>`;
+    COMP_CATEGORIES.forEach(cat => {
+        cat.stats.forEach(statName => {
+            const isAllZero = cardStats.every(st => !(st[statName] > 0));
+            if (isAllZero) return; // 誰も数値を持っていないステータスは非表示
+
+            let row = `<tr>`;
+            const catBadge = `<span style="display:inline-block; width:38px; font-size:0.6rem; font-weight:bold; background:rgba(255,255,255,0.1); color:${cat.color}; text-align:center; border-radius:3px; margin-right:6px; padding:2px 0; border:1px solid ${cat.color};">${cat.label}</span>`;
+            row += `<td style="text-align:left;"><div style="display:flex; align-items:center;">${catBadge} <span>${statName}</span></div></td>`;
+            
+            let maxVal = -1;
+            cardStats.forEach(st => { if((st[statName]||0) > maxVal) maxVal = st[statName]||0; });
+            
+            cardStats.forEach(st => {
+                const val = st[statName] || 0;
+                const classAttr = (val > 0 && val === maxVal) ? 'comp-val comp-win' : 'comp-val';
+                row += `<td class="${classAttr}" style="${val===0?'color:#444;':''}">${val > 0 ? (val/10).toFixed(1) : '-'}</td>`;
+            });
+            row += `</tr>`;
+            tbody += row;
         });
-        row += `</tr>`;
-        tbody += row;
     });
     
-    // Skills (色分け・種別対応)
-    tbody += `<tr><td>スキル</td>` + compareTray.map(c => {
+    // スキル / アビリティ行 (クリックでモーダル展開)
+    const skillBadge = `<span style="display:inline-block; width:38px; font-size:0.6rem; font-weight:bold; background:#334155; color:#fff; text-align:center; border-radius:3px; margin-right:6px; padding:2px 0;">SKL</span>`;
+    tbody += `<tr><td style="text-align:left;"><div style="display:flex; align-items:center;">${skillBadge} <span>スキル</span></div></td>` + compareTray.map((c, idx) => {
+        const state = compCardStates[idx];
+        const skillLv = getSkillLevelFromCardLevel(c.rarity, state.level);
+
         const skillHtml = (c.abilities||[]).map(s => {
             let name, rarity;
             if (typeof s === 'object' && s !== null) {
                 name = s.name; rarity = s.rarity;
             } else {
-                name = s; rarity = (c.rarity === 'SSR') ? 'Gold' : 'Silver'; // 推測
+                name = s; rarity = (c.rarity === 'SSR') ? 'Gold' : 'Silver'; 
             }
             
-            // スキルかアビリティかをDBから判定
             const isSkill = !!skillsDB.find(k => k.name === name);
             const tagClass = isSkill ? 'tag-skill' : 'tag-ability';
-            // レアリティ色
             const borderCol = rarity === 'Silver' ? '#cbd5e1' : (rarity === 'Bronze' ? '#d97706' : '#fbbf24');
             
-            return `<div class="tag ${tagClass}" style="margin-bottom:2px; border-left:3px solid ${borderCol}; text-align:left;">${name}</div>`;
+            return `<div class="tag ${tagClass}" style="margin-bottom:3px; border-left:3px solid ${borderCol}; text-align:left; cursor:pointer;" onclick="openSaModal('${name}', '${rarity}', ${skillLv})">${name}</div>`;
         }).join('');
         return `<td style="font-size:0.6rem; white-space:normal; vertical-align:top;">${skillHtml}</td>`;
     }).join('') + `</tr></tbody>`;
+    
     table.innerHTML += tbody;
 };
 

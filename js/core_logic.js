@@ -249,8 +249,9 @@ function calculateTargetGaps() {
             }
             
             const baseGap = GAP_STAGE_TABLE[targetRarity][stage] || 0;
-            gap = baseGap * targetPct;
-            maxGap = baseGap;
+            // 内部計算は全て「10倍(x10)」スケールで行うため、テーブルの表示値も10倍する
+            gap = baseGap * targetPct * 10;
+            maxGap = baseGap * 10;
         }
         gaps[s] = gap;
         maxGaps[s] = maxGap;

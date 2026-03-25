@@ -348,9 +348,10 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
     const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
 
     displayOrder.forEach(s => {
-        const gap = Math.round(gaps[s] || 0); 
-        const maxGap = Math.round(maxGaps[s] || 0); 
-        const gain = Math.round((totals_x10[s] || 0) / 10); 
+        // 内部のx10スケールを表示用に /10 して四捨五入する
+        const gap = Math.round((gaps[s] || 0) / 10); 
+        const maxGap = Math.round((maxGaps[s] || 0) / 10); 
+        const gain = Math.round((totals_x10[s] || 0) / 10);
         
         if (gap > 0) {
             totalGap += gap;
