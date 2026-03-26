@@ -3,21 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-J0XKXLK0DJ"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-J0XKXLK0DJ');
-</script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J0XKXLK0DJ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-J0XKXLK0DJ');
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Traindex-サカつく2026</title>
+    
+    <!-- 【追加】1. 検索結果に表示させる説明文 -->
+    <meta name="description" content="サカつく2026の選手図鑑＆育成シミュレーター。パラメータ比較や代用検索、育成目標の自動計算など、チーム編成に役立つウェブツールです。">
+    
+    <!-- 【追加】2. 正規URLの指定（重複エラー対策） -->
+    <link rel="canonical" href="https://subcaptaintsubasa.github.io/tra-sim/">
+
+    <!-- 【追加】3. サイト名を正しく認識させるための構造化データ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Traindex-サカつく2026",
+      "url": "https://subcaptaintsubasa.github.io/tra-sim/"
+    }
+    </script>
+
     <!-- Google API Scripts -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js" async defer></script>
     <!-- OCR Lib -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    
     <!-- OGP / Twitter Card Settings -->
     <meta property="og:title" content="Traindex-サカつく2026">
     <meta property="og:description" content="サカつく2026の選手図鑑＆育成シミュレーター。">
@@ -31,12 +49,17 @@
     <meta name="twitter:title" content="Traindex-サカつく2026">
     <meta name="twitter:description" content="サカつく2026の選手図鑑＆育成シミュレーター。">
     <meta name="twitter:image" content="https://subcaptaintsubasa.github.io/tra-sim/icon-512.png">
+    
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 【追加・修正】4. ファビコン設定 -->
+    <link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -830,7 +853,7 @@
 </div>
 
 <!-- 新規追加カードのアナウンスモーダル -->
-<div id="newCardAnnounceModal" class="modal-overlay" style="display:none; z-index: 3000;">
+<div id="newCardAnnounceModal" class="modal-overlay" style="display:none; z-index: 3000;" data-nosnippet>
     <div class="modal-content" style="max-width: 400px; max-height: 80vh; display:flex; flex-direction:column;">
         <div class="modal-header">
             <h4>✨ 新しいカードが追加されました！</h4>
