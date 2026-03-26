@@ -1688,9 +1688,16 @@ function calculateSubstituteScore(baseCardObj, targetCardObj, criteria, useBonus
         let sumBase = 0, sumTarget = 0;
 
         allStats.forEach(s => {
-            // ペナルティ緩和のため基礎値+10を加算
-            const vB = (baseStats[s] || 0) + 10;
-            const vT = (targetStats[s] || 0) + 10;
+            const baseVal = (baseStats[s] || 0);
+            const targetVal = (targetStats[s] || 0);
+
+            // 【修正】対象カードの数値が元カードを上回る場合、あふれた分を切り捨て（元カードの数値にキャップ）
+            // これにより、上位互換カードがペナルティを受けず、一致率100%に近づく
+            const cappedTargetVal = Math.min(targetVal, baseVal);
+
+            // 0除算防止およびペナルティ緩和のための基礎値+10
+            const vB = baseVal + 10;
+            const vT = cappedTargetVal + 10;
 
             dotProduct += vB * vT;
             normBase += vB * vB;
@@ -1699,7 +1706,6 @@ function calculateSubstituteScore(baseCardObj, targetCardObj, criteria, useBonus
             sumBase += vB;
             sumTarget += vT;
         });
-
         if (normBase === 0 || normTarget === 0) return 0;
 
         const cosineSim = dotProduct / (Math.sqrt(normBase) * Math.sqrt(normTarget));
