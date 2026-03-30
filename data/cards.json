@@ -1687,7 +1687,12 @@
     "bonus_type": "ドリブラー",
     "bonus_value": 20,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "強引なフィニッシュ",
+        "rarity": "Bronze"
+      }
+    ],
     "stats": {
       "突破力": 2.7,
       "走力": 1.7,
