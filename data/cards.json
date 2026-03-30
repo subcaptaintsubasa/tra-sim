@@ -1917,5 +1917,21 @@
       }
     ],
     "stats": {}
+  },
+  {
+    "title": "",
+    "name": "テスト②",
+    "rarity": "SSR",
+    "bonuses": [],
+    "bonus_type": "",
+    "bonus_value": 0,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "俊敏なる大砲",
+        "rarity": "Gold"
+      }
+    ],
+    "stats": {}
   }
 ]
