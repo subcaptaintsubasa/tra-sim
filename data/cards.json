@@ -1715,7 +1715,12 @@
     "bonus_type": "攻撃的FB",
     "bonus_value": 35,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "勝機を生み出すフィード",
+        "rarity": "Silver"
+      }
+    ],
     "stats": {
       "ショートパス": 0.7,
       "走力": 0.5,
