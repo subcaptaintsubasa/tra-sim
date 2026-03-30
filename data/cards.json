@@ -1687,7 +1687,12 @@
     "bonus_type": "ドリブラー",
     "bonus_value": 20,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "強引なフィニッシュ",
+        "rarity": "Bronze"
+      }
+    ],
     "stats": {
       "突破力": 2.7,
       "走力": 1.7,
@@ -1710,12 +1715,7 @@
     "bonus_type": "攻撃的FB",
     "bonus_value": 35,
     "special_effects": [],
-    "abilities": [
-      {
-        "name": "指令のロングフィード",
-        "rarity": "Silver"
-      }
-    ],
+    "abilities": [],
     "stats": {
       "ショートパス": 0.7,
       "走力": 0.5,
