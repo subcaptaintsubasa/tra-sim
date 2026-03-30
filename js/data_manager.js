@@ -128,8 +128,35 @@ async function saveCardToGH() {
     const btn = document.getElementById('btnSaveCard');
     if(btn) { btn.disabled = true; btn.innerText = "保存中..."; }
 
+    // ★ 非同期処理に入る前にUIの状態を変数にキャプチャする
+    const rarity = document.getElementById('editRarity').value;
+    const growthRate = parseInt(document.getElementById('editGrowth').value);
+    
+    const stats = {}; 
+    document.querySelectorAll('.edit-val').forEach(i => {
+        if(i.value) stats[i.dataset.stat] = parseFloat(i.value);
+    });
+    
+    const bonuses = [];
+    document.querySelectorAll('#editBonusList > div').forEach(r => {
+        const t = r.querySelector('.edit-b-type').value;
+        const v = parseFloat(r.querySelector('.edit-b-val').value);
+        if(t && v) bonuses.push({ type: t, value: v });
+    });
+    const legacyType = bonuses.length > 0 ? bonuses[0].type : "";
+    const legacyVal = bonuses.length > 0 ? bonuses[0].value : 0;
+
+    const special_effects = [];
+    document.querySelectorAll('#editSpecialEffectList > div').forEach(r => {
+        const t = r.querySelector('.edit-se-type').value;
+        const v = parseFloat(r.querySelector('.edit-se-val').value);
+        if(t && v) special_effects.push({ type: t, value: v });
+    });
+
+    const capturedAbilities = JSON.parse(JSON.stringify(currentEditingSkills));
+
     try {
-        // 1. 画像アップロード処理 (ファイルが選択されている場合のみ)
+        // 1. 画像アップロード処理
         const fileInput = document.getElementById('cardImgUpload');
         if (fileInput && fileInput.files[0]) {
             const file = fileInput.files[0];
@@ -148,57 +175,47 @@ async function saveCardToGH() {
         }
 
         // 2. JSONデータ構築
-        const stats = {}; 
-        document.querySelectorAll('.edit-val').forEach(i => {
-            if(i.value) stats[i.dataset.stat] = parseFloat(i.value);
-        });
-        
-        const bonuses = [];
-        const rows = document.querySelectorAll('#editBonusList > div');
-        rows.forEach(r => {
-            const t = r.querySelector('.edit-b-type').value;
-            const v = parseFloat(r.querySelector('.edit-b-val').value);
-            if(t && v) bonuses.push({ type: t, value: v });
-        });
-        // 互換性のため legacyType も残すが、基本は bonuses 配列を使用
-        const legacyType = bonuses.length > 0 ? bonuses[0].type : "";
-        const legacyVal = bonuses.length > 0 ? bonuses[0].value : 0;
-
-        const special_effects = [];
-        const seRows = document.querySelectorAll('#editSpecialEffectList > div');
-        seRows.forEach(r => {
-            const t = r.querySelector('.edit-se-type').value;
-            const v = parseFloat(r.querySelector('.edit-se-val').value);
-            if(t && v) special_effects.push({ type: t, value: v });
-        });
-
-        const growthRate = parseInt(document.getElementById('editGrowth').value);
-
         const nc = { 
-            title, name, rarity: document.getElementById('editRarity').value, 
+            title, name, rarity: rarity, 
             bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
             special_effects: special_effects,
-            
-            // 参照切れを防ぐため、JSON変換によるディープコピーを行う
-            abilities: JSON.parse(JSON.stringify(currentEditingSkills)), 
-            
+            abilities: capturedAbilities, 
             stats,
             growth_rate: growthRate
         };
 
         if (growthRate === 6) delete nc.growth_rate;
 
-        // 既存データの更新または新規追加
-        // (カード名と称号が一致するものを更新)
-        const i = cardsDB.findIndex(x => x.name === name && x.title === title); 
-        if(i >= 0) cardsDB[i] = nc; else cardsDB.push(nc);
+        // ★ GitHub API から最新の cards.json を取得してマージする（データロスト防止）
+        const token = localStorage.getItem('gh_token');
+        const repo = localStorage.getItem('gh_repo');
+        if (token && repo) {
+            const url = `https://api.github.com/repos/${repo}/contents/data/cards.json`;
+            const g = await fetch(url, { 
+                headers: { 'Authorization': `token ${token}` },
+                cache: 'no-store'
+            });
+            if (g.ok) {
+                const resJson = await g.json();
+                const contentStr = decodeURIComponent(escape(atob(resJson.content)));
+                const latestCardsDB = JSON.parse(contentStr);
+                const i = latestCardsDB.findIndex(x => x.name === name && x.title === title);
+                if(i >= 0) latestCardsDB[i] = nc; else latestCardsDB.push(nc);
+                cardsDB = latestCardsDB; // ローカル同期
+            } else {
+                const i = cardsDB.findIndex(x => x.name === name && x.title === title); 
+                if(i >= 0) cardsDB[i] = nc; else cardsDB.push(nc);
+            }
+        } else {
+            const i = cardsDB.findIndex(x => x.name === name && x.title === title); 
+            if(i >= 0) cardsDB[i] = nc; else cardsDB.push(nc);
+        }
 
         // 3. JSON保存
         if(await pushToGH('cards.json', cardsDB, `Update Card: ${name}`)) { 
             alert("保存しました"); 
             renderCardList(); 
-            // ナビゲーション状態更新
-            currentEditCardIndex = (i >= 0) ? i : cardsDB.length - 1;
+            currentEditCardIndex = cardsDB.findIndex(x => x.name === name && x.title === title);
             isCardEditorDirty = false;
         }
 
@@ -220,13 +237,51 @@ async function deleteCard(idx) {
 async function batchRegisterCards() { 
     try { 
         const d = JSON.parse(document.getElementById('aiPasteCard').value); 
-        (Array.isArray(d) ? d : [d]).forEach(c => {
+        const inputCards = Array.isArray(d) ? d : [d];
+
+         // ★ GitHub API から最新の cards.json を取得（データロスト防止）
+        const token = localStorage.getItem('gh_token');
+        const repo = localStorage.getItem('gh_repo');
+        if (token && repo) {
+            const url = `https://api.github.com/repos/${repo}/contents/data/cards.json`;
+            const g = await fetch(url, { 
+                headers: { 'Authorization': `token ${token}` },
+                cache: 'no-store'
+            });
+            if (g.ok) {
+                const resJson = await g.json();
+                const contentStr = decodeURIComponent(escape(atob(resJson.content)));
+                cardsDB = JSON.parse(contentStr); // ローカルを最新で上書き
+            }
+        }
+
+        inputCards.forEach(c => {
             const i = cardsDB.findIndex(x => x.name === c.name && x.title === c.title); 
-            if(i >= 0) cardsDB[i] = c; else cardsDB.push(c);
+            if(i >= 0) {
+                // 既存のデータを保持しつつマージ（スキル等が空になるのを防ぐ）
+                const existing = cardsDB[i];
+                cardsDB[i] = { 
+                    ...existing, 
+                    ...c, 
+                    abilities: c.abilities !== undefined ? c.abilities : existing.abilities,
+                    bonuses: c.bonuses !== undefined ? c.bonuses : existing.bonuses,
+                    bonus_type: c.bonus_type !== undefined ? c.bonus_type : existing.bonus_type,
+                    bonus_value: c.bonus_value !== undefined ? c.bonus_value : existing.bonus_value,
+                    special_effects: c.special_effects !== undefined ? c.special_effects : existing.special_effects
+                };
+            } else {
+                cardsDB.push(c);
+            }
         }); 
+
         await pushToGH('cards.json', cardsDB, "Bulk Update"); 
-        alert("保存成功"); renderCardList(); renderInventory(); 
-    } catch(e) { alert("JSONエラー"); } 
+        alert("保存成功"); 
+        renderCardList(); 
+        if (typeof renderInventory === 'function') renderInventory(); 
+    } catch(e) { 
+        console.error(e);
+        alert("JSONエラーまたは通信エラー"); 
+    } 
 }
 
 // --- スキル/アビリティ保存 (連動更新機能付き) ---
@@ -237,7 +292,6 @@ window.saveSA = async () => {
     
     const editor = document.getElementById('saEditor');
     const originalName = editor.dataset.originalName;
-    // datasetから取得 (文字列の "undefined" 等が入る可能性を考慮して空文字化)
     let originalRarity = editor.dataset.originalRarity;
     if (!originalRarity || originalRarity === "undefined" || originalRarity === "null") {
         originalRarity = "";
@@ -251,11 +305,8 @@ window.saveSA = async () => {
     if(btn) { btn.disabled = true; btn.innerText = "処理中..."; }
 
     try {
-        // 対象の配列を選択
-        let targetDB = (type === 'skill') ? skillsDB : abilitiesDB;
         const fileName = (type === 'skill') ? 'skills.json' : 'abilities.json';
 
-        // 1. 新しいデータオブジェクトの作成
         const data = { name: newName, rarity: newRarity }; 
         if(type === 'skill'){ 
             data.skill_type = document.getElementById('saSkillType').value;
@@ -276,58 +327,72 @@ window.saveSA = async () => {
             data.targets = targets;
         }
 
-        // =========================================================
-        // DB操作: 古いデータを削除して、新しいデータを追加する
-        // =========================================================
-
-        // ヘルパー: アイテムが条件に一致するか判定
         const isMatch = (item, name, rarity) => {
-            const itemR = item.rarity || ""; // undefined/null は空文字扱い
+            const itemR = item.rarity || "";
             const targetR = rarity || "";
             return item.name === name && itemR === targetR;
         };
 
-        // 2-1. 編集モードの場合、編集前の元データを削除する
+        // ★ GitHub API から最新のデータを取得してマージ
+        const token = localStorage.getItem('gh_token');
+        const repo = localStorage.getItem('gh_repo');
+        let targetDB = (type === 'skill') ? skillsDB : abilitiesDB;
+        
+        if (token && repo) {
+            const url = `https://api.github.com/repos/${repo}/contents/data/${fileName}`;
+            const g = await fetch(url, { 
+                headers: { 'Authorization': `token ${token}` },
+                cache: 'no-store'
+            });
+            if (g.ok) {
+                const resJson = await g.json();
+                const contentStr = decodeURIComponent(escape(atob(resJson.content)));
+                targetDB = JSON.parse(contentStr);
+            }
+        }
+
         if (isEditMode) {
             targetDB = targetDB.filter(item => !isMatch(item, originalName, originalRarity));
         }
-
-        // 2-2. 重複防止: これから保存するデータと同じキーを持つデータも削除する
-        // (名前を変えた結果、既存の別データと衝突する場合の上書き用)
         targetDB = targetDB.filter(item => !isMatch(item, newName, newRarity));
-
-        // 2-3. 新しいデータを追加
         targetDB.push(data);
 
-        // グローバル変数への反映 (参照切れ防止のため書き戻す)
         if (type === 'skill') skillsDB = targetDB;
         else abilitiesDB = targetDB;
 
-        // GitHub保存
         await pushToGH(fileName, targetDB, `Update ${type}: ${newName} (${newRarity})`);
 
-
-        // 3. カードデータの連動更新 (Cascade Update)
-        // 名前やレアリティが変わった場合のみ確認
         const hasKeyChanged = (originalName !== newName) || (originalRarity !== newRarity);
         
         if (isEditMode && hasKeyChanged && 
             confirm(`この${type}を持っているカードのデータも自動更新しますか？\n(対象: ${originalName})`)) {
             
             let updatedCardCount = 0;
+            
+            // cardsDBも最新を取得
+            if (token && repo) {
+                const urlCards = `https://api.github.com/repos/${repo}/contents/data/cards.json`;
+                const gc = await fetch(urlCards, { 
+                    headers: { 'Authorization': `token ${token}` },
+                    cache: 'no-store'
+                });
+                if (gc.ok) {
+                    const resJsonCards = await gc.json();
+                    const contentStrCards = decodeURIComponent(escape(atob(resJsonCards.content)));
+                    cardsDB = JSON.parse(contentStrCards);
+                }
+            }
+
             cardsDB.forEach(card => {
                 if (!card.abilities) return;
                 let cardChanged = false;
                 
                 card.abilities = card.abilities.map(ab => {
-                    // カード内のスキルデータから名前とレアリティを抽出
                     const currentName = (typeof ab === 'string') ? ab : ab.name;
                     const currentRarity = (typeof ab === 'string') ? "" : (ab.rarity || "");
                     
-                    // 編集前の元データと一致するか？
                     if (currentName === originalName && currentRarity === originalRarity) {
                         cardChanged = true;
-                        // 新しいデータに置き換え
                         return { name: newName, rarity: newRarity };
                     }
                     return ab;
@@ -346,7 +411,6 @@ window.saveSA = async () => {
             alert("保存完了しました。");
         }
 
-        // 4. 画面リセット
         editor.dataset.isEditMode = "false";
         delete editor.dataset.originalName;
         delete editor.dataset.originalRarity;

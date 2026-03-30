@@ -913,19 +913,31 @@ window.toggleCompGlobalBonus = (isOn) => {
     updateComparisonTable();
 };
 
-window.toggleCompCardBonus = (idx, isOn) => {
+window.toggleCompCardBonus = (idx, bIdx, isOn) => {
     if(compGlobalBonusOn) return; // 一括ONの時は個別の操作を無視
-    compCardStates[idx].bonusOn = isOn;
+    compCardStates[idx].activeBonuses[bIdx] = isOn;
     updateComparisonTable();
 };
+
 window.runComparison = () => {
     if(compareTray.length < 1) return alert("比較するカードを選択してください");
     compGlobalBonusOn = false; // 開くたびに一括ボーナスをOFFにリセット
-    compCardStates = compareTray.map(c => ({ 
-        id: c.name + "_" + c.title, 
-        level: c.rarity === 'SSR' ? 50 : 45,
-        bonusOn: false 
-    }));
+    compCardStates = compareTray.map(c => {
+        const state = { 
+            id: c.name + "_" + c.title, 
+            level: c.rarity === 'SSR' ? 50 : 45,
+            activeBonuses: {} 
+        };
+        // 初期状態では全てのボーナスをOFFにする
+        const bonusesList = [];
+        if (c.bonuses && c.bonuses.length > 0) {
+            c.bonuses.forEach(b => bonusesList.push(b));
+        } else if (c.bonus_type) {
+            bonusesList.push({ type: c.bonus_type, value: c.bonus_value || 0 });
+        }
+        bonusesList.forEach((_, i) => state.activeBonuses[i] = false);
+        return state;
+    });
     updateComparisonTable();
     document.getElementById('comparisonModal').style.display = 'flex';
 };
@@ -955,28 +967,37 @@ window.updateComparisonTable = () => {
         const labels = ["0","1","2","3","完"];
         let btnHtml = `<div class="comp-lvl-btns">` + levels.map((lvl, i) => `<button class="comp-lvl-btn ${lvl===state.level?'active':''}" onclick="updateCompCardLevel(${idx}, ${lvl})">${labels[i]}</button>`).join('') + `</div>`;
         
-        // 個別ボーナスの具体的なテキストを生成
-        let bonusText = 'なし';
+        // ボーナスリストの生成
+        const bonusesList = [];
         if (c.bonuses && c.bonuses.length > 0) {
-            bonusText = c.bonuses.map(b => `${b.type}+${b.value}%`).join(', ');
+            c.bonuses.forEach(b => bonusesList.push(b));
         } else if (c.bonus_type) {
-            bonusText = `${c.bonus_type}+${c.bonus_value}%`;
+            bonusesList.push({ type: c.bonus_type, value: c.bonus_value || 0 });
         }
 
         // 個別ボーナストグル生成
         const disabled = compGlobalBonusOn ? 'disabled' : '';
-        const isChecked = compGlobalBonusOn || state.bonusOn;
         const opacity = compGlobalBonusOn ? '0.4' : '1';
         
-        let bToggleHtml = `
-            <div style="margin-top:6px; opacity:${opacity}; background:#0f172a; border-radius:4px; padding:4px 2px; text-align:center;">
-                <div style="font-size:0.55rem; color:#94a3b8; margin-bottom:4px; white-space:normal; line-height:1.1; min-height:14px; display:flex; align-items:center; justify-content:center;">${bonusText}</div>
-                <label class="toggle-switch" style="${disabled ? 'cursor:not-allowed;' : 'cursor:pointer;'}">
-                    <input type="checkbox" ${isChecked ? 'checked' : ''} ${disabled} onchange="toggleCompCardBonus(${idx}, this.checked)">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-        `;
+        let bToggleHtml = `<div style="margin-top:6px; opacity:${opacity}; background:#0f172a; border-radius:4px; padding:4px; text-align:center;">`;
+        
+        if (bonusesList.length === 0) {
+            bToggleHtml += `<div style="font-size:0.55rem; color:#94a3b8; margin-bottom:4px;">ボーナスなし</div>`;
+        } else {
+            bonusesList.forEach((b, bIdx) => {
+                const isChecked = compGlobalBonusOn || state.activeBonuses[bIdx];
+                bToggleHtml += `
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-size:0.55rem; color:#94a3b8; line-height:1.1; text-align:left; word-break:break-all;">${b.type}+${b.value}%</span>
+                        <label class="toggle-switch" style="${disabled ? 'cursor:not-allowed;' : 'cursor:pointer;'} transform:scale(0.8); margin-left:4px; flex-shrink:0;">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} ${disabled} onchange="toggleCompCardBonus(${idx}, ${bIdx}, this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                `;
+            });
+        }
+        bToggleHtml += `</div>`;
 
         thead += `<th><div class="comp-card-header"><img src="${imgPath}" onerror="this.src='https://placehold.jp/50x65.png'"><div class="comp-card-name">${c.name}</div><div class="comp-card-ctrl"><span style="font-size:0.6rem;">Lv.${state.level}</span>${btnHtml}${bToggleHtml}</div></div></th>`;
     });
@@ -986,18 +1007,28 @@ window.updateComparisonTable = () => {
     // 各カードのステータス取得 (ボーナス適用処理)
     const cardStats = compareTray.map((c, idx) => {
         const state = compCardStates[idx];
-        const isBonus = compGlobalBonusOn || state.bonusOn;
         const rawStats = getCardStatsAtLevel(c, state.level, null, null, 1.0);
         
-        if (!isBonus) return rawStats;
-
-        // ボーナスONの場合、カードの持つ全ボーナスを加算して倍率をかける
-        let bonusTotal = 0;
-        if (c.bonuses && Array.isArray(c.bonuses)) {
-            c.bonuses.forEach(b => bonusTotal += b.value);
+        // ボーナスリスト生成
+        const bonusesList = [];
+        if (c.bonuses && c.bonuses.length > 0) {
+            c.bonuses.forEach(b => bonusesList.push(b));
         } else if (c.bonus_type) {
-            bonusTotal += (c.bonus_value || 0);
+            bonusesList.push({ type: c.bonus_type, value: c.bonus_value || 0 });
         }
+
+        // 有効なボーナス数値を加算する
+        let bonusTotal = 0;
+        let isAnyBonusActive = false;
+
+        bonusesList.forEach((b, bIdx) => {
+            if (compGlobalBonusOn || state.activeBonuses[bIdx]) {
+                bonusTotal += b.value;
+                isAnyBonusActive = true;
+            }
+        });
+
+        if (!isAnyBonusActive) return rawStats; // 適用するボーナスがない場合はそのまま返す
         
         const bonusMult = 1 + (bonusTotal / 100);
         const bonusStats = {};
@@ -1672,11 +1703,14 @@ function calculateSubstituteScore(baseCardObj, targetCardObj, criteria, useBonus
         let targetPos = null, targetStyle = null;
 
         if (useBonus) {
+            // 元カードのボーナスとポジションを特定
             baseStyle = baseC.bonuses && baseC.bonuses.length > 0 ? baseC.bonuses[0].type : baseC.bonus_type;
             basePos = Object.keys(POS_MAP).find(p => POS_MAP[p].includes(baseStyle)) || null;
 
-            targetStyle = targetC.bonuses && targetC.bonuses.length > 0 ? targetC.bonuses[0].type : targetC.bonus_type;
-            targetPos = Object.keys(POS_MAP).find(p => POS_MAP[p].includes(targetStyle)) || null;
+            // ターゲットカードも、元カードと同じ環境(basePos, baseStyle)で起用されたと仮定して計算する。
+            // これにより、元カードと同じ種類のボーナスのみが計算に含まれる。
+            targetPos = basePos;
+            targetStyle = baseStyle;
         }
 
         const baseStats = getCardStatsAtLevel(baseC, baseLevel, basePos, baseStyle, 1.0);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tra-sim-v2.451'; // 更新時はここを変更すると確実です
+const CACHE_NAME = 'tra-sim-v2.51'; // 更新時はここを変更すると確実です
 const ASSETS = [
   './',
   './index.html',
