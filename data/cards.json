@@ -1901,5 +1901,16 @@
       "反応速度": 1,
       "1対1": 1.8
     }
+  },
+  {
+    "title": "",
+    "name": "テスト",
+    "rarity": "SSR",
+    "bonuses": [],
+    "bonus_type": "",
+    "bonus_value": 0,
+    "special_effects": [],
+    "abilities": [],
+    "stats": {}
   }
 ]
