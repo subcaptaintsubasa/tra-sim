@@ -1945,7 +1945,12 @@
     "bonus_type": "ハードマーカー",
     "bonus_value": 30,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "パワースティール",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "タックル": 0.3,
       "キック力": 2.2,
