@@ -1915,7 +1915,12 @@
     "bonus_type": "パサー",
     "bonus_value": 35,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "迎撃のパサー",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "ショートパス": 10.8,
       "走力": 0.5,
