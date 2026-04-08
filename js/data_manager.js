@@ -156,20 +156,14 @@ async function saveCardToGH() {
     const capturedAbilities = JSON.parse(JSON.stringify(currentEditingSkills));
 
     try {
-        // 1. 画像アップロード処理
-        const fileInput = document.getElementById('cardImgUpload');
-        if (fileInput && fileInput.files[0]) {
-            const file = fileInput.files[0];
+        // 1. 画像アップロード処理 (プレビューから切り抜き後のBase64を取得)
+        const previewImg = document.getElementById('editCardPreview');
+        // previewImg.src が "data:image/" で始まる場合のみ、新規に追加・変更された画像と判定してアップロードする
+        if (previewImg && previewImg.src && previewImg.src.startsWith('data:image/')) {
             const fileName = `${name}_${title}.png`;
+            // "data:image/png;base64,xxxx..." のカンマ以降を抽出
+            const contentBase64 = previewImg.src.split(',')[1];
             
-            const toBase64 = file => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-            });
-
-            const contentBase64 = await toBase64(file);
             const imgRes = await pushToGH(`../img/cards/${fileName}`, null, `Add image: ${fileName}`, contentBase64);
             if (!imgRes) throw new Error("画像の保存に失敗しました");
         }

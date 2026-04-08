@@ -732,17 +732,86 @@ window.renderLinkedSkills = () => {
     });
 };
 
-    // --- Admin: Image Preview Logic ---
-window.previewCardImage = (input) => {
+    // --- Admin: Image Preview & AI Crop Logic ---
+window.previewCardImage = async (input) => {
     const file = input.files[0];
     const preview = document.getElementById('editCardPreview');
     if (!file || !preview) return;
 
+    // UIを処理中に変更
+    const noImgDiv = preview.nextElementSibling;
+    preview.style.display = 'none';
+    noImgDiv.style.display = 'block';
+    noImgDiv.innerText = "AI切り抜き中...";
+
+    const API_KEY = "ot0IHY7JRkXgOG0NH9f9";
+    const MODEL_ID = "sakatsuku-card-cutter/3";
+
     const reader = new FileReader();
-    reader.onload = function(e) {
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-        preview.nextElementSibling.style.display = 'none';
+    reader.onload = async function(e) {
+        const base64Image = e.target.result.split(',')[1];
+
+        try {
+            // Roboflow API呼び出し
+            const response = await axios({
+                method: "POST",
+                url: `https://serverless.roboflow.com/${MODEL_ID}`,
+                params: { api_key: API_KEY },
+                data: base64Image,
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }
+            });
+
+            const predictions = response.data.predictions;
+            
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                if (predictions && predictions.length > 0) {
+                    // 検出された中で一番面積が大きいものを採用する
+                    let bestPred = predictions[0];
+                    let maxArea = 0;
+                    predictions.forEach(p => {
+                        const area = p.width * p.height;
+                        if (area > maxArea) {
+                            maxArea = area;
+                            bestPred = p;
+                        }
+                    });
+
+                    // Canvasで切り抜き
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = bestPred.width;
+                    canvas.height = bestPred.height;
+
+                    ctx.drawImage(
+                        img,
+                        bestPred.x - bestPred.width / 2, bestPred.y - bestPred.height / 2,
+                        bestPred.width, bestPred.height,
+                        0, 0, bestPred.width, bestPred.height
+                    );
+                    
+                    // 切り抜いた画像をプレビューにセット (DataURL化)
+                    preview.src = canvas.toDataURL('image/png');
+                } else {
+                    // カードが検出されなかった場合はそのまま表示
+                    alert("カードが自動検出されませんでした。そのままの画像を使用します。");
+                    preview.src = e.target.result;
+                }
+                
+                preview.style.display = 'block';
+                noImgDiv.style.display = 'none';
+                noImgDiv.innerText = "No Image"; // テキストをリセット
+            };
+        } catch (err) {
+            console.error("AI切り抜きエラー:", err);
+            alert("AI切り抜きでエラーが発生しました。そのままの画像を使用します。");
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            noImgDiv.style.display = 'none';
+            noImgDiv.innerText = "No Image";
+        }
     };
     reader.readAsDataURL(file);
 };
