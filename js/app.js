@@ -138,12 +138,11 @@ window.onload = async () => {
                             }).then((currentToken) => {
                                 if (currentToken) {
                                     console.log('Firebase Token取得成功');
-                                    // テスト用：成功したことがわかるように一度だけ表示（確認できたら消してOKです）
-                                    // alert("スマホとFirebaseの接続が完了しました！通知を受信できます。");
+                                    // ★テスト用：取得したトークンをコピーできるように画面に表示する
+                                    prompt("【テスト用】Firebaseのトークンが取得できました。これをコピーして、Firebaseコンソールの「テストメッセージの送信」に貼り付けてください。", currentToken);
                                 }
                             }).catch((err) => {
                                 console.error('トークン取得エラー: ', err);
-                                // エラーが起きた場合は画面に表示して原因を特定する
                                 alert('通知の設定エラー(Token): ' + err.message);
                             });
                         });
