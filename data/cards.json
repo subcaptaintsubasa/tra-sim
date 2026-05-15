@@ -2345,11 +2345,11 @@
     "bonuses": [
       {
         "type": "攻撃的FB",
-        "value": 29
+        "value": 30
       }
     ],
     "bonus_type": "攻撃的FB",
-    "bonus_value": 29,
+    "bonus_value": 30,
     "special_effects": [],
     "abilities": [
       {
