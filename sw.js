@@ -10,17 +10,19 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// バックグラウンド通知の受信処理
 messaging.onBackgroundMessage(function(payload) {
   console.log('バックグラウンド通知を受信しました: ', payload);
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: './icon-192.png'
-  };
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  
+  // 【修正】ここで自前で通知を出す（showNotification）と2重通知になるため削除。
+  // Firebaseが自動でペイロードの中身を読み取って通知を出してくれます。
+  
+  // もし送信時に画像（iconなど）が指定されていなかった場合、
+  // ペイロードデータを書き換えてアイコンを強制的にセットすることも可能ですが、
+  // 通常はFirebaseコンソールからの送信時に自動で適用されます。
 });
 
-const CACHE_NAME = 'tra-sim-v2.6.1'; // 更新時はここを変更すると確実です
+const CACHE_NAME = 'tra-sim-v2.6.2'; // 更新時はここを変更すると確実です
 const ASSETS = [
   './',
   './index.html',
