@@ -139,7 +139,7 @@ window.onload = async () => {
                                 if (currentToken) {
                                     console.log('Firebase Token取得成功');
                                     // ★テスト用：取得したトークンをコピーできるように画面に表示する
-                                    prompt("【テスト用】Firebaseのトークンが取得できました。これをコピーして、Firebaseコンソールの「テストメッセージの送信」に貼り付けてください。", currentToken);
+                                    //prompt("【テスト用】Firebaseのトークンが取得できました。これをコピーして、Firebaseコンソールの「テストメッセージの送信」に貼り付けてください。", currentToken);
                                 }
                             }).catch((err) => {
                                 console.error('トークン取得エラー: ', err);
