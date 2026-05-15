@@ -110,10 +110,47 @@ window.onload = async () => {
         }
 
         // データ取得
+        // データ取得
         await fetchAllDB();
         
         // 新カードアナウンスのチェック
         if (typeof checkNewCards === 'function') checkNewCards();
+        
+        // --- Firebase Push通知 初期化 ---
+        if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined') {
+            try {
+                // Firebaseの初期化
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(FIREBASE_CONFIG);
+                }
+                const messaging = firebase.messaging();
+
+                // ユーザーに通知の許可をリクエスト
+                Notification.requestPermission().then((permission) => {
+                    if (permission === 'granted') {
+                        console.log('通知が許可されました。');
+                        // トークン取得 (VAPIDキーを使用)
+                        messaging.getToken({ vapidKey: FIREBASE_VAPID_KEY }).then((currentToken) => {
+                            if (currentToken) {
+                                console.log('Firebase Token取得成功');
+                            }
+                        }).catch((err) => {
+                            console.log('トークン取得エラー: ', err);
+                        });
+                    }
+                });
+
+                // アプリを画面で開いている最中に通知を受信した時の処理
+                messaging.onMessage((payload) => {
+                    console.log('アプリ起動中に通知を受信: ', payload);
+                    // 画面内にポップアップとして表示する
+                    alert(`【お知らせ】\n${payload.notification.title}\n${payload.notification.body}`);
+                });
+
+            } catch(e) {
+                console.warn("Firebase初期化エラー:", e);
+            }
+        }
         
         // 開発者ログイン状態チェック
         if (typeof checkDevLogin === 'function') checkDevLogin();
@@ -150,6 +187,8 @@ window.onload = async () => {
                         if (typeof closeProfileModal === 'function') closeProfileModal();
                     } else if (this.id === 'cardModal') {
                         this.style.display = 'none';
+                    } else if (this.id === 'infoAnnounceModal') {
+                        if (typeof closeInfoAnnounceModal === 'function') closeInfoAnnounceModal();
                     }
                 }
             });
@@ -1794,3 +1833,11 @@ function calculateSubstituteScore(baseCardObj, targetCardObj, criteria, useBonus
     }
     return 0;
 }
+
+// --- 全体お知らせモーダル 制御 ---
+window.closeInfoAnnounceModal = () => {
+    if (typeof infoDB !== 'undefined' && infoDB) {
+        localStorage.setItem('tra_read_info_id', infoDB.id);
+    }
+    document.getElementById('infoAnnounceModal').style.display = 'none';
+};

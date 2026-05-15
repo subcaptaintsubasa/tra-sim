@@ -347,41 +347,47 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
     const maxGaps = gapData.maxGaps;
     const targetPct = (parseInt(document.getElementById('targetPct').value) || 100) / 100;
 
-    displayOrder.forEach(s => {
-        // 内部のx10スケールを表示用に /10 して四捨五入する
-        const gap = Math.round((gaps[s] || 0) / 10); 
-        const maxGap = Math.round((maxGaps[s] || 0) / 10); 
-        const gain = Math.round((totals_x10[s] || 0) / 10);
-        
-        if (gap > 0) {
-            totalGap += gap;
-            totalGain += gain;
-            totalSatisfied += Math.min(gain, gap);
-        }
+    COMP_CATEGORIES.forEach(cat => {
+        cat.stats.forEach(s => {
+            if (!displayOrder.includes(s)) return;
+            
+            const gap = Math.round((gaps[s] || 0) / 10); 
+            const maxGap = Math.round((maxGaps[s] || 0) / 10); 
+            const gain = Math.round((totals_x10[s] || 0) / 10);
+            
+            if (gap > 0) {
+                totalGap += gap;
+                totalGain += gain;
+                totalSatisfied += Math.min(gain, gap);
+            }
 
-        // 残量は「最大Gap（100%時）」を基準に算出する
-        const remain = Math.max(0, maxGap - gain);
+            const remain = Math.max(0, maxGap - gain);
+            let fillPct = (maxGap > 0) ? (gain / maxGap) * 100 : 0;
+            let targetLinePct = targetPct * 100;
 
-        let fillPct = (maxGap > 0) ? (gain / maxGap) * 100 : 0;
-        let targetLinePct = targetPct * 100; // 目安線の位置
+            let barClass = 'res-bar-fill';
+            if (gain > maxGap && maxGap > 0) barClass += ' overflow'; 
+            if (gain >= gap && gap > 0) barClass += ' complete'; 
 
-        let barClass = 'res-bar-fill';
-        if (gain > maxGap && maxGap > 0) barClass += ' overflow'; // はみ出し判定も最大Gap基準に変更
-        if (gain >= gap && gap > 0) barClass += ' complete'; // 目標到達で緑色に
+            if (maxGap === 0 && gain === 0) return;
 
-        if (maxGap === 0 && gain === 0) return;
+            const catBadge = `<span style="display:inline-block; width:34px; font-size:0.55rem; font-weight:bold; background:rgba(255,255,255,0.1); color:${cat.color}; text-align:center; border-radius:3px; margin-right:4px; padding:2px 0; border:1px solid ${cat.color}; flex-shrink:0;">${cat.label}</span>`;
 
-        rowsHtml += `
-            <div class="res-row">
-                <div class="res-name">${s}</div>
-                <div class="res-val" style="color:${gain>0?'#fff':'#666'}">+${gain.toFixed(0)}</div>
-                <div class="res-bar-container">
-                    <div class="${barClass}" style="width:${fillPct}%; border-radius:3px;"></div>
-                    <div class="res-bar-target-marker" style="left:${targetLinePct}%;"></div>
+            rowsHtml += `
+                <div class="res-row">
+                    <div class="res-name" style="display:flex; align-items:center;">
+                        ${catBadge}
+                        <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:0.65rem;">${s}</span>
+                    </div>
+                    <div class="res-val" style="color:${gain>0?'#fff':'#666'}">+${gain.toFixed(0)}</div>
+                    <div class="res-bar-container">
+                        <div class="${barClass}" style="width:${fillPct}%; border-radius:3px;"></div>
+                        <div class="res-bar-target-marker" style="left:${targetLinePct}%;"></div>
+                    </div>
+                    <div class="res-remain">${maxGap > 0 ? (remain > 0 ? '残'+remain.toFixed(0) : 'MAX') : '対象外'}</div>
                 </div>
-                <div class="res-remain">${maxGap > 0 ? (remain > 0 ? '残'+remain.toFixed(0) : 'MAX') : '対象外'}</div>
-            </div>
-        `;
+            `;
+        });
     });
 
     const totalPct = (totalGap > 0) ? (totalSatisfied / totalGap * 100) : 0;
@@ -459,29 +465,30 @@ function renderSimSlots(pos, style) {
             div.className = 'slot-active';
             
             let bVal = 0;
+            let validPosBonuses = [pos];
+            if (pos && typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[pos]) {
+                validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[pos]);
+            }
+
             if (pos && style) {
                 if (c.bonuses && Array.isArray(c.bonuses) && c.bonuses.length > 0) {
                     c.bonuses.forEach(b => { 
-                        let validPosBonuses = [pos];
-                        if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[pos]) {
-                            validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[pos]);
-                        }
                         if(validPosBonuses.includes(b.type) || b.type === style) bVal += b.value; 
                     });
                 } else if (c.bonus_type) {
-                    let validPosBonuses = [pos];
-                    if (typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[pos]) {
-                        validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[pos]);
-                    }
                     if(validPosBonuses.includes(c.bonus_type) || c.bonus_type === style) bVal += (c.bonus_value||0);
                 }
             }
             const bText = bVal > 0 ? `+${bVal}%` : '';
-            const bDisplay = bVal > 0 ? `<div class="slot-badge">${bText}</div>` : '';
+            // バッジの位置を下にずらす
+            const bDisplay = bVal > 0 ? `<div class="slot-badge" style="top:22px;">${bText}</div>` : '';
+            // クリアボタン(×)の追加
+            const clearBtn = `<div class="slot-clear-btn" onclick="clearSimSlot(event, ${i})"><i class="fa-solid fa-xmark"></i></div>`;
             const imgPath = `img/cards/${c.name}_${c.title}.png`;
 
             div.innerHTML = `
                 <img src="${imgPath}" class="slot-bg-img" onerror="this.src='https://placehold.jp/333333/ffffff/100x133.png?text=NoImg'">
+                ${clearBtn}
                 ${bDisplay}
                 <div class="slot-overlay">
                     <div style="font-weight:bold;">${c.name}</div>
@@ -1984,4 +1991,16 @@ window.toggleAutoSimResultFav = () => {
         if (myCards[autoSimCurrentCardKey].favorite) { btnFav.innerHTML = '<i class="fa-solid fa-heart"></i> 登録中'; btnFav.classList.add('active'); } 
         else { btnFav.innerHTML = '<i class="fa-regular fa-heart"></i> お気に入り'; btnFav.classList.remove('active'); }
     }
+};
+
+// --- シミュレータ スロットクリア機能 ---
+window.clearAllSimSlots = () => {
+    selectedSlots = Array(6).fill(null);
+    updateCalc();
+};
+
+window.clearSimSlot = (e, idx) => {
+    e.stopPropagation(); // モーダルが開くのを防ぐ
+    selectedSlots[idx] = null;
+    updateCalc();
 };

@@ -1,4 +1,26 @@
-const CACHE_NAME = 'tra-sim-v2.53'; // 更新時はここを変更すると確実です
+importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyD3tPnB-zpvDl5wALKQhuCFsl-M3m7pKC8",
+  projectId: "traindex-3b337",
+  messagingSenderId: "897552477042",
+  appId: "1:897552477042:web:af169c3994aa705a348beb"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(function(payload) {
+  console.log('バックグラウンド通知を受信しました: ', payload);
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: './icon-192.png'
+  };
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+const CACHE_NAME = 'tra-sim-v2.55'; // 更新時はここを変更すると確実です
 const ASSETS = [
   './',
   './index.html',

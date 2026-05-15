@@ -1,16 +1,21 @@
 // --- データ取得・初期化 ---
+// --- データ取得・初期化 ---
 async function fetchAllDB() {
     const ts = Date.now(), base = './data';
     try {
-        const [c, s, a] = await Promise.all([ 
+        const [c, s, a, i] = await Promise.all([ 
             fetch(`${base}/cards.json?t=${ts}`), 
             fetch(`${base}/skills.json?t=${ts}`), 
-            fetch(`${base}/abilities.json?t=${ts}`) 
+            fetch(`${base}/abilities.json?t=${ts}`),
+            fetch(`${base}/info.json?t=${ts}`).catch(() => null)
         ]);
         
-        if(c.ok) cardsDB = await c.json(); 
-        if(s.ok) skillsDB = await s.json(); 
-        if(a.ok) abilitiesDB = await a.json();
+        if(c && c.ok) cardsDB = await c.json(); 
+        if(s && s.ok) skillsDB = await s.json(); 
+        if(a && a.ok) abilitiesDB = await a.json();
+        if(i && i.ok) {
+            try { infoDB = await i.json(); } catch(e) { infoDB = null; }
+        }
         
         if (typeof renderCardList === 'function') renderCardList(); 
         if (typeof renderInventory === 'function') renderInventory(); 
@@ -665,5 +670,34 @@ window.checkDevLogin = () => {
         loginBtn.innerHTML = hasAuth 
             ? '<i class="fa-solid fa-user-shield"></i> 開発者: ログイン中' 
             : '<i class="fa-solid fa-terminal"></i> 開発者オプション';
+    }
+};
+
+// --- お知らせ保存機能 (Admin用) ---
+window.saveInfoToGH = async () => {
+    const title = document.getElementById('infoTitle').value;
+    const message = document.getElementById('infoMessage').value;
+    if (!title || !message) return alert('タイトルとメッセージを入力してください');
+    
+    const btn = document.querySelector('#view-admin-info button');
+    if(btn) { btn.disabled = true; btn.innerText = "送信中..."; }
+
+    const newInfo = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString('ja-JP'),
+        title: title,
+        message: message
+    };
+    
+    try {
+        if (await pushToGH('info.json', newInfo, `Update Info`)) {
+            infoDB = newInfo;
+            alert('お知らせを送信しました');
+        }
+    } catch(e) {
+        console.error(e);
+        alert('送信に失敗しました');
+    } finally {
+        if(btn) { btn.disabled = false; btn.innerText = "送信 (保存)"; }
     }
 };

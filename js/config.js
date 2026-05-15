@@ -1,5 +1,19 @@
 // --- START OF FILE tra-sim-main/js/config.js ---
 
+// --- Firebase Push通知設定 ---
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD3tPnB-zpvDl5wALKQhuCFsl-M3m7pKC8",
+  authDomain: "traindex-3b337.firebaseapp.com",
+  projectId: "traindex-3b337",
+  storageBucket: "traindex-3b337.firebasestorage.app",
+  messagingSenderId: "897552477042",
+  appId: "1:897552477042:web:af169c3994aa705a348beb",
+  measurementId: "G-PJ5HNS65XJ"
+};
+
+// Cloud Messagingで生成したWeb Push証明書（キーペア）
+const FIREBASE_VAPID_KEY = "BO3lKfw8p2VMTEvecR2GkjXxBKPrFJ6h-QLIEeBG7DZOuP2z9DRpinhyrhjklq2SMtSc4jN-nStR6slp0fLNg1c";
+
 // --- 定数定義 ---
 const STATS = [
     "決定力", "ショートパス", "突破力", "タックル", "ジャンプ", "走力",
@@ -82,6 +96,17 @@ const GDRIVE_CONFIG = {
     BACKUP_FILE_NAME: 'tra_sim_backup.json'
 };
 
+// --- 比較・結果画面用 カテゴリ分類 ---
+const COMP_CATEGORIES = [
+    { label: 'SHO', color: '#ef4444', stats: ['決定力', 'キック力', '冷静さ'] },
+    { label: 'PAS', color: '#eab308', stats: ['ショートパス', 'ロングパス', 'キック精度'] },
+    { label: 'DRB', color: '#22c55e', stats: ['突破力', 'キープ力', 'ボールタッチ'] },
+    { label: 'DEF①', color: '#3b82f6', stats: ['タックル', 'パスカット', 'マーク'] },
+    { label: 'DEF②', color: '#8b5cf6', stats: ['セービング', '反応速度', '1対1'] },
+    { label: 'PHY', color: '#f97316', stats: ['ジャンプ', 'コンタクト', 'スタミナ'] },
+    { label: 'SPD', color: '#06b6d4', stats: ['走力', '敏捷性'] }
+];
+
 // --- グローバル変数 ---
 let cardsDB = [];
 let skillsDB = [];
@@ -96,6 +121,7 @@ let selectedTargetSkills = [];
 let selectedTargetAbilities = [];
 
 let profiles = {};
+let infoDB = null; // お知らせデータ
 
 // --- グローバル変数 (追加) ---
 let appMode = 'view'; // 'view' or 'mycards'
