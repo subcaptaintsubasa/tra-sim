@@ -20,7 +20,7 @@ messaging.onBackgroundMessage(function(payload) {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE_NAME = 'tra-sim-v2.55'; // 更新時はここを変更すると確実です
+const CACHE_NAME = 'tra-sim-v2.6.0'; // 更新時はここを変更すると確実です
 const ASSETS = [
   './',
   './index.html',

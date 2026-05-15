@@ -129,13 +129,23 @@ window.onload = async () => {
                 Notification.requestPermission().then((permission) => {
                     if (permission === 'granted') {
                         console.log('通知が許可されました。');
-                        // トークン取得 (VAPIDキーを使用)
-                        messaging.getToken({ vapidKey: FIREBASE_VAPID_KEY }).then((currentToken) => {
-                            if (currentToken) {
-                                console.log('Firebase Token取得成功');
-                            }
-                        }).catch((err) => {
-                            console.log('トークン取得エラー: ', err);
+                        
+                        // ★修正：既存の sw.js を明示的に指定してトークンを取得する
+                        navigator.serviceWorker.ready.then((registration) => {
+                            messaging.getToken({ 
+                                vapidKey: FIREBASE_VAPID_KEY,
+                                serviceWorkerRegistration: registration 
+                            }).then((currentToken) => {
+                                if (currentToken) {
+                                    console.log('Firebase Token取得成功');
+                                    // テスト用：成功したことがわかるように一度だけ表示（確認できたら消してOKです）
+                                    // alert("スマホとFirebaseの接続が完了しました！通知を受信できます。");
+                                }
+                            }).catch((err) => {
+                                console.error('トークン取得エラー: ', err);
+                                // エラーが起きた場合は画面に表示して原因を特定する
+                                alert('通知の設定エラー(Token): ' + err.message);
+                            });
                         });
                     }
                 });
@@ -143,7 +153,6 @@ window.onload = async () => {
                 // アプリを画面で開いている最中に通知を受信した時の処理
                 messaging.onMessage((payload) => {
                     console.log('アプリ起動中に通知を受信: ', payload);
-                    // 画面内にポップアップとして表示する
                     alert(`【お知らせ】\n${payload.notification.title}\n${payload.notification.body}`);
                 });
 
