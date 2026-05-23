@@ -2004,3 +2004,36 @@ window.clearSimSlot = (e, idx) => {
     selectedSlots[idx] = null;
     updateCalc();
 };
+
+// 各列に対応するパラメータをトグル（全選択/全解除）する関数
+window.toggleSortColumn = (colIdx, event) => {
+    if (event) event.preventDefault();
+    const order = [
+        "決定力", "ショートパス", "突破力", "タックル", "セービング", "ジャンプ", "走力",
+        "キック力", "ロングパス", "キープ力", "パスカット", "反応速度", "コンタクト", "敏捷性",
+        "冷静さ", "キック精度", "ボールタッチ", "マーク", "1対1", "スタミナ"
+    ];
+    
+    // colIdx (0~6) に対応する列内のパラメータを抽出
+    const colParams = [];
+    for (let r = 0; r < 3; r++) {
+        const idx = r * 7 + colIdx;
+        if (idx < order.length) {
+            colParams.push(order[idx]);
+        }
+    }
+    
+    const inputs = colParams.map(s => document.getElementById(`s_prm_${s}`)).filter(el => el !== null);
+    const allChecked = inputs.every(el => el.checked);
+    
+    inputs.forEach(el => {
+        el.checked = !allChecked;
+    });
+};
+
+// ソート用パラメータをすべて選択/解除する関数
+window.toggleSortAllParams = (checked) => {
+    document.querySelectorAll('input[name="s_prm"]').forEach(el => {
+        el.checked = checked;
+    });
+};

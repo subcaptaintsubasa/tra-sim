@@ -253,7 +253,6 @@ window.switchView = (viewId) => {
     if(viewId === 'admin-skill' && typeof renderSAList === 'function') renderSAList();
 };
 
-// --- Mode Management ---
 window.setAppMode = (mode) => {
     // 一括選択モード中は切り替え禁止
     if (isSelectMode) return; 
@@ -266,23 +265,18 @@ window.setAppMode = (mode) => {
     if(btnView) btnView.classList.toggle('active', mode === 'view');
     if(btnMy) btnMy.classList.toggle('active', mode === 'mycards');
     
-    // --- 1. ヘッダーUIの表示制御 ---
-    const btnSelect = document.getElementById('btnSelectMode'); // 一括選択
-    const btnFilter = document.getElementById('btnFilterOpen'); // フィルタ
+    const btnSelect = document.getElementById('btnSelectMode');
+    const btnFilter = document.getElementById('btnFilterOpen');
     
-    // 図鑑モード(view): フィルタ表示, 選択モード非表示
-    // 所持モード(mycards): フィルタ非表示, 選択モード表示
+    // 一括選択ボタンはMycardsモードのみ表示
     if(btnSelect) btnSelect.style.display = (mode === 'mycards') ? 'block' : 'none';
-    if(btnFilter) btnFilter.style.display = (mode === 'view') ? 'block' : 'none';
-    // ----------------------------
+    // 絞り込み/並び替えボタンは両モードで常に表示（共通化）
+    if(btnFilter) btnFilter.style.display = 'block';
 
     const btnViewType = document.getElementById('btnViewType');
-    if(btnViewType) btnViewType.style.display = 'block'; // 両方で表示
+    if(btnViewType) btnViewType.style.display = 'block';
 
-    // MyCardsモードに切り替えたらフィルタをリセット
-    if (mode === 'mycards') {
-        resetFilters();
-    }
+    // モード切替時のリセット（resetFilters）は行わず、フィルタ・ソート状態を維持します
 
     renderDatabase();
 };
@@ -1184,13 +1178,12 @@ window.openCardDetailModal = (item) => {
 
 // --- Filter Modal Logic (Restored) ---
 
-// --- フィルタボタン生成関数 (修正版: 文字数制限を撤廃) ---
 window.renderParamButtons = (targetId, nameAttr) => {
     const container = document.getElementById(targetId);
     if (!container) return;
     container.innerHTML = ''; 
 
-    // パラメータ順序定義
+    // パラメータ順序定義（7列3行レイアウト）
     const order = [
         "決定力", "ショートパス", "突破力", "タックル", "セービング", "ジャンプ", "走力",
         "キック力", "ロングパス", "キープ力", "パスカット", "反応速度", "コンタクト", "敏捷性",
@@ -1198,16 +1191,28 @@ window.renderParamButtons = (targetId, nameAttr) => {
     ];
     const gkStats = ["セービング", "反応速度", "1対1"];
 
+    // 並び替えグリッドの場合のみ、最上行に列一括選択ヘッダーを挿入
+    if (targetId === 'sortParamsGrid') {
+        const colHeaders = ["SHO", "PAS", "DRB", "DEF①", "DEF②", "PHY", "SPD"];
+        colHeaders.forEach((label, colIdx) => {
+            const div = document.createElement('div');
+            div.className = 'chk-btn';
+            div.innerHTML = `
+                <label style="background: var(--header-bg); border-color: var(--primary); color: var(--primary); font-weight: bold; padding: 4px 0; font-size: 0.65rem;" onclick="toggleSortColumn(${colIdx}, event)">
+                    ${label}
+                </label>
+            `;
+            container.appendChild(div);
+        });
+    }
+
     order.forEach(s => {
         const div = document.createElement('div');
         const isGk = gkStats.includes(s);
         div.className = `chk-btn param ${isGk ? 'param-gk' : ''}`;
         const id = `${nameAttr}_${s}`;
         
-        // ★修正: 文字数制限を削除し、そのままの名前(s)を表示する
-        const labelText = s; 
-        
-        div.innerHTML = `<input type="checkbox" name="${nameAttr}" value="${s}" id="${id}"><label for="${id}">${labelText}</label>`;
+        div.innerHTML = `<input type="checkbox" name="${nameAttr}" value="${s}" id="${id}"><label for="${id}">${s}</label>`;
         container.appendChild(div);
     });
 

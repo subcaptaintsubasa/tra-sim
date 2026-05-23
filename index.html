@@ -631,9 +631,12 @@
                 <div class="filter-group">
                     <div class="filter-group-title">
                         <span>ソート基準 (複数選択可)</span>
-                        <button class="btn btn-sm" style="width:auto; font-size:0.7rem; margin-left:auto;" onclick="document.querySelectorAll('input[name=s_prm]').forEach(c=>c.checked=false)">クリア</button>
+                        <div style="display:flex; gap:5px; margin-left:auto;">
+                            <button class="btn btn-sm" style="width:auto; font-size:0.7rem;" onclick="toggleSortAllParams(true)">全選択</button>
+                            <button class="btn btn-sm" style="width:auto; font-size:0.7rem;" onclick="toggleSortAllParams(false)">クリア</button>
+                        </div>
                     </div>
-                    <!-- ソート用パラメータID (ここが重要) -->
+                    <!-- ソート用パラメータID -->
                     <div class="filter-grid-params" id="sortParamsGrid"></div>
                 </div>
 
