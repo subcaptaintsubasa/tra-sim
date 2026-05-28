@@ -60,6 +60,9 @@
     <!-- 【追加・修正】4. ファビコン設定 -->
     <link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
     <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- html2canvas (画像出力用) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -657,15 +660,17 @@
     </div>
 </div>
 
-<!-- 比較モーダル (Phase 2: Slider Removed) -->
+<!-- 比較モーダル -->
 <div id="comparisonModal" class="modal-overlay" style="display:none;">
     <div class="modal-content" style="max-width: 95%; height: 90vh;">
         <div class="modal-header">
             <h4>選手比較</h4>
+            <button class="btn btn-sm btn-accent" style="margin-left:auto; margin-right:10px; width:auto;" onclick="exportComparisonImage()"><i class="fa-solid fa-camera"></i> 画像出力</button>
             <button class="btn-close" onclick="document.getElementById('comparisonModal').style.display='none'">×</button>
         </div>
-        <div class="modal-body" style="padding:0;">
-            <div class="comp-table-wrapper">
+        <!-- タッチイベントをここに追加 -->
+        <div class="modal-body" style="padding:0;" ontouchstart="handleCompTouchStart(event)" ontouchend="handleCompTouchEnd(event)">
+            <div class="comp-table-wrapper" id="compTableWrapper">
                 <table class="comp-table" id="compTable"></table>
             </div>
         </div>

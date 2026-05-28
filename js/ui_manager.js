@@ -14,6 +14,55 @@ window.toggleManualGapMode = () => {
     if (typeof updateCalc === 'function') updateCalc();
 };
 
+// --- モーダル順位表示用ステート ---
+let currentRankGroup = 'all'; // 'all', 'pos', 'style'
+let currentRankUseBonus = false;
+
+window.toggleRankGroup = () => {
+    const groups = ['all', 'pos', 'style'];
+    const labels = { 'all': '[ 全カード ]', 'pos': '[ ポジション別 ]', 'style': '[ スタイル別 ]' };
+    let idx = groups.indexOf(currentRankGroup);
+    idx = (idx + 1) % groups.length;
+    currentRankGroup = groups[idx];
+    
+    const btn = document.getElementById('rankGroupBtn');
+    if (btn) btn.innerText = labels[currentRankGroup];
+    
+    refreshDetailStatsDisplay(); // 後述の再描画関数
+};
+
+window.toggleRankBonus = (checked) => {
+    currentRankUseBonus = checked;
+    refreshDetailStatsDisplay();
+};
+
+window.currentRankTotal = 0; // 分母保持用のグローバル変数
+
+window.refreshDetailStatsDisplay = () => {
+    if (!currentModalItem) return;
+    window.currentRankTotal = 0; // リセット
+    const isMyCard = document.getElementById('cardDetailModal').classList.contains('mycards-mode');
+    if (isMyCard) {
+        const c = currentModalItem.original;
+        const currentLevel = myCards[currentModalItem.key]?.level || 1;
+        const stats = getCardStatsAtLevel(c, currentLevel, null, null, 1.0);
+        document.getElementById('mcStatGrid').innerHTML = renderStatGridHTML(c.stats, stats, currentModalItem.key, c);
+    } else {
+        const c = currentModalItem.original;
+        const stats = getCardStatsAtLevel(c, currentViewLevel, null, null, 1.0);
+        const grid = document.querySelector('#cardDetailModal .stat-grid');
+        if (grid) grid.innerHTML = renderStatGridHTML(c.stats, stats, currentModalItem.key, c);
+    }
+
+    // 分母の更新
+    const totalEl = document.getElementById('rankTotalCount');
+    if (totalEl && window.currentRankTotal > 0) {
+        totalEl.innerText = `(全${window.currentRankTotal}枚)`;
+    } else if (totalEl) {
+        totalEl.innerText = '';
+    }
+};
+
 // --- 初期化系 UI構築 ---
 
 function initStatInputs() {
@@ -338,6 +387,7 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
     let totalGain = 0;
     let totalGap = 0;
     let totalSatisfied = 0;
+    let totalOvrGain = 0; // 上昇総合値の合計用
 
     let rowsHtml = '';
     
@@ -353,12 +403,19 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
             
             const gap = Math.round((gaps[s] || 0) / 10); 
             const maxGap = Math.round((maxGaps[s] || 0) / 10); 
-            const gain = Math.round((totals_x10[s] || 0) / 10);
+            const actualGain = (totals_x10[s] || 0) / 10; // 計算用の正確な数値
+            const gain = Math.round(actualGain); // 表示用の四捨五入された数値
             
             if (gap > 0) {
                 totalGap += gap;
-                totalGain += gain;
                 totalSatisfied += Math.min(gain, gap);
+            }
+            
+            if (actualGain > 0) {
+                totalGain += gain;
+                // 上昇総合値の計算 (パラメータ上昇値 × 重み ÷ 13)
+                const weight = getStatWeight(s, 'ovr', selectedStyle);
+                totalOvrGain += actualGain * (weight / 13);
             }
 
             const remain = Math.max(0, maxGap - gain);
@@ -392,11 +449,14 @@ window.renderResults = (totals_x10, saMap, missingTargets, specialEffects_x10 = 
 
     const totalPct = (totalGap > 0) ? (totalSatisfied / totalGap * 100) : 0;
     
+    // 合計値を合算後に小数切り捨て
+    const finalOvrGain = Math.floor(totalOvrGain);
+
     const summaryHtml = `
         <div class="res-summary">
             <div class="res-sum-title">目標達成率</div>
             <div class="res-sum-val">${totalPct.toFixed(1)}%</div>
-            <div class="res-sum-sub">上昇合計: ${totalGain.toFixed(0)} / 必要合計: ${totalGap.toFixed(0)}</div>
+            <div class="res-sum-sub">上昇数値合計: ${totalGain.toFixed(0)} / 上昇総合値: ${finalOvrGain}</div>
         </div>
     `;
 
@@ -2035,5 +2095,106 @@ window.toggleSortColumn = (colIdx, event) => {
 window.toggleSortAllParams = (checked) => {
     document.querySelectorAll('input[name="s_prm"]').forEach(el => {
         el.checked = checked;
+    });
+};
+
+// --- 比較結果の画像出力 ---
+window.exportComparisonImage = () => {
+    if (typeof html2canvas === 'undefined') {
+        alert("画像生成ライブラリが読み込まれていません。通信環境を確認してください。");
+        return;
+    }
+
+    const exportContainer = document.createElement('div');
+    
+    // テーブルのクローン作成を先に行う
+    const tableClone = document.getElementById('compTable').cloneNode(true);
+
+    // 画像出力用の表示切り替え
+    const noExports = tableClone.querySelectorAll('.no-export');
+    noExports.forEach(el => el.remove());
+    const exportOnlys = tableClone.querySelectorAll('.export-only');
+    exportOnlys.forEach(el => el.style.display = 'block');
+
+    // 実際に表示されているカードの列数を確認（1列目は項目名）
+    const cardCols = tableClone.querySelectorAll('th').length - 1; 
+    const isOneOnOne = (cardCols === 2); // PC/モバイル問わず、2枚なら縦長扱い
+    
+    if (isOneOnOne) {
+        exportContainer.style.width = '900px';
+        exportContainer.style.padding = '30px';
+    } else {
+        exportContainer.style.width = '1200px';
+        exportContainer.style.padding = '20px';
+    }
+
+    exportContainer.style.position = 'absolute';
+    exportContainer.style.top = '-9999px';
+    exportContainer.style.left = '-9999px';
+    exportContainer.style.background = '#0f172a';
+    exportContainer.style.color = '#f1f5f9';
+    exportContainer.style.boxSizing = 'border-box';
+    exportContainer.style.display = 'flex';
+    exportContainer.style.flexDirection = 'column';
+
+    // 左上の空きセルにロゴを挿入
+    const firstTh = tableClone.querySelector('th');
+    if (firstTh) {
+        firstTh.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding: 10px;">
+                <img src="icon-192.png" style="width: 72px; height: 72px; border-radius: 12px; margin-bottom: 8px;">
+                <div style="font-size:0.9em; color:#94a3b8; font-weight:normal; line-height:1;">powered by traindex</div>
+            </div>
+        `;
+    }
+
+    // スタイルをインラインに固定化
+    tableClone.style.width = '100%';
+    tableClone.style.borderCollapse = 'collapse';
+    tableClone.style.background = '#1e293b';
+    tableClone.style.borderRadius = '10px';
+    tableClone.style.overflow = 'hidden';
+
+    // 人数に応じた動的スケール調整
+    let fontSize = '16px';
+    if (!isOneOnOne) {
+        if (cardCols >= 6) fontSize = '11px';
+        else if (cardCols >= 4) fontSize = '13px';
+    } else {
+        fontSize = '20px'; 
+    }
+    tableClone.style.fontSize = fontSize;
+
+    const ths = tableClone.querySelectorAll('th');
+    ths.forEach(th => {
+        th.style.borderBottom = '2px solid #475569';
+        th.style.padding = '10px';
+    });
+
+    const tds = tableClone.querySelectorAll('td');
+    tds.forEach(td => {
+        td.style.borderBottom = '1px solid #334155';
+        td.style.borderRight = '1px solid #334155';
+        td.style.padding = '10px 5px';
+    });
+
+    exportContainer.appendChild(tableClone);
+    document.body.appendChild(exportContainer);
+
+    // html2canvas 実行
+    html2canvas(exportContainer, {
+        backgroundColor: '#0f172a',
+        scale: 1,
+        useCORS: true
+    }).then(canvas => {
+        document.body.removeChild(exportContainer);
+        const link = document.createElement('a');
+        link.download = `traindex_comparison_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }).catch(err => {
+        console.error(err);
+        alert("画像出力に失敗しました。");
+        document.body.removeChild(exportContainer);
     });
 };

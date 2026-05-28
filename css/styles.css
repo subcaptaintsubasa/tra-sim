@@ -1630,3 +1630,71 @@ input:disabled + .toggle-slider {
 .res-name { width: 100px !important; }
 .res-val { width: 35px !important; }
 .res-remain { width: 45px !important; }
+
+/* --- 詳細モーダル 順位レイアウト用 --- */
+.modal-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    padding: 3px 4px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+}
+.modal-stat-val-wrap {
+    display: flex;
+    align-items: center;
+}
+.modal-stat-rank {
+    margin-left: 8px;
+    font-size: 0.65rem;
+    color: #fbbf24;
+}
+
+@media (max-width: 768px) {
+    .modal-stat-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .modal-stat-row > div:first-child {
+        margin-bottom: 2px;
+    }
+    .modal-stat-val-wrap {
+        justify-content: space-between;
+    }
+    .modal-stat-rank {
+        margin-left: 0;
+    }
+}
+
+/* --- モバイル比較テーブルUIの圧縮調整（改） --- */
+@media (max-width: 768px) {
+    .comp-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    /* 1列目（項目名）は狭く、2・3列目（カード）で等分 */
+    .comp-table th:first-child, .comp-table td:first-child {
+        width: 25% !important;
+        min-width: 0 !important;
+        padding-left: 2px !important;
+        font-size: 0.65rem;
+        white-space: normal;
+        word-break: break-all;
+    }
+    .comp-table th, .comp-table td {
+        width: 37.5% !important;
+        padding: 4px 2px !important;
+        white-space: normal;
+        word-break: break-word;
+    }
+    .comp-card-header img {
+        width: 40px;
+        height: 52px;
+    }
+}
+
+/* 画像出力時専用の表示クラス */
+.export-only {
+    display: none;
+}

@@ -259,3 +259,120 @@ function calculateTargetGaps() {
     
     return { gaps, maxGaps };
 }
+
+// --- 順位計算ロジック ---
+let rankCache = { all: null, pos: {}, style: {} };
+
+function buildRankCache() {
+    rankCache = { all: { noBonus: {}, withBonus: {} }, pos: {}, style: {} };
+    
+    // 全カードをMaxLvで評価して配列化
+    const evaluatedCards = cardsDB.map(c => {
+        const level = c.rarity === 'SSR' ? 50 : 45;
+        // プレースタイルの推測（新規項目 play_style があればそれ、なければボーナスから）
+        const pStyle = c.play_style || (c.bonuses && c.bonuses.length > 0 ? c.bonuses[0].type : c.bonus_type) || "未設定";
+        // 該当するポジションの配列を取得
+        const pPosList = Object.keys(POS_MAP).filter(p => POS_MAP[p].includes(pStyle));
+        
+        return {
+            key: c.name + "_" + c.title,
+            card: c,
+            style: pStyle,
+            posList: pPosList,
+            noBonusStats: getCardStatsAtLevel(c, level, null, null, 1.0),
+            // 最も一致するボーナスを適用したステータス（順位計算用）
+            withBonusStats: getCardStatsAtLevel(c, level, pPosList[0] || null, pStyle, 1.0) 
+        };
+    });
+
+    const statsList = [...STATS, ...GK_STATS];
+
+    // 分類ごとのソートと順位付けヘルパー
+    const rankUp = (groupList, useBonus) => {
+        const rankObj = {};
+        statsList.forEach(s => {
+            // ステータス値で降順ソート
+            const sorted = [...groupList].sort((a, b) => {
+                const valA = useBonus ? (a.withBonusStats[s] || 0) : (a.noBonusStats[s] || 0);
+                const valB = useBonus ? (b.withBonusStats[s] || 0) : (b.noBonusStats[s] || 0);
+                return valB - valA;
+            });
+            rankObj[s] = {};
+            let currentRank = 1;
+            let previousVal = -1;
+            let drawCount = 0;
+            
+            sorted.forEach((item, index) => {
+                const val = useBonus ? (item.withBonusStats[s] || 0) : (item.noBonusStats[s] || 0);
+                if (val !== previousVal) {
+                    currentRank = index + 1;
+                    previousVal = val;
+                }
+                rankObj[s][item.key] = { rank: currentRank, total: sorted.length };
+            });
+        });
+        return rankObj;
+    };
+
+    // 1. 全カード
+    rankCache.all.noBonus = rankUp(evaluatedCards, false);
+    rankCache.all.withBonus = rankUp(evaluatedCards, true);
+
+    // 2. プレースタイル別
+    const styleGroups = {};
+    evaluatedCards.forEach(c => {
+        if (!styleGroups[c.style]) styleGroups[c.style] = [];
+        styleGroups[c.style].push(c);
+    });
+    for (let st in styleGroups) {
+        if (st === "未設定") continue;
+        rankCache.style[st] = {
+            noBonus: rankUp(styleGroups[st], false),
+            withBonus: rankUp(styleGroups[st], true)
+        };
+    }
+
+    // 3. ポジション別
+    const posGroups = {};
+    evaluatedCards.forEach(c => {
+        c.posList.forEach(p => {
+            if (!posGroups[p]) posGroups[p] = [];
+            posGroups[p].push(c);
+        });
+    });
+    for (let p in posGroups) {
+        rankCache.pos[p] = {
+            noBonus: rankUp(posGroups[p], false),
+            withBonus: rankUp(posGroups[p], true)
+        };
+    }
+}
+
+// 順位取得インターフェース
+window.getStatRank = (cardKey, statName, groupType, useBonus) => {
+    if (!rankCache.all) buildRankCache(); // 未キャッシュなら構築
+    
+    const card = cardsDB.find(c => (c.name + "_" + c.title) === cardKey);
+    if (!card) return null;
+
+    let targetCache = null;
+    if (groupType === 'all') {
+        targetCache = useBonus ? rankCache.all.withBonus : rankCache.all.noBonus;
+    } else if (groupType === 'style') {
+        const pStyle = card.play_style || (card.bonuses && card.bonuses.length > 0 ? card.bonuses[0].type : card.bonus_type) || "未設定";
+        if (rankCache.style[pStyle]) {
+            targetCache = useBonus ? rankCache.style[pStyle].withBonus : rankCache.style[pStyle].noBonus;
+        }
+    } else if (groupType === 'pos') {
+        const pStyle = card.play_style || (card.bonuses && card.bonuses.length > 0 ? card.bonuses[0].type : card.bonus_type) || "未設定";
+        const pPos = Object.keys(POS_MAP).find(p => POS_MAP[p].includes(pStyle));
+        if (pPos && rankCache.pos[pPos]) {
+            targetCache = useBonus ? rankCache.pos[pPos].withBonus : rankCache.pos[pPos].noBonus;
+        }
+    }
+
+    if (targetCache && targetCache[statName] && targetCache[statName][cardKey]) {
+        return targetCache[statName][cardKey];
+    }
+    return null;
+};
