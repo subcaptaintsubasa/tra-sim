@@ -629,12 +629,17 @@
     "title": "【ミラノの11を背負う覚悟】",
     "name": "クリスティアン_プリシッチ",
     "rarity": "SR",
+    "positions": [],
+    "play_style": "サイドアタッカー",
     "bonuses": [
       {
         "type": "WM",
         "value": 10
       }
     ],
+    "bonus_type": "WM",
+    "bonus_value": 10,
+    "special_effects": [],
     "abilities": [
       {
         "name": "冷静な突破",
@@ -642,10 +647,10 @@
       }
     ],
     "stats": {
-      "コンタクト": 3.7,
       "決定力": 3.3,
       "突破力": 3.3,
       "走力": 3,
+      "コンタクト": 3.7,
       "敏捷性": 1.7,
       "ボールタッチ": 1.3
     }
