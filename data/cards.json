@@ -2311,6 +2311,10 @@
     "title": "【雄弁な語り手】",
     "name": "U字工事",
     "rarity": "SR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "セントラルMF",
     "bonuses": [
       {
         "type": "セントラルMF",
