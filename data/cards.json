@@ -1838,6 +1838,10 @@
     "title": "【トリノに輝く若き魔法】",
     "name": "ケナン・ユルディズ",
     "rarity": "SSR",
+    "positions": [
+      "AM"
+    ],
+    "play_style": "アタッカー",
     "bonuses": [
       {
         "type": "アタッカー",
@@ -1846,6 +1850,7 @@
     ],
     "bonus_type": "アタッカー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "失わないドリブラー",
