@@ -2880,6 +2880,11 @@
     "title": "【ロッテルダムの疾風】",
     "name": "ジヴァイロ・リード",
     "rarity": "SR",
+    "positions": [
+      "LB",
+      "RB"
+    ],
+    "play_style": "攻撃的FB",
     "bonuses": [
       {
         "type": "攻撃的FB",
