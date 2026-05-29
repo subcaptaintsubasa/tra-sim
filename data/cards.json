@@ -2914,6 +2914,10 @@
     "title": "【サン・セバスチャンの砦】",
     "name": "イゴール・スベルディア",
     "rarity": "SR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "組立CB",
     "bonuses": [
       {
         "type": "組立CB",
