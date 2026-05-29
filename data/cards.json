@@ -2079,6 +2079,10 @@
     "title": "【赤白のスーペル・ニュメロ・6】",
     "name": "デニス・ザカリア",
     "rarity": "SR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "ハードマーカー",
     "bonuses": [
       {
         "type": "DM",
@@ -2087,6 +2091,7 @@
     ],
     "bonus_type": "DM",
     "bonus_value": 10,
+    "special_effects": [],
     "abilities": [
       {
         "name": "激情のキック",
