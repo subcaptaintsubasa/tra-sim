@@ -3,7 +3,9 @@
     "title": "【赤き勝者の雄叫び】",
     "name": "フィルジル・ファン・ダイク",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "組立CB",
     "bonuses": [
       {
