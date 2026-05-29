@@ -1693,7 +1693,12 @@
     "title": "【凱旋する稲妻】",
     "name": "伊東純也",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "サイドアタッカー",
     "bonuses": [
       {
