@@ -1234,7 +1234,10 @@
     "title": "【アルビセレステの鉄人】",
     "name": "ニコラス・タグリアフィコ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "守備的FB",
     "bonuses": [
       {
