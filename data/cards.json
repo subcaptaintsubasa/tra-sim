@@ -879,7 +879,9 @@
     "title": "【アイントホーフェンの巨塔】",
     "name": "ルーク・デ・ヨング",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ストライカー",
     "bonuses": [
       {
