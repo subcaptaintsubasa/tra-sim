@@ -175,7 +175,9 @@
     "title": "【引き継がれるセレステの系譜】",
     "name": "ダルウィン・ヌニェス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ラインブレーカー",
     "bonuses": [
       {
