@@ -2980,7 +2980,9 @@
     "title": "【マドリードを統べる赤い壁】",
     "name": "ヤン・オブラク",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "オーソドックスGK",
     "bonuses": [
       {
