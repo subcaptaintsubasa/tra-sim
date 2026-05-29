@@ -1499,7 +1499,10 @@
     "title": "【ゴールへのエレガントパス】",
     "name": "フェデリコ・ディマルコ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "攻撃的FB",
     "bonuses": [
       {
