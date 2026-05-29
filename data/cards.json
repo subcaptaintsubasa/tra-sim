@@ -1628,7 +1628,10 @@
     "title": "【イエローサブマリン・コマンダンテ】",
     "name": "ダニ・パレホ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "パサー",
     "bonuses": [
       {
