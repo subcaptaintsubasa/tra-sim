@@ -1106,7 +1106,9 @@
     "title": "【真の守護神の証明】",
     "name": "ダビド・ラヤ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "スイーパーGK",
     "bonuses": [
       {
