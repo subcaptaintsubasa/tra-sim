@@ -1014,7 +1014,9 @@
     "title": "【サン・セバスチャンに聳え立つ砦】",
     "name": "アレックス・レミーロ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "スイーパーGK",
     "bonuses": [
       {
