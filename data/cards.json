@@ -1078,7 +1078,9 @@
     "title": "【鬼神降臨】",
     "name": "ヤン・ゾマー",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "オーソドックスGK",
     "bonuses": [],
     "bonus_type": "",
