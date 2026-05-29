@@ -368,7 +368,9 @@
     "title": "【砲撃隊の統治者】",
     "name": "デクラン・ライス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "DM"
+    ],
     "play_style": "ハードマーカー",
     "bonuses": [
       {
