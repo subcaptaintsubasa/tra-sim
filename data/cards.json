@@ -327,7 +327,10 @@
     "title": "【円熟のマエストロ】",
     "name": "ルカ・モドリッチ",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "セントラルMF",
     "bonuses": [
       {
