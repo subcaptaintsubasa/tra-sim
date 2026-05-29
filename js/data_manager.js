@@ -143,7 +143,7 @@ async function saveCardToGH() {
     const growthRate = parseInt(document.getElementById('editGrowth').value);
     
     // ポジションとプレースタイルの取得
-    const positions = Array.from(document.querySelectorAll('.admin-pos-btn.active')).map(btn => btn.innerText);
+    const positions = Array.from(document.querySelectorAll('#editPosGroup .pos-chip.active')).map(btn => btn.dataset.pos);
     const playStyle = document.getElementById('editPlayStyle').value;
     
     const stats = {}; 
