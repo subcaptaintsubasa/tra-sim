@@ -1908,6 +1908,13 @@
     "title": "【韓国が誇る左足】",
     "name": "イ・ガンイン",
     "rarity": "SSR",
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
+    "play_style": "ドリブラー",
     "bonuses": [
       {
         "type": "ドリブラー",
@@ -1916,6 +1923,7 @@
     ],
     "bonus_type": "ドリブラー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "技巧派ドリブラー",
