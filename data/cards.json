@@ -1363,7 +1363,10 @@
     "title": "【サウスロンドンでの交歓】",
     "name": "鎌田大地",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "セントラルMF",
     "bonuses": [
       {
