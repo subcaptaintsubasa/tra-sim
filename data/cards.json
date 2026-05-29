@@ -844,7 +844,9 @@
     "title": "【剛柔兼備のヒットマン】",
     "name": "モーガン・ギブス＝ホワイト",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
