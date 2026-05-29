@@ -911,7 +911,9 @@
     "title": "【日本のエースの真価】",
     "name": "上田綺世",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ストライカー",
     "bonuses": [
       {
