@@ -289,7 +289,10 @@
     "title": "【青黒のブレイブ・コマンダー】",
     "name": "ハカン・チャルハノール",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "パサー",
     "bonuses": [
       {
