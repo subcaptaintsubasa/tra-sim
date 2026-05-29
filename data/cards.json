@@ -2764,44 +2764,5 @@
       "キック精度": 0.2,
       "スタミナ": 4
     }
-  },
-  {
-    "title": "【オフェンス基礎トレーニング】",
-    "name": "オフェンス基礎トレーニング",
-    "rarity": "SSR",
-    "positions": [],
-    "play_style": "ドリブラー",
-    "bonuses": [
-      {
-        "type": "ドリブラー",
-        "value": 30
-      },
-      {
-        "type": "CF",
-        "value": 10
-      },
-      {
-        "type": "WF",
-        "value": 10
-      }
-    ],
-    "bonus_type": "ドリブラー",
-    "bonus_value": 30,
-    "special_effects": [],
-    "abilities": [
-      {
-        "name": "強引なフィニッシュ",
-        "rarity": "Bronze"
-      }
-    ],
-    "stats": {
-      "ショートパス": 7.3,
-      "突破力": 8,
-      "走力": 3.3,
-      "キック力": 5.3,
-      "敏捷性": 5.3,
-      "ボールタッチ": 7.3
-    },
-    "growth_rate": 3
   }
 ]
