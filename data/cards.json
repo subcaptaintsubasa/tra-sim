@@ -1600,7 +1600,9 @@
     "title": "【ラ・デアがほほ笑む若き守護神】",
     "name": "マルコ・カルネセッキ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "スイーパーGK",
     "bonuses": [],
     "bonus_type": "",
