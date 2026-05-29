@@ -2444,6 +2444,10 @@
     "title": "【ラ・デアのジガンテ】",
     "name": "ジャンルカ・スカマッカ",
     "rarity": "SR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ポストプレーヤー",
     "bonuses": [
       {
         "type": "ポストプレーヤー",
