@@ -1560,6 +1560,8 @@
     "title": "【凱旋する稲妻】",
     "name": "伊東純也",
     "rarity": "SSR",
+    "positions": [],
+    "play_style": "サイドアタッカー",
     "bonuses": [
       {
         "type": "サイドアタッカー",
@@ -1568,6 +1570,7 @@
     ],
     "bonus_type": "サイドアタッカー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "俊敏なドリブラー",
