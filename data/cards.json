@@ -2111,6 +2111,13 @@
     "title": "【エル・マゴ・ヴェルディプランコス】",
     "name": "アントニー",
     "rarity": "SR",
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
+    "play_style": "ドリブラー",
     "bonuses": [
       {
         "type": "ドリブラー",
