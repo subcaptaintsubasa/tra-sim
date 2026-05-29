@@ -2747,6 +2747,10 @@
     "title": "【デンマークの爆撃機】",
     "name": "ラスムス・ホイルンド",
     "rarity": "SR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ラインブレーカー",
     "bonuses": [
       {
         "type": "ラインブレーカー",
