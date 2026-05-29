@@ -812,7 +812,9 @@
     "title": "【ゴールデンガルーダを新次元へ】",
     "name": "ジェイ・イツェス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "組立CB",
     "bonuses": [
       {
