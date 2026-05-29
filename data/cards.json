@@ -3014,7 +3014,9 @@
     "title": "【ポルトガルの赤き創造者】",
     "name": "ロドリゴ・モラ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
