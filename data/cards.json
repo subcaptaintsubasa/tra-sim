@@ -2811,6 +2811,11 @@
     "title": "【多彩なるパリの宝石】",
     "name": "ヴィティーニャ",
     "rarity": "SSR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "セントラルMF",
     "bonuses": [
       {
         "type": "セントラルMF",
