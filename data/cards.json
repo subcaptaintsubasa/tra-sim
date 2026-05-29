@@ -1873,6 +1873,10 @@
     "title": "【攻守万能のクストーデ】",
     "name": "アレッサンドロ・バストーニ",
     "rarity": "SSR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "ストッパー",
     "bonuses": [
       {
         "type": "ストッパー",
@@ -1881,6 +1885,7 @@
     ],
     "bonus_type": "ストッパー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "反攻のロングパサー",
