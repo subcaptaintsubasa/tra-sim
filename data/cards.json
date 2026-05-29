@@ -747,7 +747,9 @@
     "title": "【老練なゴレアドール】",
     "name": "アヨゼ・ペレス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ラインブレーカー",
     "bonuses": [
       {
