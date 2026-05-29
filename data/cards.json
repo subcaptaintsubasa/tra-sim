@@ -939,12 +939,17 @@
     "title": "【サン・セバスチャンに聳え立つ砦】",
     "name": "アレックス・レミーロ",
     "rarity": "SR",
+    "positions": [],
+    "play_style": "スイーパーGK",
     "bonuses": [
       {
         "type": "スイーパーGK",
         "value": 20
       }
     ],
+    "bonus_type": "スイーパーGK",
+    "bonus_value": 20,
+    "special_effects": [],
     "abilities": [
       {
         "name": "広域の守護神",
@@ -954,9 +959,9 @@
     "stats": {
       "ショートパス": 7,
       "セービング": 6.3,
-      "1対1": 3,
       "反応速度": 1,
       "敏捷性": 0.7,
+      "1対1": 3,
       "スタミナ": 0.3
     }
   },
