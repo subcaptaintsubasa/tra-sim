@@ -1532,7 +1532,10 @@
     "title": "【神を導く旗手】",
     "name": "ロドリゴ・デ・パウル",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "パサー",
     "bonuses": [
       {
