@@ -141,7 +141,9 @@
     "title": "【規格外のデーモン】",
     "name": "アーリング・ハーランド",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ストライカー",
     "bonuses": [
       {
