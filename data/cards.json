@@ -2847,7 +2847,8 @@
     "name": "リッカルド・カラフィオーリ",
     "rarity": "SSR",
     "positions": [
-      "CB"
+      "LB",
+      "RB"
     ],
     "play_style": "守備的FB",
     "bonuses": [
