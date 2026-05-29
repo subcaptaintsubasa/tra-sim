@@ -2047,6 +2047,10 @@
     "title": "【コート・ダジュールでの再起】",
     "name": "南野拓実",
     "rarity": "SR",
+    "positions": [
+      "AM"
+    ],
+    "play_style": "アタッカー",
     "bonuses": [
       {
         "type": "アタッカー",
@@ -2055,6 +2059,7 @@
     ],
     "bonus_type": "アタッカー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "点で合わせるシュート",
