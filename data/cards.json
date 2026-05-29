@@ -1980,6 +1980,11 @@
     "title": "【ネラッズーロのスナイパー】",
     "name": "ニコロ・バレッラ",
     "rarity": "SSR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "セントラルMF",
     "bonuses": [
       {
         "type": "セントラルMF",
@@ -1988,6 +1993,7 @@
     ],
     "bonus_type": "セントラルMF",
     "bonus_value": 40,
+    "special_effects": [],
     "abilities": [
       {
         "name": "精緻な指揮者",
