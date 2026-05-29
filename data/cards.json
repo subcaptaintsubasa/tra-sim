@@ -1768,7 +1768,9 @@
     "title": "【無限の可能性】",
     "name": "MAJIDE",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ポストプレーヤー",
     "bonuses": [
       {
