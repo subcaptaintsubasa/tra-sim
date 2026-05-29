@@ -1731,7 +1731,9 @@
     "title": "【新たな世界への挑戦】",
     "name": "本田圭佑",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
