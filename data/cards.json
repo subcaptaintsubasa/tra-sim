@@ -2779,6 +2779,10 @@
     "title": "【マージーサイド・ブルーの心臓】",
     "name": "イドリッサ・ゲイェ",
     "rarity": "SR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "ハードマーカー",
     "bonuses": [
       {
         "type": "ハードマーカー",
