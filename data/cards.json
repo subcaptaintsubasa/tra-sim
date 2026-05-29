@@ -1201,7 +1201,10 @@
     "title": "【左を駆け抜ける荒鷲】",
     "name": "ヌーノ・タバレス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "攻撃的FB",
     "bonuses": [
       {
