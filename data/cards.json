@@ -1399,7 +1399,9 @@
     "title": "【赤き日本の闘将】",
     "name": "遠藤航",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM"
+    ],
     "play_style": "ハードマーカー",
     "bonuses": [
       {
