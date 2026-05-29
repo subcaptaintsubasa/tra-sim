@@ -264,6 +264,8 @@
     "title": "【青黒のブレイブ・コマンダー】",
     "name": "ハカン・チャルハノール",
     "rarity": "SSR",
+    "positions": [],
+    "play_style": "パサー",
     "bonuses": [
       {
         "type": "DM",
@@ -276,6 +278,7 @@
     ],
     "bonus_type": "DM",
     "bonus_value": 20,
+    "special_effects": [],
     "abilities": [
       {
         "name": "魔術師の弾道",
