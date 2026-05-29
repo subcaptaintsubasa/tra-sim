@@ -74,7 +74,12 @@
     "title": "【咆哮のファンソ】",
     "name": "ファン・ヒチャン",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "サイドアタッカー",
     "bonuses": [
       {
