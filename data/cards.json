@@ -109,7 +109,9 @@
     "title": "【ニューエラ・ハードマーカー】",
     "name": "リサンドロ・マルティネス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
