@@ -2846,6 +2846,10 @@
     "title": "【受け継がれるカテナチオの遺伝子】",
     "name": "リッカルド・カラフィオーリ",
     "rarity": "SSR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "守備的FB",
     "bonuses": [
       {
         "type": "守備的FB",
