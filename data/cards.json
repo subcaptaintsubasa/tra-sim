@@ -2181,6 +2181,10 @@
     "title": "【パリに衝撃を与える猛襲】",
     "name": "ランダル・コロ・ムアニ",
     "rarity": "SSR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ラインブレーカー",
     "bonuses": [
       {
         "type": "ラインブレーカー",
