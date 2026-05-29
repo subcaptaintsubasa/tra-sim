@@ -515,7 +515,9 @@
     "title": "【11年ぶりの歓喜への奮闘】",
     "name": "フィカヨ・トモリ",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
