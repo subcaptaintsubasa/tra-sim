@@ -620,7 +620,9 @@
     "title": "【パンプローナの仕事人】",
     "name": "アンテ・ブディミル",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ストライカー",
     "bonuses": [],
     "bonus_type": "",
