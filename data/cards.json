@@ -2645,6 +2645,11 @@
     "title": "【我が道を行く発信者】",
     "name": "ウンパルンパ",
     "rarity": "SR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "パサー",
     "bonuses": [
       {
         "type": "パサー",
