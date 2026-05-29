@@ -1946,6 +1946,10 @@
     "title": "【試合を決める赤黒のショセット】",
     "name": "オリヴィエ・ジルー",
     "rarity": "SSR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ポストプレーヤー",
     "bonuses": [
       {
         "type": "ポストプレーヤー",
@@ -1954,6 +1958,7 @@
     ],
     "bonus_type": "ポストプレーヤー",
     "bonus_value": 25,
+    "special_effects": [],
     "abilities": [
       {
         "name": "マグネットタッチ",
