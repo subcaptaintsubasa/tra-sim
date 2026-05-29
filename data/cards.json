@@ -443,7 +443,10 @@
     "title": "【最強を体現する男】",
     "name": "ダニ・カルバハル",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "守備的FB",
     "bonuses": [
       {
