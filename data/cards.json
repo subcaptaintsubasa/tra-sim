@@ -1166,7 +1166,12 @@
     "title": "【リリーホワイトのワイドシューター】",
     "name": "ブレナン・ジョンソン",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "ドリブラー",
     "bonuses": [
       {
