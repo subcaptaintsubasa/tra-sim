@@ -1267,7 +1267,9 @@
     "title": "【パルテノーペイへの挨拶】",
     "name": "アレッサンドロ・ボンジョルノ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
