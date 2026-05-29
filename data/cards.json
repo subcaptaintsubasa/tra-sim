@@ -405,7 +405,10 @@
     "title": "【ロッソネロ・エクスプレス】",
     "name": "テオ・エルナンデス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "攻撃的FB",
     "bonuses": [
       {
