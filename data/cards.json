@@ -1331,7 +1331,9 @@
     "title": "【怜悧な頭脳】",
     "name": "伊沢拓司",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM"
+    ],
     "play_style": "ハードマーカー",
     "bonuses": [
       {
