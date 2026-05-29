@@ -779,7 +779,10 @@
     "title": "【凱旋するファスト・スパイダー】",
     "name": "アーロン・ワン＝ビサカ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "守備的FB",
     "bonuses": [
       {
