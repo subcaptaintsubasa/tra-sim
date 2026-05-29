@@ -2579,6 +2579,11 @@
     "title": "【情熱の若獅子】",
     "name": "コナー・ギャラガー",
     "rarity": "SR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "セントラルMF",
     "bonuses": [
       {
         "type": "セントラルMF",
