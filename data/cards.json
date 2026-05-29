@@ -474,6 +474,8 @@
     "title": "【11年ぶりの歓喜への奮闘】",
     "name": "フィカヨ・トモリ",
     "rarity": "SSR",
+    "positions": [],
+    "play_style": "ストッパー",
     "bonuses": [
       {
         "type": "ストッパー",
@@ -486,6 +488,7 @@
     ],
     "bonus_type": "ストッパー",
     "bonus_value": 20,
+    "special_effects": [],
     "abilities": [
       {
         "name": "反撃のキッカー",
