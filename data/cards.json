@@ -586,7 +586,9 @@
     "title": "【反転の速射砲】",
     "name": "ロベルト・サンチェス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "スイーパーGK",
     "bonuses": [
       {
