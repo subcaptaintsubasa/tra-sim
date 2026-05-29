@@ -226,6 +226,8 @@
     "title": "【ワールド・ソニー】",
     "name": "ソン・フンミン",
     "rarity": "SSR",
+    "positions": [],
+    "play_style": "サイドアタッカー",
     "bonuses": [
       {
         "type": "サイドアタッカー",
@@ -242,6 +244,7 @@
     ],
     "bonus_type": "サイドアタッカー",
     "bonus_value": 25,
+    "special_effects": [],
     "abilities": [
       {
         "name": "裏への飛び出し",
