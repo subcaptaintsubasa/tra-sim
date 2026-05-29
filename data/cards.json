@@ -1299,7 +1299,9 @@
     "title": "【因縁吹き飛ばすパワーショット】",
     "name": "ジャン＝フィリップ・マテタ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ポストプレーヤー",
     "bonuses": [
       {
