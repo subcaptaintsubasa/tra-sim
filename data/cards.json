@@ -552,7 +552,9 @@
     "title": "【世界最強の道化師】",
     "name": "エミリアーノ・マルティネス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "オーソドックスGK",
     "bonuses": [
       {
