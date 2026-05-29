@@ -1384,6 +1384,8 @@
     "title": "【ゴールへのエレガントパス】",
     "name": "フェデリコ・ディマルコ",
     "rarity": "SR",
+    "positions": [],
+    "play_style": "攻撃的FB",
     "bonuses": [
       {
         "type": "攻撃的FB",
@@ -1392,6 +1394,7 @@
     ],
     "bonus_type": "攻撃的FB",
     "bonus_value": 35,
+    "special_effects": [],
     "abilities": [
       {
         "name": "絢爛なインターセプト",
