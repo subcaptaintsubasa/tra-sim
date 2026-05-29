@@ -191,6 +191,8 @@
     "title": "【パルテノーペイでの復活】",
     "name": "ロメル・ルカク",
     "rarity": "SSR",
+    "positions": [],
+    "play_style": "ポストプレーヤー",
     "bonuses": [
       {
         "type": "CF",
@@ -203,6 +205,7 @@
     ],
     "bonus_type": "CF",
     "bonus_value": 10,
+    "special_effects": [],
     "abilities": [
       {
         "name": "ゴールへ導くトラップ",
