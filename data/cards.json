@@ -980,7 +980,9 @@
     "title": "【狂喜のゲルマンファイター】",
     "name": "アントニオ・リュディガー",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
