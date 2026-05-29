@@ -2476,6 +2476,10 @@
     "title": "【ロヒブロンコスの番人】",
     "name": "クレマン・ラングレ",
     "rarity": "SR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "組立CB",
     "bonuses": [
       {
         "type": "組立CB",
