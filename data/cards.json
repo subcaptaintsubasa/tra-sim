@@ -2946,7 +2946,9 @@
     "title": "【新時代の怪物】",
     "name": "キリアン・エンバペ",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ラインブレーカー",
     "bonuses": [
       {
