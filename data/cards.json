@@ -1565,7 +1565,12 @@
     "title": "【確かな青の輝き】",
     "name": "クリストファー・エンクンク",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "ドリブラー",
     "bonuses": [
       {
