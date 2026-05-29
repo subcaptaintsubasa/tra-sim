@@ -3046,7 +3046,10 @@
     "title": "【パレスの鉄壁フルバック】",
     "name": "ダニエル・ムニョス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "守備的FB",
     "bonuses": [
       {
