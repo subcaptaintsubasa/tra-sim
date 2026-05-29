@@ -1628,6 +1628,8 @@
     "title": "【無限の可能性】",
     "name": "MAJIDE",
     "rarity": "SR",
+    "positions": [],
+    "play_style": "ポストプレーヤー",
     "bonuses": [
       {
         "type": "ポストプレーヤー",
@@ -1636,6 +1638,7 @@
     ],
     "bonus_type": "ポストプレーヤー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "パワフルキッカー",
