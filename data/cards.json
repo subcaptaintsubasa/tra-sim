@@ -2587,5 +2587,35 @@
       "冷静さ": 0.7,
       "スタミナ": 0.8
     }
+  },
+  {
+    "title": "【パレスの鉄壁フルバック】",
+    "name": "ダニエル・ムニョス",
+    "rarity": "SR",
+    "positions": [],
+    "play_style": "守備的FB",
+    "bonuses": [
+      {
+        "type": "守備的FB",
+        "value": 30
+      }
+    ],
+    "bonus_type": "守備的FB",
+    "bonus_value": 30,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "ピッチの掃除屋",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "タックル": 2,
+      "パスカット": 6.2,
+      "コンタクト": 1.7,
+      "敏捷性": 4.3,
+      "キック精度": 0.2,
+      "スタミナ": 4
+    }
   }
 ]
