@@ -657,9 +657,37 @@ window.renderSAList = () => {
 window.initEditors = () => {
     const grid = document.getElementById('editStatsGrid');
     if (grid) {
-        const allStats = [...new Set([...STATS, ...GK_STATS])];
         grid.innerHTML = '';
-        allStats.forEach(s => grid.innerHTML += `<div class="stat-item ${GK_STATS.includes(s)?'gk-stat':''}"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`);
+        const order = [
+            "決定力", "ショートパス", "突破力", "タックル", "セービング", "ジャンプ", "走力",
+            "キック力", "ロングパス", "キープ力", "パスカット", "反応速度", "コンタクト", "敏捷性",
+            "冷静さ", "キック精度", "ボールタッチ", "マーク", "1対1", "スタミナ", ""
+        ];
+        order.forEach(s => {
+            if (s === "") {
+                grid.innerHTML += `<div></div>`; // 空セル
+            } else {
+                grid.innerHTML += `<div class="stat-item"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`;
+            }
+        });
+    }
+
+    // --- 管理画面用ポジション＆スタイルUIの初期化 ---
+    const editPosGrid = document.getElementById('editPosGroup');
+    if (editPosGrid) {
+        editPosGrid.innerHTML = '';
+        Object.keys(POS_MAP).forEach(p => {
+            const group = POS_GROUPS[p] || 'df';
+            const chip = document.createElement('div');
+            chip.className = 'pos-chip';
+            chip.innerText = p;
+            chip.dataset.pos = p;
+            chip.dataset.group = group;
+            chip.onclick = () => toggleEditPos(p, chip);
+            editPosGrid.appendChild(chip);
+        });
+        // 初期状態のスタイルオプションを生成
+        updateEditStyleOptions();
     }
     
     // アビリティ用パラメータチェックボックス生成
@@ -672,10 +700,112 @@ window.initEditors = () => {
         });
     }
     
-     const areaGrid = document.getElementById('saAreaGrid');
+    const areaGrid = document.getElementById('saAreaGrid');
     if (areaGrid) {
         areaGrid.innerHTML = '';
         for(let i=0; i<9; i++) areaGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
+    }
+};
+
+// --- 管理画面UIトグル・動的生成用のヘルパー関数 ---
+window.selectEditRarity = (rarity) => {
+    document.querySelectorAll('#editRarityGroup .sim-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText === rarity);
+    });
+    document.getElementById('editRarity').value = rarity;
+};
+
+window.toggleEditPos = (pos, btn) => {
+    btn.classList.toggle('active');
+    updateEditStyleOptions();
+};
+
+window.updateEditStyleOptions = () => {
+    const activePos = Array.from(document.querySelectorAll('#editPosGroup .pos-chip.active')).map(b => b.dataset.pos);
+    
+    // 選択されたポジションから候補となるスタイルを抽出
+    const stylesSet = new Set();
+    activePos.forEach(p => {
+        if (POS_MAP[p]) POS_MAP[p].forEach(s => stylesSet.add(s));
+    });
+    
+    // ポジションが未選択の場合は全スタイルを表示
+    let availableStyles = Array.from(stylesSet);
+    if (activePos.length === 0) {
+        Object.values(POS_MAP).forEach(arr => arr.forEach(s => stylesSet.add(s)));
+        availableStyles = Array.from(stylesSet);
+    }
+    
+    const currentStyleInput = document.getElementById('editPlayStyle');
+    let currentStyle = currentStyleInput.value;
+    
+    // 選択中のスタイルが現在の候補になければクリア
+    if (currentStyle && !availableStyles.includes(currentStyle)) {
+        currentStyle = "";
+        currentStyleInput.value = "";
+    }
+
+    const grid = document.getElementById('editStyleGroup');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    availableStyles.forEach(s => {
+        const iconCode = STYLE_ICONS[s] || 'ST';
+        const card = document.createElement('div');
+        card.className = `style-card ${s === currentStyle ? 'active' : ''}`;
+        card.innerHTML = `
+            <img src="img/styles/${iconCode}.png" onerror="this.src='https://placehold.jp/24/333333/ffffff/60x40.png?text=${iconCode}'">
+            <span>${s}</span>
+        `;
+        card.onclick = () => selectEditStyle(s);
+        grid.appendChild(card);
+    });
+
+    updateStyleBonusButtonName(currentStyle);
+};
+
+window.selectEditStyle = (style) => {
+    document.getElementById('editPlayStyle').value = style;
+    document.querySelectorAll('#editStyleGroup .style-card').forEach(c => {
+        c.classList.toggle('active', c.querySelector('span').innerText === style);
+    });
+    updateStyleBonusButtonName(style);
+};
+
+window.updateStyleBonusButtonName = (style) => {
+    const btn = document.getElementById('btnAddStyleBonus');
+    if (btn) {
+        btn.innerText = style ? `+ ${style}` : '+ ｽﾀｲﾙ';
+    }
+};
+
+window.addPlayStyleBonus = () => {
+    const style = document.getElementById('editPlayStyle').value;
+    if (style) {
+        addBonusRow(style, 20); // デフォルト20%
+    } else {
+        alert("メインプレースタイルを選択してください。");
+    }
+};
+
+// UIトグル用のヘルパー関数追加
+window.selectEditRarity = (rarity) => {
+    document.querySelectorAll('#editRarityGroup .sim-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText === rarity);
+    });
+    document.getElementById('editRarity').value = rarity;
+};
+
+window.toggleEditPos = (pos, btn) => {
+    btn.classList.toggle('active');
+};
+
+window.addPlayStyleBonus = () => {
+    const style = document.getElementById('editPlayStyle').value;
+    if (style) {
+        addBonusRow(style, 30); // デフォルト30%
+    } else {
+        alert("メインプレースタイルを選択してください。");
     }
 };
 
@@ -960,7 +1090,7 @@ window.loadCardToEditor = (d) => {
 
     // フォームリセット
     isCardEditorDirty = false;
-    document.getElementById('cardImgUpload').value = ''; // ファイル選択リセット
+    document.getElementById('cardImgUpload').value = ''; 
 
     if(!d) {
         // 新規作成時の初期化
@@ -970,8 +1100,14 @@ window.loadCardToEditor = (d) => {
         document.getElementById('editBonusList').innerHTML = '';
         document.getElementById('editSpecialEffectList').innerHTML = '';
         document.getElementById('editGrowth').value = "6"; 
+        selectEditRarity('SSR');
         
-        // スキルリストリセット (新規作成時は空)
+        // ポジションとスタイルをリセット
+        document.querySelectorAll('#editPosGroup .pos-chip').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('editPlayStyle').value = "";
+        updateEditStyleOptions();
+        
+        // スキルリストリセット
         currentEditingSkills = [];
         renderLinkedSkills();
 
@@ -988,28 +1124,50 @@ window.loadCardToEditor = (d) => {
 
     // 既存データロード
     document.getElementById('editName').value = d.name;
-    document.getElementById('editTitle').value = d.title;
-    document.getElementById('editRarity').value = d.rarity;
+    
+    // 称号から 【 】 を除外して表示
+    let title = d.title || "";
+    if (title.startsWith("【") && title.endsWith("】")) {
+        title = title.substring(1, title.length - 1);
+    }
+    document.getElementById('editTitle').value = title;
+    
+    selectEditRarity(d.rarity);
     document.getElementById('editGrowth').value = d.growth_rate || "6";
 
-    // --- スキルリストの展開 (新旧データ構造対応) ---
-    currentEditingSkills = []; // 初期化
+    // ポジションの復元
+    const positions = d.positions || [];
+    document.querySelectorAll('#editPosGroup .pos-chip').forEach(btn => {
+        btn.classList.toggle('active', positions.includes(btn.dataset.pos));
+    });
     
+    // 選択されたポジションをもとにスタイル候補を生成
+    updateEditStyleOptions();
+
+    // プレースタイルの推測または復元
+    let pStyle = d.play_style || "";
+    if (!pStyle && d.bonuses && d.bonuses.length > 0) {
+        pStyle = d.bonuses[0].type; 
+    } else if (!pStyle && d.bonus_type) {
+        pStyle = d.bonus_type; 
+    }
+    if (pStyle) {
+        selectEditStyle(pStyle);
+    }
+
+    // スキルリストの展開
+    currentEditingSkills = []; 
     if (d.abilities && Array.isArray(d.abilities)) {
         d.abilities.forEach(ab => {
             if (typeof ab === 'object' && ab !== null) {
-                // 新データ構造 ({name, rarity})
                 currentEditingSkills.push({ name: ab.name, rarity: ab.rarity });
             } else {
-                // 旧データ構造 (文字列のみ) -> カードのレアリティから推測して変換
-                // SSRならGold, それ以外(SR)ならSilverとする
                 const guessedRarity = (d.rarity === 'SSR') ? 'Gold' : 'Silver';
                 currentEditingSkills.push({ name: ab, rarity: guessedRarity });
             }
         });
     }
-    renderLinkedSkills(); // 描画実行
-    // ----------------------------------
+    renderLinkedSkills(); 
     
     // ステータス
     document.querySelectorAll('.edit-val').forEach(i => i.value = d.stats[i.dataset.stat] || '');
@@ -1030,13 +1188,12 @@ window.loadCardToEditor = (d) => {
         d.special_effects.forEach(se => addSpecialEffectRow(se.type, se.value));
     }
 
-    // 画像プレビュー (GitHub URL)
+    // 画像プレビュー
     const prev = document.getElementById('editCardPreview');
     prev.src = `img/cards/${d.name}_${d.title}.png`;
     prev.style.display = 'block';
     prev.nextElementSibling.style.display = 'none';
 
-    // スクロール
     document.getElementById('cardEditor').scrollIntoView({behavior: "smooth"});
     
     watchCardFormChanges();

@@ -126,16 +126,25 @@ async function pushToGH(file, data, msg, rawContent = null) {
 }
 
 async function saveCardToGH() {
-    const name = document.getElementById('editName').value;
-    const title = document.getElementById('editTitle').value; 
+    const name = document.getElementById('editName').value.trim();
+    let rawTitle = document.getElementById('editTitle').value.trim(); 
     if(!name) return alert("名前を入力してください");
+
+    // 【変更】称号に自動で【】を付与
+    if (rawTitle && !rawTitle.startsWith("【")) rawTitle = "【" + rawTitle;
+    if (rawTitle && !rawTitle.endsWith("】")) rawTitle = rawTitle + "】";
+    const title = rawTitle;
 
     const btn = document.getElementById('btnSaveCard');
     if(btn) { btn.disabled = true; btn.innerText = "保存中..."; }
 
-    // ★ 非同期処理に入る前にUIの状態を変数にキャプチャする
+    // 値の取得
     const rarity = document.getElementById('editRarity').value;
     const growthRate = parseInt(document.getElementById('editGrowth').value);
+    
+    // ポジションとプレースタイルの取得
+    const positions = Array.from(document.querySelectorAll('.admin-pos-btn.active')).map(btn => btn.innerText);
+    const playStyle = document.getElementById('editPlayStyle').value;
     
     const stats = {}; 
     document.querySelectorAll('.edit-val').forEach(i => {
@@ -161,21 +170,19 @@ async function saveCardToGH() {
     const capturedAbilities = JSON.parse(JSON.stringify(currentEditingSkills));
 
     try {
-        // 1. 画像アップロード処理 (プレビューから切り抜き後のBase64を取得)
         const previewImg = document.getElementById('editCardPreview');
-        // previewImg.src が "data:image/" で始まる場合のみ、新規に追加・変更された画像と判定してアップロードする
         if (previewImg && previewImg.src && previewImg.src.startsWith('data:image/')) {
             const fileName = `${name}_${title}.png`;
-            // "data:image/png;base64,xxxx..." のカンマ以降を抽出
             const contentBase64 = previewImg.src.split(',')[1];
             
             const imgRes = await pushToGH(`../img/cards/${fileName}`, null, `Add image: ${fileName}`, contentBase64);
             if (!imgRes) throw new Error("画像の保存に失敗しました");
         }
 
-        // 2. JSONデータ構築
+        // JSONデータ構築
         const nc = { 
             title, name, rarity: rarity, 
+            positions: positions, play_style: playStyle,
             bonuses: bonuses, bonus_type: legacyType, bonus_value: legacyVal,
             special_effects: special_effects,
             abilities: capturedAbilities, 
@@ -185,7 +192,6 @@ async function saveCardToGH() {
 
         if (growthRate === 6) delete nc.growth_rate;
 
-        // ★ GitHub API から最新の cards.json を取得してマージする（データロスト防止）
         const token = localStorage.getItem('gh_token');
         const repo = localStorage.getItem('gh_repo');
         if (token && repo) {
@@ -200,7 +206,7 @@ async function saveCardToGH() {
                 const latestCardsDB = JSON.parse(contentStr);
                 const i = latestCardsDB.findIndex(x => x.name === name && x.title === title);
                 if(i >= 0) latestCardsDB[i] = nc; else latestCardsDB.push(nc);
-                cardsDB = latestCardsDB; // ローカル同期
+                cardsDB = latestCardsDB; 
             } else {
                 const i = cardsDB.findIndex(x => x.name === name && x.title === title); 
                 if(i >= 0) cardsDB[i] = nc; else cardsDB.push(nc);
@@ -210,7 +216,6 @@ async function saveCardToGH() {
             if(i >= 0) cardsDB[i] = nc; else cardsDB.push(nc);
         }
 
-        // 3. JSON保存
         if(await pushToGH('cards.json', cardsDB, `Update Card: ${name}`)) { 
             alert("保存しました"); 
             renderCardList(); 

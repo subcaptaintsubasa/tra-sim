@@ -349,14 +349,12 @@
             </div>
 
             <div class="admin-editor-container">
-                <!-- ナビゲーション -->
-                <button class="nav-btn prev" onclick="navigateCard(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                <button class="nav-btn next" onclick="navigateCard(1)"><i class="fa-solid fa-chevron-right"></i></button>
-
-                <!-- プレビューエリア -->
+                <!-- プレビューエリア（矢印ボタンを内包） -->
                 <div class="card-preview-area">
+                    <button class="nav-btn prev" onclick="navigateCard(-1)"><i class="fa-solid fa-chevron-left"></i></button>
                     <img id="editCardPreview" src="" class="card-preview-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                     <div style="display:none; color:#666; font-size:0.8rem;">No Image</div>
+                    <button class="nav-btn next" onclick="navigateCard(1)"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
 
                 <!-- 画像選択 -->
@@ -367,38 +365,71 @@
                 <!-- 基本情報 -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
                     <input id="editName" placeholder="選手名" class="card-input">
-                    <input id="editTitle" placeholder="【称号】" class="card-input">
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
-                    <select id="editRarity" class="card-input"><option>SSR</option><option>SR</option></select>
-                    <select id="editGrowth" class="card-input"><option value="6">成長: 通常(6倍)</option><option value="3" style="color:#fbbf24;">成長: 3倍</option></select>
+                    <input id="editTitle" placeholder="称号（【】は自動付与）" class="card-input">
                 </div>
                 
-                <!-- スキル/ボーナス -->
-<!-- 新しいスキル選択UI -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px; align-items:center;">
+                    <!-- レアリティ選択（ボタン式） -->
+                    <div class="sim-mode-group" id="editRarityGroup">
+                        <button class="sim-mode-btn active" onclick="selectEditRarity('SSR')">SSR</button>
+                        <button class="sim-mode-btn" onclick="selectEditRarity('SR')">SR</button>
+                    </div>
+                    <input type="hidden" id="editRarity" value="SSR">
+                    <select id="editGrowth" class="card-input"><option value="6">成長: 通常(6倍)</option><option value="3" style="color:#fbbf24;">成長: 3倍</option></select>
+                </div>
+
+                <!-- ポジション・プレースタイル設定 -->
+                <div style="margin-top:10px; border:1px solid #334155; padding:8px; border-radius:6px; background:#0f172a;">
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:4px;">適正ポジション (複数選択可)</label>
+                    <div id="editPosGroup" class="pos-grid">
+                        <!-- JSで動的に生成されます -->
+                    </div>
+                    
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-top:8px; margin-bottom:4px;">メインプレースタイル</label>
+                    <div id="editStyleGroup" class="style-grid" style="max-height:200px; overflow-y:auto; margin-top:5px;">
+                        <!-- JSで動的に生成されます -->
+                    </div>
+                    <input type="hidden" id="editPlayStyle" value="">
+                </div>
+                
+                <!-- スキル/アビリティ -->
                 <label style="font-size:0.7rem; color:#94a3b8; margin-top:10px; display:block;">習得スキル/アビリティ</label>
                 <div class="skill-selector-container">
                     <input type="text" id="skillSearchInput" class="skill-search-input" placeholder="名前で検索して追加..." oninput="searchSkillCandidates(this.value)" onfocus="searchSkillCandidates(this.value)">
                     <div id="skillSuggestions" class="skill-suggestions"></div>
                 </div>
-                <!-- 選択されたスキルがここに並ぶ -->
                 <div id="linkedSkillsList" class="linked-skills-list"></div>
-                <div style="margin-top:10px; border:1px dashed #555; padding:5px; border-radius:4px;">
-                    <label style="font-size:0.7rem;">ボーナス条件</label>
+
+                <!-- ボーナス設定 -->
+                <div style="margin-top:10px; border:1px dashed #555; padding:8px; border-radius:6px;">
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px;">ボーナス条件追加</label>
+                    <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:4px; margin-bottom:8px;">
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('CF', 10)">CF</button>
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('WF', 10)">WF</button>
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('AM', 10)">AM</button>
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('WM', 10)">WM</button>
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('CM', 10)">CM</button>
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('DM', 10)">DM</button>
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('FB', 10)">FB</button>
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('CB', 10)">CB</button>
+                        <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('GK', 10)">GK</button>
+                        <button class="btn btn-sm" id="btnAddStyleBonus" style="background:#1e40af; color:#fff;" onclick="addPlayStyleBonus()">+ ｽﾀｲﾙ</button>
+                    </div>
                     <div id="editBonusList"></div>
-                    <button class="btn btn-sm" onclick="addBonusRow()" style="margin-top:5px;">+ 条件追加</button>
+                    <button class="btn btn-sm" onclick="addBonusRow('', '')" style="margin-top:5px; background:transparent; border:1px dashed #64748b;">+ 手動入力で追加</button>
                 </div>
 
+                <!-- 特殊効果 -->
                 <div style="margin-top:10px; border:1px dashed #555; padding:5px; border-radius:4px;">
-                    <label style="font-size:0.7rem;">特殊効果 (覚醒Ptなど)</label>
+                    <label style="font-size:0.7rem; color:#94a3b8;">特殊効果 (覚醒Ptなど)</label>
                     <div id="editSpecialEffectList"></div>
                     <button class="btn btn-sm" onclick="addSpecialEffectRow()" style="margin-top:5px;">+ 特殊効果追加</button>
                 </div>
 
                 <!-- ステータス -->
-                <div class="stat-grid" id="editStatsGrid" style="margin-top:10px;"></div>
+                <div class="edit-stat-grid" id="editStatsGrid"></div>
                 
-                <!-- 保存ボタン (統合) -->
+                <!-- 保存ボタン -->
                 <button id="btnSaveCard" class="btn btn-accent" style="margin-top:15px;" onclick="saveCardToGH()">
                     <i class="fa-solid fa-floppy-disk"></i> 保存 (画像+データ)
                 </button>

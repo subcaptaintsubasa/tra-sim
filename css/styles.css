@@ -1698,3 +1698,52 @@ input:disabled + .toggle-slider {
 .export-only {
     display: none;
 }
+
+/* --- Admin 管理画面用UI調整 --- */
+.edit-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-top: 10px;
+}
+.edit-stat-grid .stat-item {
+    background: #0f172a;
+    padding: 2px;
+    border-radius: 4px;
+    text-align: center;
+}
+.edit-stat-grid label {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    display: block;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.edit-stat-grid input {
+    font-size: 0.75rem;
+    padding: 4px 0;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .edit-stat-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* 矢印ボタンを画像領域の内側に配置 */
+.card-preview-area .nav-btn.prev { left: 10px; }
+.card-preview-area .nav-btn.next { right: 10px; }
+
+/* 管理画面用ボタングループ */
+.admin-pos-btn {
+    background: #1e293b; border: 1px solid #475569; color: #94a3b8;
+    padding: 6px 0; border-radius: 4px; font-size: 0.7rem; cursor: pointer;
+}
+.admin-pos-btn.active {
+    background: var(--primary); color: #000; border-color: var(--primary); font-weight: bold;
+}
