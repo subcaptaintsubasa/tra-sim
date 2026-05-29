@@ -1046,7 +1046,9 @@
     "title": "【欧州の中心でのリベンジ】",
     "name": "オ・ヒョンギュ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ポストプレーヤー",
     "bonuses": [
       {
