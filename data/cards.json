@@ -2247,6 +2247,10 @@
     "title": "【好きを誇りに】",
     "name": "豊永阿紀",
     "rarity": "SR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "ストッパー",
     "bonuses": [
       {
         "type": "ストッパー",
