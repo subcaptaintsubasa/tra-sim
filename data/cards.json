@@ -1466,7 +1466,10 @@
     "title": "【威厳示すドゥープレテーツ】",
     "name": "アドリアン・ラビオ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "セントラルMF",
     "bonuses": [
       {
