@@ -2612,6 +2612,11 @@
     "title": "【ジャロロッソの賢将】",
     "name": "ロレンツォ・ペッレグリーニ",
     "rarity": "SR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "パサー",
     "bonuses": [
       {
         "type": "パサー",
