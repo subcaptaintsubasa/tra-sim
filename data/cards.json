@@ -2508,6 +2508,10 @@
     "title": "【過去を超えるハリケーン】",
     "name": "ハリー・ケイン",
     "rarity": "SSR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ストライカー",
     "bonuses": [
       {
         "type": "ストライカー",
