@@ -2542,6 +2542,13 @@
     "title": "【右サイドから巻き起こすカオス】",
     "name": "デンゼル・ダンフリース",
     "rarity": "SSR",
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
+    "play_style": "サイドアタッカー",
     "bonuses": [
       {
         "type": "サイドアタッカー",
