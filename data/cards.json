@@ -2015,6 +2015,10 @@
     "title": "【勝利を創造する伯爵】",
     "name": "ミケル・メリーノ",
     "rarity": "SR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "ハードマーカー",
     "bonuses": [
       {
         "type": "ハードマーカー",
@@ -2023,6 +2027,7 @@
     ],
     "bonus_type": "ハードマーカー",
     "bonus_value": 20,
+    "special_effects": [],
     "abilities": [
       {
         "name": "ムービングウォール",
