@@ -680,7 +680,12 @@
     "title": "【ミラノの11を背負う覚悟】",
     "name": "クリスティアン_プリシッチ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "サイドアタッカー",
     "bonuses": [
       {
