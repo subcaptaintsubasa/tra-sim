@@ -2146,6 +2146,11 @@
     "title": "【獅子の誇る精密機器】",
     "name": "トレント・アレクサンダー＝アーノルド",
     "rarity": "SSR",
+    "positions": [
+      "LB",
+      "RB"
+    ],
+    "play_style": "攻撃的FB",
     "bonuses": [
       {
         "type": "攻撃的FB",
