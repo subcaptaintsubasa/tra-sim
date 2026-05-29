@@ -2279,6 +2279,10 @@
     "title": "【オレンジパワー】",
     "name": "相川暖花",
     "rarity": "SR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ラインブレーカー",
     "bonuses": [
       {
         "type": "ラインブレーカー",
