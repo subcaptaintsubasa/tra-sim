@@ -37,7 +37,12 @@
     "title": "【アンストッパブル・ドク】",
     "name": "ジェレミー・ドク",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "ドリブラー",
     "bonuses": [
       {
