@@ -1593,6 +1593,8 @@
     "title": "【新たな世界への挑戦】",
     "name": "本田圭佑",
     "rarity": "SSR",
+    "positions": [],
+    "play_style": "アタッカー",
     "bonuses": [
       {
         "type": "アタッカー",
@@ -1605,6 +1607,7 @@
     ],
     "bonus_type": "アタッカー",
     "bonus_value": 40,
+    "special_effects": [],
     "abilities": [
       {
         "name": "確信のロングシュート",
