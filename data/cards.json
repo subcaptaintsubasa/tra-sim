@@ -946,7 +946,9 @@
     "title": "【獅子を奮い立たせる衝撃】",
     "name": "ジュード・ベリンガム",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
