@@ -209,7 +209,9 @@
     "title": "【パルテノーペイでの復活】",
     "name": "ロメル・ルカク",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ポストプレーヤー",
     "bonuses": [
       {
