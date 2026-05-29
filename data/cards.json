@@ -2678,6 +2678,11 @@
     "title": "【進化を続ける若き伝説】",
     "name": "ラミン・ヤマル",
     "rarity": "SSR",
+    "positions": [
+      "LW",
+      "RW"
+    ],
+    "play_style": "ドリブラー",
     "bonuses": [
       {
         "type": "WF",
