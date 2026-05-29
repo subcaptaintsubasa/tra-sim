@@ -1431,7 +1431,12 @@
     "title": "【躍動するガンビアの韋駄天】",
     "name": "ヤンクバ・ミンテ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "ドリブラー",
     "bonuses": [
       {
