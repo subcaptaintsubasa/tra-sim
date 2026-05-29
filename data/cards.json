@@ -97,6 +97,8 @@
     "title": "【ニューエラ・ハードマーカー】",
     "name": "リサンドロ・マルティネス",
     "rarity": "SR",
+    "positions": [],
+    "play_style": "ストッパー",
     "bonuses": [
       {
         "type": "ストッパー",
@@ -105,6 +107,7 @@
     ],
     "bonus_type": "ストッパー",
     "bonus_value": 20,
+    "special_effects": [],
     "abilities": [
       {
         "name": "冴え渡るインターセプト",
