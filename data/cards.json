@@ -478,7 +478,9 @@
     "title": "【ノースロンドンの装甲列車】",
     "name": "ミッキー・ファン・デ・フェン",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "組立CB",
     "bonuses": [
       {
