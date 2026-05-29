@@ -715,7 +715,9 @@
     "title": "【バスクのバイタルスナッチャー】",
     "name": "オイアン・サンセト",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
