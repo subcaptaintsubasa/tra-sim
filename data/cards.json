@@ -2375,6 +2375,11 @@
     "title": "【アルビセレステのメインダイナモ】",
     "name": "アレクシス・マック・アリスター",
     "rarity": "SSR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "パサー",
     "bonuses": [
       {
         "type": "パサー",
