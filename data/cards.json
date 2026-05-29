@@ -246,7 +246,12 @@
     "title": "【ワールド・ソニー】",
     "name": "ソン・フンミン",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "サイドアタッカー",
     "bonuses": [
       {
