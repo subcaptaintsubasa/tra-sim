@@ -3083,5 +3083,35 @@
       "ボールタッチ": 7.3
     },
     "growth_rate": 3
+  },
+  {
+    "title": "【香港の快速WF】",
+    "name": "李健和",
+    "rarity": "SR",
+    "positions": [],
+    "play_style": "ドリブラー",
+    "bonuses": [
+      {
+        "type": "ドリブラー",
+        "value": 20
+      }
+    ],
+    "bonus_type": "ドリブラー",
+    "bonus_value": 20,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "スピードドリブラー",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "突破力": 4.5,
+      "走力": 3.3,
+      "キープ力": 2.2,
+      "冷静さ": 3,
+      "キック精度": 2,
+      "スタミナ": 1.7
+    }
   }
 ]
