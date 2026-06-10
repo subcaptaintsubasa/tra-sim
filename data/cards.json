@@ -3083,5 +3083,18 @@
       "ボールタッチ": 7.3
     },
     "growth_rate": 3
+  },
+  {
+    "title": "",
+    "name": "テスト",
+    "rarity": "SSR",
+    "positions": [],
+    "play_style": "",
+    "bonuses": [],
+    "bonus_type": "",
+    "bonus_value": 0,
+    "special_effects": [],
+    "abilities": [],
+    "stats": {}
   }
 ]
