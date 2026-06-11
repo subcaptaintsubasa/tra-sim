@@ -3113,5 +3113,35 @@
       "キック精度": 2,
       "スタミナ": 1.7
     }
+  },
+  {
+    "title": "【香港の大砲】",
+    "name": "歐偉倫",
+    "rarity": "SR",
+    "positions": [],
+    "play_style": "ストライカー",
+    "bonuses": [
+      {
+        "type": "ストライカー",
+        "value": 20
+      }
+    ],
+    "bonus_type": "ストライカー",
+    "bonus_value": 20,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "保持からの一撃",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "決定力": 5,
+      "走力": 0.5,
+      "コンタクト": 2.5,
+      "敏捷性": 2.5,
+      "冷静さ": 3,
+      "スタミナ": 3.2
+    }
   }
 ]
