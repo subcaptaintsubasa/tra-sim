@@ -3162,7 +3162,12 @@
     "bonus_type": "パサー",
     "bonus_value": 40,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "英知のパスワーク",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "ショートパス": 3.7,
       "キック力": 0.8,
