@@ -37,7 +37,12 @@
     "title": "【アンストッパブル・ドク】",
     "name": "ジェレミー・ドク",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "ドリブラー",
     "bonuses": [
       {
@@ -69,7 +74,12 @@
     "title": "【咆哮のファンソ】",
     "name": "ファン・ヒチャン",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "サイドアタッカー",
     "bonuses": [
       {
@@ -99,7 +109,9 @@
     "title": "【ニューエラ・ハードマーカー】",
     "name": "リサンドロ・マルティネス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
@@ -129,7 +141,9 @@
     "title": "【規格外のデーモン】",
     "name": "アーリング・ハーランド",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ストライカー",
     "bonuses": [
       {
@@ -161,7 +175,9 @@
     "title": "【引き継がれるセレステの系譜】",
     "name": "ダルウィン・ヌニェス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ラインブレーカー",
     "bonuses": [
       {
@@ -193,7 +209,9 @@
     "title": "【パルテノーペイでの復活】",
     "name": "ロメル・ルカク",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ポストプレーヤー",
     "bonuses": [
       {
@@ -228,7 +246,12 @@
     "title": "【ワールド・ソニー】",
     "name": "ソン・フンミン",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "サイドアタッカー",
     "bonuses": [
       {
@@ -266,7 +289,10 @@
     "title": "【青黒のブレイブ・コマンダー】",
     "name": "ハカン・チャルハノール",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "パサー",
     "bonuses": [
       {
@@ -301,7 +327,10 @@
     "title": "【円熟のマエストロ】",
     "name": "ルカ・モドリッチ",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "セントラルMF",
     "bonuses": [
       {
@@ -339,7 +368,9 @@
     "title": "【砲撃隊の統治者】",
     "name": "デクラン・ライス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "DM"
+    ],
     "play_style": "ハードマーカー",
     "bonuses": [
       {
@@ -374,7 +405,10 @@
     "title": "【ロッソネロ・エクスプレス】",
     "name": "テオ・エルナンデス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "攻撃的FB",
     "bonuses": [
       {
@@ -409,7 +443,10 @@
     "title": "【最強を体現する男】",
     "name": "ダニ・カルバハル",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "守備的FB",
     "bonuses": [
       {
@@ -441,7 +478,9 @@
     "title": "【ノースロンドンの装甲列車】",
     "name": "ミッキー・ファン・デ・フェン",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "組立CB",
     "bonuses": [
       {
@@ -476,7 +515,9 @@
     "title": "【11年ぶりの歓喜への奮闘】",
     "name": "フィカヨ・トモリ",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
@@ -511,7 +552,9 @@
     "title": "【世界最強の道化師】",
     "name": "エミリアーノ・マルティネス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "オーソドックスGK",
     "bonuses": [
       {
@@ -543,7 +586,9 @@
     "title": "【反転の速射砲】",
     "name": "ロベルト・サンチェス",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "スイーパーGK",
     "bonuses": [
       {
@@ -575,7 +620,9 @@
     "title": "【パンプローナの仕事人】",
     "name": "アンテ・ブディミル",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ストライカー",
     "bonuses": [],
     "bonus_type": "",
@@ -601,7 +648,9 @@
     "title": "【盤石のサラブレッド】",
     "name": "デイリー・ブリント",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "組立CB",
     "bonuses": [
       {
@@ -631,7 +680,12 @@
     "title": "【ミラノの11を背負う覚悟】",
     "name": "クリスティアン_プリシッチ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "サイドアタッカー",
     "bonuses": [
       {
@@ -661,7 +715,9 @@
     "title": "【バスクのバイタルスナッチャー】",
     "name": "オイアン・サンセト",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
@@ -691,7 +747,9 @@
     "title": "【老練なゴレアドール】",
     "name": "アヨゼ・ペレス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ラインブレーカー",
     "bonuses": [
       {
@@ -721,7 +779,10 @@
     "title": "【凱旋するファスト・スパイダー】",
     "name": "アーロン・ワン＝ビサカ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "守備的FB",
     "bonuses": [
       {
@@ -751,7 +812,9 @@
     "title": "【ゴールデンガルーダを新次元へ】",
     "name": "ジェイ・イツェス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "組立CB",
     "bonuses": [
       {
@@ -781,7 +844,9 @@
     "title": "【剛柔兼備のヒットマン】",
     "name": "モーガン・ギブス＝ホワイト",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
@@ -814,7 +879,9 @@
     "title": "【アイントホーフェンの巨塔】",
     "name": "ルーク・デ・ヨング",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ストライカー",
     "bonuses": [
       {
@@ -844,7 +911,9 @@
     "title": "【日本のエースの真価】",
     "name": "上田綺世",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ストライカー",
     "bonuses": [
       {
@@ -877,7 +946,9 @@
     "title": "【獅子を奮い立たせる衝撃】",
     "name": "ジュード・ベリンガム",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
@@ -909,7 +980,9 @@
     "title": "【狂喜のゲルマンファイター】",
     "name": "アントニオ・リュディガー",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
@@ -941,7 +1014,9 @@
     "title": "【サン・セバスチャンに聳え立つ砦】",
     "name": "アレックス・レミーロ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "スイーパーGK",
     "bonuses": [
       {
@@ -971,7 +1046,9 @@
     "title": "【欧州の中心でのリベンジ】",
     "name": "オ・ヒョンギュ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ポストプレーヤー",
     "bonuses": [
       {
@@ -1001,7 +1078,9 @@
     "title": "【鬼神降臨】",
     "name": "ヤン・ゾマー",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "オーソドックスGK",
     "bonuses": [],
     "bonus_type": "",
@@ -1027,7 +1106,9 @@
     "title": "【真の守護神の証明】",
     "name": "ダビド・ラヤ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "スイーパーGK",
     "bonuses": [
       {
@@ -1057,7 +1138,9 @@
     "title": "【ナイジェリアン・ヒール・マジック】",
     "name": "ウマル・サディク",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ラインブレーカー",
     "bonuses": [],
     "bonus_type": "",
@@ -1083,7 +1166,12 @@
     "title": "【リリーホワイトのワイドシューター】",
     "name": "ブレナン・ジョンソン",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "ドリブラー",
     "bonuses": [
       {
@@ -1113,7 +1201,10 @@
     "title": "【左を駆け抜ける荒鷲】",
     "name": "ヌーノ・タバレス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "攻撃的FB",
     "bonuses": [
       {
@@ -1143,7 +1234,10 @@
     "title": "【アルビセレステの鉄人】",
     "name": "ニコラス・タグリアフィコ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "守備的FB",
     "bonuses": [
       {
@@ -1173,7 +1267,9 @@
     "title": "【パルテノーペイへの挨拶】",
     "name": "アレッサンドロ・ボンジョルノ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
@@ -1203,7 +1299,9 @@
     "title": "【因縁吹き飛ばすパワーショット】",
     "name": "ジャン＝フィリップ・マテタ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ポストプレーヤー",
     "bonuses": [
       {
@@ -1233,7 +1331,9 @@
     "title": "【怜悧な頭脳】",
     "name": "伊沢拓司",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM"
+    ],
     "play_style": "ハードマーカー",
     "bonuses": [
       {
@@ -1263,7 +1363,10 @@
     "title": "【サウスロンドンでの交歓】",
     "name": "鎌田大地",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "セントラルMF",
     "bonuses": [
       {
@@ -1296,7 +1399,9 @@
     "title": "【赤き日本の闘将】",
     "name": "遠藤航",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM"
+    ],
     "play_style": "ハードマーカー",
     "bonuses": [
       {
@@ -1326,7 +1431,12 @@
     "title": "【躍動するガンビアの韋駄天】",
     "name": "ヤンクバ・ミンテ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "ドリブラー",
     "bonuses": [
       {
@@ -1356,7 +1466,10 @@
     "title": "【威厳示すドゥープレテーツ】",
     "name": "アドリアン・ラビオ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "セントラルMF",
     "bonuses": [
       {
@@ -1386,7 +1499,10 @@
     "title": "【ゴールへのエレガントパス】",
     "name": "フェデリコ・ディマルコ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "攻撃的FB",
     "bonuses": [
       {
@@ -1416,7 +1532,10 @@
     "title": "【神を導く旗手】",
     "name": "ロドリゴ・デ・パウル",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "パサー",
     "bonuses": [
       {
@@ -1446,7 +1565,12 @@
     "title": "【確かな青の輝き】",
     "name": "クリストファー・エンクンク",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "ドリブラー",
     "bonuses": [
       {
@@ -1476,7 +1600,9 @@
     "title": "【ラ・デアがほほ笑む若き守護神】",
     "name": "マルコ・カルネセッキ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "スイーパーGK",
     "bonuses": [],
     "bonus_type": "",
@@ -1502,7 +1628,10 @@
     "title": "【イエローサブマリン・コマンダンテ】",
     "name": "ダニ・パレホ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "DM",
+      "AM"
+    ],
     "play_style": "パサー",
     "bonuses": [
       {
@@ -1532,7 +1661,9 @@
     "title": "【不屈のブルーファイター】",
     "name": "ウェズレイ・フォファナ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CB"
+    ],
     "play_style": "ストッパー",
     "bonuses": [
       {
@@ -1562,7 +1693,12 @@
     "title": "【凱旋する稲妻】",
     "name": "伊東純也",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
     "play_style": "サイドアタッカー",
     "bonuses": [
       {
@@ -1595,7 +1731,9 @@
     "title": "【新たな世界への挑戦】",
     "name": "本田圭佑",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
@@ -1630,7 +1768,9 @@
     "title": "【無限の可能性】",
     "name": "MAJIDE",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ポストプレーヤー",
     "bonuses": [
       {
@@ -1659,45 +1799,13 @@
     }
   },
   {
-    "title": "オフェンス基礎トレーニング",
-    "name": "オフェンス基礎トレーニング",
-    "rarity": "SSR",
-    "bonuses": [
-      {
-        "type": "ドリブラー",
-        "value": 30
-      },
-      {
-        "type": "CF",
-        "value": 10
-      },
-      {
-        "type": "WF",
-        "value": 10
-      }
-    ],
-    "bonus_type": "ドリブラー",
-    "bonus_value": 30,
-    "abilities": [
-      {
-        "name": "強引なフィニッシュ",
-        "rarity": "Bronze"
-      }
-    ],
-    "stats": {
-      "ショートパス": 7.3,
-      "突破力": 8,
-      "走力": 3.3,
-      "キック力": 5.3,
-      "敏捷性": 5.3,
-      "ボールタッチ": 7.3
-    },
-    "growth_rate": 3
-  },
-  {
     "title": "【トリノに輝く若き魔法】",
     "name": "ケナン・ユルディズ",
     "rarity": "SSR",
+    "positions": [
+      "AM"
+    ],
+    "play_style": "アタッカー",
     "bonuses": [
       {
         "type": "アタッカー",
@@ -1706,6 +1814,7 @@
     ],
     "bonus_type": "アタッカー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "失わないドリブラー",
@@ -1728,6 +1837,10 @@
     "title": "【攻守万能のクストーデ】",
     "name": "アレッサンドロ・バストーニ",
     "rarity": "SSR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "ストッパー",
     "bonuses": [
       {
         "type": "ストッパー",
@@ -1736,6 +1849,7 @@
     ],
     "bonus_type": "ストッパー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "反攻のロングパサー",
@@ -1758,6 +1872,13 @@
     "title": "【韓国が誇る左足】",
     "name": "イ・ガンイン",
     "rarity": "SSR",
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
+    "play_style": "ドリブラー",
     "bonuses": [
       {
         "type": "ドリブラー",
@@ -1766,6 +1887,7 @@
     ],
     "bonus_type": "ドリブラー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "技巧派ドリブラー",
@@ -1788,6 +1910,10 @@
     "title": "【試合を決める赤黒のショセット】",
     "name": "オリヴィエ・ジルー",
     "rarity": "SSR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ポストプレーヤー",
     "bonuses": [
       {
         "type": "ポストプレーヤー",
@@ -1796,6 +1922,7 @@
     ],
     "bonus_type": "ポストプレーヤー",
     "bonus_value": 25,
+    "special_effects": [],
     "abilities": [
       {
         "name": "マグネットタッチ",
@@ -1817,6 +1944,11 @@
     "title": "【ネラッズーロのスナイパー】",
     "name": "ニコロ・バレッラ",
     "rarity": "SSR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "セントラルMF",
     "bonuses": [
       {
         "type": "セントラルMF",
@@ -1825,6 +1957,7 @@
     ],
     "bonus_type": "セントラルMF",
     "bonus_value": 40,
+    "special_effects": [],
     "abilities": [
       {
         "name": "精緻な指揮者",
@@ -1846,6 +1979,10 @@
     "title": "【勝利を創造する伯爵】",
     "name": "ミケル・メリーノ",
     "rarity": "SR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "ハードマーカー",
     "bonuses": [
       {
         "type": "ハードマーカー",
@@ -1854,6 +1991,7 @@
     ],
     "bonus_type": "ハードマーカー",
     "bonus_value": 20,
+    "special_effects": [],
     "abilities": [
       {
         "name": "ムービングウォール",
@@ -1873,6 +2011,10 @@
     "title": "【コート・ダジュールでの再起】",
     "name": "南野拓実",
     "rarity": "SR",
+    "positions": [
+      "AM"
+    ],
+    "play_style": "アタッカー",
     "bonuses": [
       {
         "type": "アタッカー",
@@ -1881,6 +2023,7 @@
     ],
     "bonus_type": "アタッカー",
     "bonus_value": 30,
+    "special_effects": [],
     "abilities": [
       {
         "name": "点で合わせるシュート",
@@ -1900,6 +2043,10 @@
     "title": "【赤白のスーペル・ニュメロ・6】",
     "name": "デニス・ザカリア",
     "rarity": "SR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "ハードマーカー",
     "bonuses": [
       {
         "type": "DM",
@@ -1908,6 +2055,7 @@
     ],
     "bonus_type": "DM",
     "bonus_value": 10,
+    "special_effects": [],
     "abilities": [
       {
         "name": "激情のキック",
@@ -1927,6 +2075,13 @@
     "title": "【エル・マゴ・ヴェルディプランコス】",
     "name": "アントニー",
     "rarity": "SR",
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
+    "play_style": "ドリブラー",
     "bonuses": [
       {
         "type": "ドリブラー",
@@ -1955,6 +2110,11 @@
     "title": "【獅子の誇る精密機器】",
     "name": "トレント・アレクサンダー＝アーノルド",
     "rarity": "SSR",
+    "positions": [
+      "LB",
+      "RB"
+    ],
+    "play_style": "攻撃的FB",
     "bonuses": [
       {
         "type": "攻撃的FB",
@@ -1985,6 +2145,10 @@
     "title": "【パリに衝撃を与える猛襲】",
     "name": "ランダル・コロ・ムアニ",
     "rarity": "SSR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ラインブレーカー",
     "bonuses": [
       {
         "type": "ラインブレーカー",
@@ -2015,6 +2179,10 @@
     "title": "【チアフルサポート】",
     "name": "井上里奈",
     "rarity": "SR",
+    "positions": [
+      "GK"
+    ],
+    "play_style": "オーソドックスGK",
     "bonuses": [
       {
         "type": "オーソドックスGK",
@@ -2033,16 +2201,20 @@
     "stats": {
       "キック力": 3,
       "ロングパス": 3,
-      "コンタクト": 0.8,
-      "スタミナ": 2.8,
       "反応速度": 1.2,
-      "1対1": 2.2
+      "コンタクト": 0.8,
+      "1対1": 2.2,
+      "スタミナ": 2.8
     }
   },
   {
     "title": "【好きを誇りに】",
     "name": "豊永阿紀",
     "rarity": "SR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "ストッパー",
     "bonuses": [
       {
         "type": "ストッパー",
@@ -2071,6 +2243,10 @@
     "title": "【オレンジパワー】",
     "name": "相川暖花",
     "rarity": "SR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ラインブレーカー",
     "bonuses": [
       {
         "type": "ラインブレーカー",
@@ -2099,6 +2275,10 @@
     "title": "【雄弁な語り手】",
     "name": "U字工事",
     "rarity": "SR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "セントラルMF",
     "bonuses": [
       {
         "type": "セントラルMF",
@@ -2127,6 +2307,10 @@
     "title": "【ジャロロッソの砦】",
     "name": "ミロ・スヴィラール",
     "rarity": "SR",
+    "positions": [
+      "GK"
+    ],
+    "play_style": "オーソドックスGK",
     "bonuses": [
       {
         "type": "オーソドックスGK",
@@ -2143,11 +2327,11 @@
       }
     ],
     "stats": {
+      "セービング": 7.5,
       "ジャンプ": 2.5,
+      "反応速度": 1,
       "コンタクト": 1,
       "キック精度": 4.2,
-      "セービング": 7.5,
-      "反応速度": 1,
       "1対1": 1.8
     }
   },
@@ -2155,6 +2339,11 @@
     "title": "【アルビセレステのメインダイナモ】",
     "name": "アレクシス・マック・アリスター",
     "rarity": "SSR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "パサー",
     "bonuses": [
       {
         "type": "パサー",
@@ -2185,6 +2374,10 @@
     "title": "【青い支配者】",
     "name": "モイセス・カイセド",
     "rarity": "SSR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "ハードマーカー",
     "bonuses": [
       {
         "type": "ハードマーカー",
@@ -2215,6 +2408,10 @@
     "title": "【ラ・デアのジガンテ】",
     "name": "ジャンルカ・スカマッカ",
     "rarity": "SR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ポストプレーヤー",
     "bonuses": [
       {
         "type": "ポストプレーヤー",
@@ -2243,6 +2440,10 @@
     "title": "【ロヒブロンコスの番人】",
     "name": "クレマン・ラングレ",
     "rarity": "SR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "組立CB",
     "bonuses": [
       {
         "type": "組立CB",
@@ -2271,6 +2472,10 @@
     "title": "【過去を超えるハリケーン】",
     "name": "ハリー・ケイン",
     "rarity": "SSR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ストライカー",
     "bonuses": [
       {
         "type": "ストライカー",
@@ -2301,6 +2506,13 @@
     "title": "【右サイドから巻き起こすカオス】",
     "name": "デンゼル・ダンフリース",
     "rarity": "SSR",
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW"
+    ],
+    "play_style": "サイドアタッカー",
     "bonuses": [
       {
         "type": "サイドアタッカー",
@@ -2331,6 +2543,11 @@
     "title": "【情熱の若獅子】",
     "name": "コナー・ギャラガー",
     "rarity": "SR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "セントラルMF",
     "bonuses": [
       {
         "type": "セントラルMF",
@@ -2359,6 +2576,11 @@
     "title": "【ジャロロッソの賢将】",
     "name": "ロレンツォ・ペッレグリーニ",
     "rarity": "SR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "パサー",
     "bonuses": [
       {
         "type": "パサー",
@@ -2387,6 +2609,11 @@
     "title": "【我が道を行く発信者】",
     "name": "ウンパルンパ",
     "rarity": "SR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "パサー",
     "bonuses": [
       {
         "type": "パサー",
@@ -2415,6 +2642,11 @@
     "title": "【進化を続ける若き伝説】",
     "name": "ラミン・ヤマル",
     "rarity": "SSR",
+    "positions": [
+      "LW",
+      "RW"
+    ],
+    "play_style": "ドリブラー",
     "bonuses": [
       {
         "type": "WF",
@@ -2445,6 +2677,10 @@
     "title": "【ブルーガルの守護神】",
     "name": "バルト・フェルブルッヘン",
     "rarity": "SSR",
+    "positions": [
+      "GK"
+    ],
+    "play_style": "スイーパーGK",
     "bonuses": [
       {
         "type": "スイーパーGK",
@@ -2465,9 +2701,9 @@
       "ジャンプ": 1.5,
       "走力": 0.3,
       "ロングパス": 3,
+      "反応速度": 6.5,
       "コンタクト": 2.2,
       "敏捷性": 0.5,
-      "反応速度": 6.5,
       "1対1": 5
     }
   },
@@ -2475,6 +2711,10 @@
     "title": "【デンマークの爆撃機】",
     "name": "ラスムス・ホイルンド",
     "rarity": "SR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ラインブレーカー",
     "bonuses": [
       {
         "type": "ラインブレーカー",
@@ -2503,6 +2743,10 @@
     "title": "【マージーサイド・ブルーの心臓】",
     "name": "イドリッサ・ゲイェ",
     "rarity": "SR",
+    "positions": [
+      "DM"
+    ],
+    "play_style": "ハードマーカー",
     "bonuses": [
       {
         "type": "ハードマーカー",
@@ -2531,6 +2775,11 @@
     "title": "【多彩なるパリの宝石】",
     "name": "ヴィティーニャ",
     "rarity": "SSR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "セントラルMF",
     "bonuses": [
       {
         "type": "セントラルMF",
@@ -2561,6 +2810,11 @@
     "title": "【受け継がれるカテナチオの遺伝子】",
     "name": "リッカルド・カラフィオーリ",
     "rarity": "SSR",
+    "positions": [
+      "LB",
+      "RB"
+    ],
+    "play_style": "守備的FB",
     "bonuses": [
       {
         "type": "守備的FB",
@@ -2591,6 +2845,11 @@
     "title": "【ロッテルダムの疾風】",
     "name": "ジヴァイロ・リード",
     "rarity": "SR",
+    "positions": [
+      "LB",
+      "RB"
+    ],
+    "play_style": "攻撃的FB",
     "bonuses": [
       {
         "type": "攻撃的FB",
@@ -2619,6 +2878,10 @@
     "title": "【サン・セバスチャンの砦】",
     "name": "イゴール・スベルディア",
     "rarity": "SR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "組立CB",
     "bonuses": [
       {
         "type": "組立CB",
@@ -2647,7 +2910,9 @@
     "title": "【新時代の怪物】",
     "name": "キリアン・エンバペ",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "CF"
+    ],
     "play_style": "ラインブレーカー",
     "bonuses": [
       {
@@ -2679,7 +2944,9 @@
     "title": "【マドリードを統べる赤い壁】",
     "name": "ヤン・オブラク",
     "rarity": "SSR",
-    "positions": [],
+    "positions": [
+      "GK"
+    ],
     "play_style": "オーソドックスGK",
     "bonuses": [
       {
@@ -2711,7 +2978,9 @@
     "title": "【ポルトガルの赤き創造者】",
     "name": "ロドリゴ・モラ",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "AM"
+    ],
     "play_style": "アタッカー",
     "bonuses": [
       {
@@ -2741,7 +3010,10 @@
     "title": "【パレスの鉄壁フルバック】",
     "name": "ダニエル・ムニョス",
     "rarity": "SR",
-    "positions": [],
+    "positions": [
+      "LB",
+      "RB"
+    ],
     "play_style": "守備的FB",
     "bonuses": [
       {
@@ -2765,6 +3037,246 @@
       "敏捷性": 4.3,
       "キック精度": 0.2,
       "スタミナ": 4
+    }
+  },
+  {
+    "title": "",
+    "name": "オフェンス基礎トレーニング",
+    "rarity": "SSR",
+    "positions": [
+      "LM",
+      "RM",
+      "LW",
+      "RW",
+      "CF"
+    ],
+    "play_style": "ドリブラー",
+    "bonuses": [
+      {
+        "type": "ドリブラー",
+        "value": 30
+      },
+      {
+        "type": "CF",
+        "value": 10
+      },
+      {
+        "type": "WF",
+        "value": 10
+      }
+    ],
+    "bonus_type": "ドリブラー",
+    "bonus_value": 30,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "強引なフィニッシュ",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "ショートパス": 7.3,
+      "突破力": 8,
+      "走力": 3.3,
+      "キック力": 5.3,
+      "敏捷性": 5.3,
+      "ボールタッチ": 7.3
+    },
+    "growth_rate": 3
+  },
+  {
+    "title": "【香港の快速WF】",
+    "name": "李健和",
+    "rarity": "SR",
+    "positions": [],
+    "play_style": "ドリブラー",
+    "bonuses": [
+      {
+        "type": "ドリブラー",
+        "value": 20
+      }
+    ],
+    "bonus_type": "ドリブラー",
+    "bonus_value": 20,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "スピードドリブラー",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "突破力": 4.5,
+      "走力": 3.3,
+      "キープ力": 2.2,
+      "冷静さ": 3,
+      "キック精度": 2,
+      "スタミナ": 1.7
+    }
+  },
+  {
+    "title": "【香港の大砲】",
+    "name": "歐偉倫",
+    "rarity": "SR",
+    "positions": [],
+    "play_style": "ストライカー",
+    "bonuses": [
+      {
+        "type": "ストライカー",
+        "value": 20
+      }
+    ],
+    "bonus_type": "ストライカー",
+    "bonus_value": 20,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "保持からの一撃",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "決定力": 5,
+      "走力": 0.5,
+      "コンタクト": 2.5,
+      "敏捷性": 2.5,
+      "冷静さ": 3,
+      "スタミナ": 3.2
+    }
+  },
+  {
+    "title": "【ブラウ・グラーナのパスマスター】",
+    "name": "フレンキー・デ・ヨング",
+    "rarity": "SSR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "パサー",
+    "bonuses": [
+      {
+        "type": "パサー",
+        "value": 40
+      }
+    ],
+    "bonus_type": "パサー",
+    "bonus_value": 40,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "英知のパスワーク",
+        "rarity": "Gold"
+      }
+    ],
+    "stats": {
+      "ショートパス": 3.7,
+      "キック力": 0.8,
+      "ロングパス": 7.5,
+      "キープ力": 0.7,
+      "冷静さ": 5.8,
+      "キック精度": 1.8,
+      "ボールタッチ": 1.7,
+      "スタミナ": 4.7
+    }
+  },
+  {
+    "title": "【加速する巨人の翼】",
+    "name": "ヴィニシウス・ジュニオール",
+    "rarity": "SSR",
+    "positions": [
+      "LW",
+      "RW"
+    ],
+    "play_style": "",
+    "bonuses": [
+      {
+        "type": "ワイドストライカー",
+        "value": 30
+      }
+    ],
+    "bonus_type": "ワイドストライカー",
+    "bonus_value": 30,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "緩急自在のドリブラー",
+        "rarity": "Gold"
+      }
+    ],
+    "stats": {
+      "決定力": 3.7,
+      "ショートパス": 0.8,
+      "突破力": 0.3,
+      "走力": 4.7,
+      "キープ力": 5,
+      "冷静さ": 8.5,
+      "キック精度": 1.7,
+      "スタミナ": 0.3
+    }
+  },
+  {
+    "title": "【リリーホワイツのゴールゲッター】",
+    "name": "ドミニク・ソランケ",
+    "rarity": "SR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ポストプレーヤー",
+    "bonuses": [
+      {
+        "type": "ポストプレーヤー",
+        "value": 35
+      }
+    ],
+    "bonus_type": "ポストプレーヤー",
+    "bonus_value": 35,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "強靭な脚力",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "決定力": 1.7,
+      "キック力": 5.8,
+      "キープ力": 0.7,
+      "コンタクト": 5.2,
+      "敏捷性": 2.5,
+      "キック精度": 0.8
+    }
+  },
+  {
+    "title": "【ブルー・ガルの鉄人】",
+    "name": "ジェームズ・ミルナー",
+    "rarity": "SR",
+    "positions": [
+      "DM",
+      "AM"
+    ],
+    "play_style": "セントラルMF",
+    "bonuses": [
+      {
+        "type": "セントラルMF",
+        "value": 20
+      }
+    ],
+    "bonus_type": "セントラルMF",
+    "bonus_value": 20,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "走り切るロングパサー",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "ロングパス": 0.3,
+      "パスカット": 3.3,
+      "冷静さ": 0.5,
+      "ボールタッチ": 6.3,
+      "マーク": 2.5,
+      "スタミナ": 4.7
     }
   }
 ]
