@@ -3394,11 +3394,11 @@
     "play_style": "ストライカー",
     "bonuses": [
       {
-        "type": "パサー",
+        "type": "ストライカー",
         "value": 30
       }
     ],
-    "bonus_type": "パサー",
+    "bonus_type": "ストライカー",
     "bonus_value": 30,
     "special_effects": [],
     "abilities": [
