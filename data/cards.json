@@ -3383,5 +3383,41 @@
       "ボールタッチ": 0.5,
       "スタミナ": 5.8
     }
+  },
+  {
+    "title": "【コテッチャーズの巨塔】",
+    "name": "ラウル・ヒメネス",
+    "rarity": "SR",
+    "positions": [
+      "CF"
+    ],
+    "play_style": "ストライカー",
+    "bonuses": [
+      {
+        "type": "パサー",
+        "value": 30
+      }
+    ],
+    "bonus_type": "パサー",
+    "bonus_value": 30,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "懐の深いパサー",
+        "rarity": "Bronze"
+      },
+      {
+        "name": "ムービングキッカー",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "決定力": 3,
+      "ジャンプ": 4.8,
+      "コンタクト": 6.7,
+      "敏捷性": 0.8,
+      "冷静さ": 2.7,
+      "スタミナ": 0.2
+    }
   }
 ]
