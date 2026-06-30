@@ -3369,7 +3369,12 @@
     "bonus_type": "パサー",
     "bonus_value": 40,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "懐の深いパサー",
+        "rarity": "Bronze"
+      }
+    ],
     "stats": {
       "決定力": 0.2,
       "ショートパス": 2.5,
