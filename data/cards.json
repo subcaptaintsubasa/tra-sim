@@ -3471,7 +3471,12 @@
     "bonus_type": "サイドアタッカー",
     "bonus_value": 15,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "サンバシャペウ",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "決定力": 7.7,
       "突破力": 2.3,
