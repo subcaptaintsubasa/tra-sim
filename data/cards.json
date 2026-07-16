@@ -3543,5 +3543,37 @@
       "敏捷性": 2,
       "冷静さ": 2.5
     }
+  },
+  {
+    "title": "【ブーレンの攻撃FB】",
+    "name": "セルジーノ・デスト",
+    "rarity": "SSR",
+    "positions": [
+      "FB(RB/LB)"
+    ],
+    "play_style": "攻撃的FB",
+    "bonuses": [
+      {
+        "type": "攻撃的FB",
+        "value": 30
+      }
+    ],
+    "bonus_type": "攻撃的FB",
+    "bonus_value": 30,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "打開のドリブル",
+        "rarity": "Bronze"
+      }
+    ],
+    "stats": {
+      "タックル": 2.5,
+      "走力": 3,
+      "パスカット": 3.7,
+      "敏捷性": 3,
+      "キック精度": 0.3,
+      "スタミナ": 5.5
+    }
   }
 ]
