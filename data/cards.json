@@ -3415,5 +3415,42 @@
       "冷静さ": 2.7,
       "スタミナ": 0.2
     }
+  },
+  {
+    "title": "【知の探求者】",
+    "name": "影山優佳",
+    "rarity": "SSR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "組立CB",
+    "bonuses": [
+      {
+        "type": "組立CB",
+        "value": 40
+      },
+      {
+        "type": "日本",
+        "value": 10
+      }
+    ],
+    "bonus_type": "組立CB",
+    "bonus_value": 40,
+    "special_effects": [],
+    "abilities": [
+      {
+        "name": "3Dパス",
+        "rarity": "Silver"
+      }
+    ],
+    "stats": {
+      "ショートパス": 4.5,
+      "ジャンプ": 0.3,
+      "走力": 1.3,
+      "ロングパス": 3.5,
+      "冷静さ": 2,
+      "キック精度": 0.3,
+      "マーク": 4.7
+    }
   }
 ]
