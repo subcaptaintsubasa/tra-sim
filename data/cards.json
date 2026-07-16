@@ -3534,7 +3534,12 @@
     "bonus_type": "ラインブレーカー",
     "bonus_value": 30,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "狙いすました強振",
+        "rarity": "Bronze"
+      }
+    ],
     "stats": {
       "決定力": 5.8,
       "走力": 3,
