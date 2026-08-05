@@ -2739,9 +2739,23 @@ window.toggleSimSaFilterPanel = () => {
     if (panel) {
         const isOpening = panel.style.display === 'none';
         panel.style.display = isOpening ? 'block' : 'none';
-        if (btn) btn.classList.toggle('active', isOpening);
+        
+        if (btn) {
+            btn.classList.toggle('active', isOpening);
+            if (isOpening) {
+                btn.innerHTML = '<i class="fa-solid fa-xmark"></i> 閉じる';
+                btn.style.background = '#ef4444';
+                btn.style.borderColor = '#ef4444';
+                btn.style.color = '#fff';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-filter"></i> 絞り込み';
+                btn.style.background = '#334155';
+                btn.style.borderColor = '#475569';
+                btn.style.color = '#fff';
+            }
+        }
 
-        // ★絞り込みパネルが開いているときは候補枠をコンパクト表示、閉じているときは広々表示に切替
+        // 絞り込みパネルの開閉状態を要素に反映
         if (skillContainer) skillContainer.classList.toggle('compact-view', isOpening);
         if (abilityContainer) abilityContainer.classList.toggle('compact-view', isOpening);
     }
