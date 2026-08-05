@@ -1844,3 +1844,74 @@ input:disabled + .toggle-slider {
     font-size: 0.55rem;
     margin-right: 2px;
 }
+
+/* --- 必須スキル/アビ選択モーダルのレイアウト最適化 --- */
+.tag-selector-container {
+    max-height: 38vh; /* パネル閉じ時はゆったり大きく表示 */
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    background: #0f172a;
+    transition: max-height 0.2s ease;
+}
+
+/* 絞り込みパネルが開いている時のコンパクト表示 */
+.tag-selector-container.compact-view {
+    max-height: 95px;
+}
+
+/* ボタンの余白と文字サイズを最適化して1行に入る数を増加 */
+.tag-selector-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px !important;
+}
+
+.tag-selector-grid .tag-btn-select {
+    padding: 4px 8px !important;
+    font-size: 0.72rem !important;
+    border-radius: 12px !important;
+}
+
+/* --- 必須スキル/アビ選択モーダルの外枠・レイアウト最適化 --- */
+#simTargetModal .modal-content {
+    overflow: hidden !important; /* ボタンのはみ出しを防止 */
+    height: auto !important;
+    max-height: 85vh;
+    border-radius: 10px;
+}
+
+#simTargetModal .modal-body {
+    padding: 10px 12px !important;
+    overflow-y: auto;
+    flex: 1 1 auto; /* 中身に合わせて伸縮 */
+}
+
+/* 候補エリア：囲み枠と背景を削除 */
+.tag-selector-container {
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 2px 0;
+    border: none !important; /* 枠線を削除 */
+    background: transparent !important; /* 背景色を削除 */
+    transition: max-height 0.2s ease;
+}
+
+/* 絞り込みパネル開いている時の高さ調整 */
+.tag-selector-container.compact-view {
+    max-height: 120px;
+}
+
+/* タグボタンの配置 */
+.tag-selector-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px !important;
+}
+
+.tag-selector-grid .tag-btn-select {
+    padding: 4px 8px !important;
+    font-size: 0.72rem !important;
+    border-radius: 12px !important;
+}

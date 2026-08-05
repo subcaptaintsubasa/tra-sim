@@ -210,10 +210,8 @@ window.expandSelection = () => {
 // --- ターゲットボタン選択 UI ---
 
 window.updateAutoComplete = () => {
-    // 3.2. 所持のみフィルタ
     const onlyOwned = document.getElementById('chkOnlyOwnedSkills')?.checked || false;
     
-    // 所持しているスキル/アビリティのセットを作成 (ID形式: 名前::レアリティ)
     const ownedIds = new Set();
     if (onlyOwned) {
         cardsDB.forEach(c => {
@@ -223,9 +221,6 @@ window.updateAutoComplete = () => {
                     if (typeof ab === 'object') {
                         ownedIds.add(`${ab.name}::${ab.rarity}`);
                     } else {
-                        // 旧データの場合は暫定的にGold/Silver両方を候補とする
-                        // (あるいはカードレアリティから推測したものを入れるのが正確だが、
-                        // ここでは「所持している可能性があるID」として広めに取る)
                         ownedIds.add(`${ab}::Gold`);
                         ownedIds.add(`${ab}::Silver`);
                     }
@@ -234,36 +229,49 @@ window.updateAutoComplete = () => {
         });
     }
 
+    const RARITY_ORDER = { "Rainbow": 4, "Gold": 3, "Silver": 2, "Bronze": 1 };
+
     const renderButtons = (containerId, db, selectedArray, type) => {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
         
-        db.forEach(item => {
-            // 未更新データ(rarityなし)はGoldとして扱う
+        const isSkill = (type === 'skill');
+
+        // ★レアリティ降順 (Rainbow > Gold > Silver > Bronze) ソート
+        const sortedDb = [...db].sort((a, b) => {
+            const rA = RARITY_ORDER[a.rarity || 'Gold'] || 0;
+            const rB = RARITY_ORDER[b.rarity || 'Gold'] || 0;
+            if (rA !== rB) return rB - rA;
+            return a.name.localeCompare(b.name, 'ja');
+        });
+
+        let count = 0;
+        sortedDb.forEach(item => {
             const r = item.rarity || 'Gold';
             const saId = `${item.name}::${r}`;
             
             if (onlyOwned && !ownedIds.has(saId)) return;
+            if (!checkSaMatchesSimFilter(item, isSkill)) return; // ★S/A単体フィルタ
 
+            count++;
             const btn = document.createElement('button');
             const isSelected = selectedArray.includes(saId);
             
-            // レアリティクラス
-            const rarityClass = `sa-${r.toLowerCase()}`;
             const selectedClass = type === 'skill' ? 'selected-skill' : 'selected-ability';
-            
             btn.className = `tag-btn-select ${isSelected ? selectedClass : ''}`;
             
-            // レアリティ色
-const rarityColor = r === 'Rainbow' ? '#ec4899' : (r === 'Silver' ? '#cbd5e1' : (r === 'Bronze' ? '#d97706' : '#fbbf24'));
+            const rarityColor = r === 'Rainbow' ? '#ec4899' : (r === 'Silver' ? '#cbd5e1' : (r === 'Bronze' ? '#d97706' : '#fbbf24'));
             btn.style.borderLeft = `4px solid ${rarityColor}`;
             
-            // 頭文字 (G, S, B) と名前
-btn.innerHTML = `<span style="font-size:0.6rem; opacity:0.7; margin-right:3px;">${r[0]}</span>${item.name}`;
+            btn.innerHTML = `<span style="font-size:0.6rem; opacity:0.7; margin-right:3px;">${r[0]}</span>${item.name}`;
             btn.onclick = () => toggleTarget(type, saId);
             container.appendChild(btn);
         });
+
+        if (count === 0) {
+            container.innerHTML = '<div style="font-size:0.75rem; color:#64748b; padding:5px;">該当なし</div>';
+        }
     };
 
     renderButtons('skillTargetContainer', skillsDB, selectedTargetSkills, 'skill');
@@ -274,6 +282,9 @@ btn.innerHTML = `<span style="font-size:0.6rem; opacity:0.7; margin-right:3px;">
         l.innerHTML = ''; 
         [...skillsDB,...abilitiesDB].forEach(i => l.innerHTML += `<option value="${i.name}">`); 
     }
+
+    // ★メイン画面サマリーバッジの更新
+    renderSimTargetSummaryBadges();
 };
 
 function toggleTarget(type, saId) {
@@ -2562,4 +2573,199 @@ window.selectNation = (nation) => {
 
 window.initNationSelect = () => {
     selectNation(selectedNation || '');
+};
+
+// --- シミュレーター必須項目 サマリーバッジ描画 ---
+window.renderSimTargetSummaryBadges = () => {
+    const container = document.getElementById('simTargetBadges');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const allTargets = [
+        ...selectedTargetSkills.map(id => ({ id, type: 'skill' })),
+        ...selectedTargetAbilities.map(id => ({ id, type: 'ability' }))
+    ];
+
+    if (allTargets.length === 0) {
+        container.innerHTML = '<span style="font-size:0.75rem; color:#64748b;">(指定なし)</span>';
+        return;
+    }
+
+    allTargets.forEach(item => {
+        const [name, rarity] = item.id.split('::');
+        const isS = (item.type === 'skill');
+        const badge = document.createElement('span');
+        const rarityClass = `sa-${rarity.toLowerCase()}`;
+        badge.className = `tag`;
+        badge.style.cssText = 'background:#1e293b; border:1px solid #334155; color:#fff; padding:4px 8px; font-size:0.75rem; display:inline-flex; align-items:center; gap:5px;';
+        badge.innerHTML = `
+            <span class="sa-badge ${rarityClass}">${isS?'S':'A'}</span>
+            <span>${name}</span>
+            <i class="fa-solid fa-xmark" style="cursor:pointer; color:#ef4444;" onclick="toggleTarget('${item.type}', '${item.id}')"></i>
+        `;
+        container.appendChild(badge);
+    });
+};
+
+// --- シミュレーター用 必須項目指定 タブ＆モーダル制御 ---
+let currentSimTargetTab = 'skill'; // 'skill' or 'ability'
+
+window.switchSimTargetTab = (type) => {
+    currentSimTargetTab = type;
+    
+    // タブハイライト
+    const btnSkill = document.getElementById('tabBtnSimSkill');
+    const btnAbility = document.getElementById('tabBtnSimAbility');
+    if (btnSkill) btnSkill.classList.toggle('active', type === 'skill');
+    if (btnAbility) btnAbility.classList.toggle('active', type === 'ability');
+
+    // リストコンテンツ表示切り替え
+    const skillContent = document.getElementById('simTargetSkillTabContent');
+    const abilityContent = document.getElementById('simTargetAbilityTabContent');
+    if (skillContent) skillContent.style.display = (type === 'skill') ? 'block' : 'none';
+    if (abilityContent) abilityContent.style.display = (type === 'ability') ? 'block' : 'none';
+
+    // 絞り込みパネル内のグループ表示切り替え
+    const stGroup = document.getElementById('simSaSkillTypeGroup');
+    const cdGroup = document.getElementById('simSaCondGroup');
+    if (stGroup) stGroup.style.display = (type === 'skill') ? 'block' : 'none';
+    if (cdGroup) cdGroup.style.display = (type === 'ability') ? 'block' : 'none';
+
+    updateAutoComplete();
+};
+
+window.openSimTargetModal = () => {
+    initSimSaFilterContainers();
+    switchSimTargetTab(currentSimTargetTab);
+    document.getElementById('simTargetModal').style.display = 'flex';
+};
+
+window.closeSimTargetModal = () => {
+    document.getElementById('simTargetModal').style.display = 'none';
+};
+
+// 旧関数互換エイリアス
+window.openMobileTargetModal = window.openSimTargetModal;
+window.closeMobileTargetModal = window.closeSimTargetModal;
+
+// --- S/A単体 絞り込みロジック ---
+let simSaFilter = {
+    rarities: [],
+    skillTypes: [],
+    conditions: [],
+    targetStats: []
+};
+
+function checkSaMatchesSimFilter(item, isSkill) {
+    const r = item.rarity || 'Gold';
+
+    if (simSaFilter.rarities.length > 0 && !simSaFilter.rarities.includes(r)) return false;
+
+    if (isSkill && simSaFilter.skillTypes.length > 0) {
+        if (!item.skill_type || !simSaFilter.skillTypes.includes(item.skill_type)) return false;
+    }
+
+    if (!isSkill && simSaFilter.conditions.length > 0) {
+        if (!item.condition || !simSaFilter.conditions.includes(item.condition)) return false;
+    }
+
+    if (simSaFilter.targetStats.length > 0) {
+        let statsInSa = [];
+        if (isSkill && item.params) {
+            statsInSa = item.params.map(p => p.stat);
+        } else if (!isSkill && item.targets) {
+            statsInSa = item.targets;
+        }
+        const hasStat = simSaFilter.targetStats.some(st => statsInSa.includes(st));
+        if (!hasStat) return false;
+    }
+
+    return true;
+}
+
+function initSimSaFilterContainers() {
+    // スキルタイプ
+    const stSet = new Set();
+    skillsDB.forEach(s => { if (s.skill_type) stSet.add(s.skill_type); });
+    const stContainer = document.getElementById('simSaSkillTypeContainer');
+    if (stContainer && stContainer.children.length === 0) {
+        Array.from(stSet).forEach((st, idx) => {
+            const id = `ssast_${idx}`;
+            const div = document.createElement('div');
+            div.className = 'chk-btn';
+            div.innerHTML = `<input type="checkbox" name="sim_sast" value="${st}" id="${id}" onchange="applySimSaFilter()"><label for="${id}">${st}</label>`;
+            stContainer.appendChild(div);
+        });
+    }
+
+    // 発動条件
+    const cdSet = new Set();
+    abilitiesDB.forEach(a => { if (a.condition) cdSet.add(a.condition); });
+    const cdContainer = document.getElementById('simSaCondContainer');
+    if (cdContainer && cdContainer.children.length === 0) {
+        Array.from(cdSet).forEach((cd, idx) => {
+            const id = `ssacd_${idx}`;
+            const div = document.createElement('div');
+            div.className = 'chk-btn';
+            div.innerHTML = `<input type="checkbox" name="sim_sacd" value="${cd}" id="${id}" onchange="applySimSaFilter()"><label for="${id}">${cd}</label>`;
+            cdContainer.appendChild(div);
+        });
+    }
+
+    // 上昇パラメータ
+    const paramContainer = document.getElementById('simSaParamContainer');
+    if (paramContainer && paramContainer.children.length === 0) {
+        const order = [
+            "決定力", "ショートパス", "突破力", "タックル", "セービング", "ジャンプ", "走力",
+            "キック力", "ロングパス", "キープ力", "パスカット", "反応速度", "コンタクト", "敏捷性",
+            "冷静さ", "キック精度", "ボールタッチ", "マーク", "1対1", "スタミナ"
+        ];
+        order.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'chk-btn param';
+            const id = `ssap_${s}`;
+            div.innerHTML = `<input type="checkbox" name="sim_saparam" value="${s}" id="${id}" onchange="applySimSaFilter()"><label for="${id}">${s}</label>`;
+            paramContainer.appendChild(div);
+        });
+    }
+}
+
+window.toggleSimSaFilterPanel = () => {
+    const panel = document.getElementById('simSaFilterPanel');
+    const btn = document.getElementById('btnToggleSimSaFilter');
+    const skillContainer = document.getElementById('skillTargetContainer');
+    const abilityContainer = document.getElementById('abilityTargetContainer');
+
+    if (panel) {
+        const isOpening = panel.style.display === 'none';
+        panel.style.display = isOpening ? 'block' : 'none';
+        if (btn) btn.classList.toggle('active', isOpening);
+
+        // ★絞り込みパネルが開いているときは候補枠をコンパクト表示、閉じているときは広々表示に切替
+        if (skillContainer) skillContainer.classList.toggle('compact-view', isOpening);
+        if (abilityContainer) abilityContainer.classList.toggle('compact-view', isOpening);
+    }
+};
+
+window.applySimSaFilter = () => {
+    const getChecks = (name) => {
+        const arr = [];
+        document.querySelectorAll(`input[name="${name}"]:checked`).forEach(el => arr.push(el.value));
+        return arr;
+    };
+
+    simSaFilter = {
+        rarities: getChecks('sim_sar'),
+        skillTypes: getChecks('sim_sast'),
+        conditions: getChecks('sim_sacd'),
+        targetStats: getChecks('sim_saparam')
+    };
+
+    updateAutoComplete();
+};
+
+window.resetSimSaFilter = () => {
+    document.querySelectorAll('#simSaFilterPanel input[type="checkbox"]').forEach(el => el.checked = false);
+    simSaFilter = { rarities: [], skillTypes: [], conditions: [], targetStats: [] };
+    updateAutoComplete();
 };
