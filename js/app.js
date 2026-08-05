@@ -11,20 +11,30 @@ var substituteSearch = {
 };
 
 // フィルタ条件
+// フィルタ条件
 var dbFilter = { 
     text: '', 
     rarity: { SSR: true, SR: true }, 
     ownedOnly: false,
-    hasSkill: false,
-    hasAbility: false,
-    hasSpecial: false,
+    hasSkill: true,     // ★デフォルトONに統一
+    hasAbility: true,   // ★デフォルトONに統一
+    hasSpecial: true,   // ★デフォルトONに統一
     skillText: '',
     pos: [], 
     style: [], 
     params: [], 
     paramLogic: 'OR',
     sortParams: [],
-    useMyLevel: false
+    useMyLevel: false,
+    // ★スキル・アビリティ詳細フィルタ条件
+    saDetail: {
+        active: false,
+        type: 'all',          // 'all', 'skill', 'ability'
+        rarities: [],
+        skillTypes: [],
+        conditions: [],
+        targetStats: []
+    }
 };
 
 // 比較トレイ
@@ -313,24 +323,23 @@ window.clearSearch = () => {
 };
 
 window.resetFilters = () => {
-    // 1. フィルタ条件変数の初期化
     dbFilter = { 
         text: '', 
         rarity: { SSR: true, SR: true }, 
         ownedOnly: false,
-        hasSkill: false,
-        hasAbility: false,
-        hasSpecial: false,
+        hasSkill: true,     // ★デフォルトON
+        hasAbility: true,   // ★デフォルトON
+        hasSpecial: true,   // ★デフォルトON
         skillText: '',
         pos: [], 
         style: [], 
         params: [], 
         paramLogic: 'OR',
         sortParams: [],
-        useMyLevel: false
+        useMyLevel: false,
+        saDetail: { active: false, type: 'all', rarities: [], skillTypes: [], conditions: [], targetStats: [] }
     };
 
-    // 2. 検索バーの表示リセット
     const searchEl = document.getElementById('globalSearch');
     if (searchEl) {
         searchEl.value = '';
@@ -338,20 +347,18 @@ window.resetFilters = () => {
         if(clrBtn) clrBtn.style.display = 'none';
     }
 
-    // 3. モーダル内のUI要素(チェックボックス等)を初期状態に戻す
-    // 全てのチェックボックスをOFF
     document.querySelectorAll('#filterModal input[type="checkbox"]').forEach(el => {
         el.checked = false;
     });
-    // 初期値がONのものを設定
     if(document.getElementById('f_rar_SSR')) document.getElementById('f_rar_SSR').checked = true;
     if(document.getElementById('f_rar_SR')) document.getElementById('f_rar_SR').checked = true;
+    if(document.getElementById('f_has_skill')) document.getElementById('f_has_skill').checked = true;
+    if(document.getElementById('f_has_ability')) document.getElementById('f_has_ability').checked = true;
+    if(document.getElementById('f_has_special')) document.getElementById('f_has_special').checked = true;
     
-    // ラジオボタンをORに戻す
     const radioOr = document.querySelector('input[name="f_logic"][value="OR"]');
     if(radioOr) radioOr.checked = true;
 
-    // 4. リスト再描画
     renderDatabase();
 };
 // --- js/app.js ---
@@ -388,9 +395,10 @@ window.renderDatabase = () => {
         if(currentMode === 'mycards') badges.push("モード: 所持/育成");
         if(isSelectMode) badges.push("★ 選択モード中");
         if(dbFilter.ownedOnly) badges.push("所持のみ");
-        if(dbFilter.hasSkill) badges.push("スキル所持");
-        if(dbFilter.hasAbility) badges.push("アビリティ所持");
-        if(dbFilter.hasSpecial) badges.push("覚醒Pt所持");
+        if(!dbFilter.hasSkill) badges.push("スキル除外");
+        if(!dbFilter.hasAbility) badges.push("アビリティ除外");
+        if(!dbFilter.hasSpecial) badges.push("覚醒Pt除外");
+        if(dbFilter.saDetail && dbFilter.saDetail.active) badges.push("⚙ S/A詳細設定あり");
         if(dbFilter.skillText) badges.push(`Skill:"${dbFilter.skillText}"`);
         if(dbFilter.pos.length) badges.push(`Pos:${dbFilter.pos.join(',')}`);
         if(dbFilter.style.length) badges.push(`Style:${dbFilter.style.join(',')}`);
@@ -399,7 +407,6 @@ window.renderDatabase = () => {
         afDiv.innerHTML += badges.map(l => `<span class="tag" style="background:#334155;">${l}</span>`).join('');
     }
 
-    // ヘルパー: スキル名を取り出す
     const getSaName = (item) => (typeof item === 'object' && item !== null) ? item.name : item;
 
     const list = cardsDB.map((card, idx) => {
@@ -416,9 +423,20 @@ window.renderDatabase = () => {
         if (!dbFilter.rarity[card.rarity]) return null;
         if (dbFilter.ownedOnly && !isOwned) return null;
 
-        if (dbFilter.hasSkill && !(card.abilities || []).some(a => skillsDB.some(s => s.name === getSaName(a)))) return null;
-        if (dbFilter.hasAbility && !(card.abilities || []).some(a => abilitiesDB.some(ab => ab.name === getSaName(a)))) return null;
-        if (dbFilter.hasSpecial && !(card.special_effects && card.special_effects.some(se => se.type === '覚醒Pt'))) return null;
+        // ★所持要素の統一チェック判定（フラグがOFFの場合は該当要素を持つカードを除外）
+        const cardHasSkill = (card.abilities || []).some(a => skillsDB.some(s => s.name === getSaName(a)));
+        const cardHasAbility = (card.abilities || []).some(a => abilitiesDB.some(ab => ab.name === getSaName(a)));
+        const cardHasSpecial = !!(card.special_effects && card.special_effects.some(se => se.type === '覚醒Pt'));
+
+        if (!dbFilter.hasSkill && cardHasSkill) return null;
+        if (!dbFilter.hasAbility && cardHasAbility) return null;
+        if (!dbFilter.hasSpecial && cardHasSpecial) return null;
+
+        // ★S/A詳細フィルタ判定
+        if (dbFilter.saDetail && dbFilter.saDetail.active) {
+            if (!checkCardMatchesSaDetail(card, dbFilter.saDetail)) return null;
+        }
+
         if (dbFilter.skillText && !(card.abilities || []).some(a => getSaName(a).toLowerCase().includes(dbFilter.skillText))) return null;
 
         if (dbFilter.pos.length > 0 || dbFilter.style.length > 0) {
@@ -451,16 +469,14 @@ window.renderDatabase = () => {
         let sortScore = 0;
         let substScore = 0;
 
-        // 代用検索処理
         if (substituteSearch.active && substituteSearch.targetCard) {
             if (substituteSearch.ownedOnly && !isOwned) return null;
-            // 検索元自身は除外する
             if (key === substituteSearch.targetCard.key) return null;
 
             const targetObj = { original: card, key: key, level: (userData.level || (card.rarity==='SSR'?50:45)) };
             substScore = calculateSubstituteScore(substituteSearch.targetCard, targetObj, substituteSearch.criteria, substituteSearch.useBonus);
             
-            if (substScore <= 0) return null; // 0%は非表示にする
+            if (substScore <= 0) return null;
         } else if (dbFilter.sortParams.length > 0) {
             if (dbFilter.useMyLevel && !isOwned) {
                 sortScore = 0;
@@ -481,7 +497,7 @@ window.renderDatabase = () => {
     // Sort Logic
     list.sort((a, b) => {
         if (substituteSearch.active) {
-            return b.substScore - a.substScore; // 代用検索はスコア降順
+            return b.substScore - a.substScore;
         }
         if (currentMode === 'mycards') {
             if (a.isOwned !== b.isOwned) return b.isOwned - a.isOwned;
@@ -532,7 +548,6 @@ window.renderDatabase = () => {
                 displayStats = Object.entries(stats).sort(([,a], [,b]) => b - a).slice(0, 3).map(([k,v]) => `${k}:${(v/10).toFixed(0)}`);
             }
             
-            // Skill Tag Generation
             const skillsHtml = (c.abilities || []).map(ab => {
                 let name, rarity;
                 if (typeof ab === 'object' && ab !== null) {
@@ -545,7 +560,7 @@ window.renderDatabase = () => {
                 const isSkill = !!skillsDB.find(s => s.name === name);
                 const typeChar = isSkill ? 'S' : 'A';
                 const typeClass = isSkill ? 'type-S' : 'type-A';
-const borderClass = rarity === 'Rainbow' ? 'bd-rainbow' : (rarity === 'Silver' ? 'bd-silver' : (rarity === 'Bronze' ? 'bd-bronze' : 'bd-gold'));
+                const borderClass = rarity === 'Rainbow' ? 'bd-rainbow' : (rarity === 'Silver' ? 'bd-silver' : (rarity === 'Bronze' ? 'bd-bronze' : 'bd-gold'));
 
                 return `<div class="skill-tag-chip ${borderClass}"><span class="skill-type-icon ${typeClass}">${typeChar}</span>${name}</div>`;
             }).join('');
@@ -1956,4 +1971,191 @@ window.closeInfoAnnounceModal = () => {
         localStorage.setItem('tra_read_info_id', infoDB.id);
     }
     document.getElementById('infoAnnounceModal').style.display = 'none';
+};
+
+// --- スキル・アビリティ詳細判定ロジック ---
+function checkCardMatchesSaDetail(card, saDetail) {
+    if (!saDetail || !saDetail.active) return true;
+    if (!card.abilities || card.abilities.length === 0) return false;
+
+    return card.abilities.some(ab => {
+        const saName = (typeof ab === 'object' && ab !== null) ? ab.name : ab;
+        const saRarity = (typeof ab === 'object' && ab !== null) ? ab.rarity : (card.rarity === 'SSR' ? 'Gold' : 'Silver');
+
+        const sObj = skillsDB.find(s => s.name === saName && (!s.rarity || s.rarity === saRarity));
+        const aObj = abilitiesDB.find(a => a.name === saName && (!a.rarity || a.rarity === saRarity));
+        const isSkill = !!sObj;
+
+        // 1. 区分チェック ('all', 'skill', 'ability')
+        if (saDetail.type === 'skill' && !isSkill) return false;
+        if (saDetail.type === 'ability' && isSkill) return false;
+
+        // 2. レアリティチェック
+        if (saDetail.rarities.length > 0 && !saDetail.rarities.includes(saRarity)) return false;
+
+        // 3. スキルタイプチェック
+        if (saDetail.skillTypes.length > 0) {
+            if (!isSkill || !sObj.skill_type || !saDetail.skillTypes.includes(sObj.skill_type)) return false;
+        }
+
+        // 4. アビリティ発動条件チェック
+        if (saDetail.conditions.length > 0) {
+            if (isSkill || !aObj.condition || !saDetail.conditions.includes(aObj.condition)) return false;
+        }
+
+        // 5. 上昇パラメータ項目チェック
+        if (saDetail.targetStats.length > 0) {
+            let statsInSa = [];
+            if (isSkill && sObj.params) {
+                statsInSa = sObj.params.map(p => p.stat);
+            } else if (!isSkill && aObj.targets) {
+                statsInSa = aObj.targets;
+            }
+            const hasStat = saDetail.targetStats.some(st => statsInSa.includes(st));
+            if (!hasStat) return false;
+        }
+
+        return true;
+    });
+}
+
+// --- S/A詳細モーダル UI制御 ---
+window.openSaDetailFilterModal = () => {
+    const modal = document.getElementById('saDetailFilterModal');
+    if (!modal) return;
+
+    // 1. スキルタイプの動的生成
+    const skillTypesSet = new Set();
+    skillsDB.forEach(s => { if (s.skill_type) skillTypesSet.add(s.skill_type); });
+    const stContainer = document.getElementById('sadSkillTypeContainer');
+    if (stContainer) {
+        stContainer.innerHTML = '';
+        Array.from(skillTypesSet).forEach((st, idx) => {
+            const id = `sadt_${idx}`;
+            const div = document.createElement('div');
+            div.className = 'chk-btn';
+            div.innerHTML = `<input type="checkbox" name="sad_stype" value="${st}" id="${id}"><label for="${id}">${st}</label>`;
+            stContainer.appendChild(div);
+        });
+    }
+
+    // 2. アビリティ条件の動的生成
+    const condSet = new Set();
+    abilitiesDB.forEach(a => { if (a.condition) condSet.add(a.condition); });
+    const condContainer = document.getElementById('sadConditionContainer');
+    if (condContainer) {
+        condContainer.innerHTML = '';
+        Array.from(condSet).forEach((cd, idx) => {
+            const id = `sadc_${idx}`;
+            const div = document.createElement('div');
+            div.className = 'chk-btn';
+            div.innerHTML = `<input type="checkbox" name="sad_cond" value="${cd}" id="${id}"><label for="${id}">${cd}</label>`;
+            condContainer.appendChild(div);
+        });
+    }
+
+    // 3. 上昇パラメータ項目の生成 (全20項目)
+    const paramContainer = document.getElementById('sadTargetParamContainer');
+    if (paramContainer) {
+        paramContainer.innerHTML = '';
+        const order = [
+            "決定力", "ショートパス", "突破力", "タックル", "セービング", "ジャンプ", "走力",
+            "キック力", "ロングパス", "キープ力", "パスカット", "反応速度", "コンタクト", "敏捷性",
+            "冷静さ", "キック精度", "ボールタッチ", "マーク", "1対1", "スタミナ"
+        ];
+        order.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'chk-btn param';
+            const id = `sadp_${s}`;
+            div.innerHTML = `<input type="checkbox" name="sad_param" value="${s}" id="${id}"><label for="${id}">${s}</label>`;
+            paramContainer.appendChild(div);
+        });
+    }
+
+    // 4. 保存済み状態の復元
+    const sad = dbFilter.saDetail || { type: 'all', rarities: [], skillTypes: [], conditions: [], targetStats: [] };
+    setSaDetailType(sad.type || 'all');
+
+    const setChecks = (name, vals) => {
+        document.querySelectorAll(`input[name="${name}"]`).forEach(el => {
+            el.checked = vals.includes(el.value);
+        });
+    };
+    setChecks('sad_rarity', sad.rarities);
+    setChecks('sad_stype', sad.skillTypes);
+    setChecks('sad_cond', sad.conditions);
+    setChecks('sad_param', sad.targetStats);
+
+    modal.style.display = 'flex';
+};
+
+window.closeSaDetailFilterModal = () => {
+    document.getElementById('saDetailFilterModal').style.display = 'none';
+};
+
+window.setSaDetailType = (type) => {
+    ['btnSaTypeAll', 'btnSaTypeSkill', 'btnSaTypeAbility'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.remove('active');
+    });
+    const activeBtnMap = { 'all': 'btnSaTypeAll', 'skill': 'btnSaTypeSkill', 'ability': 'btnSaTypeAbility' };
+    const activeBtn = document.getElementById(activeBtnMap[type]);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // 表示エリアの制御
+    const stGrp = document.getElementById('sadSkillTypeGroup');
+    const cdGrp = document.getElementById('sadConditionGroup');
+    
+    if (type === 'all') {
+        // ★「すべて」の場合: レアリティ選択と上昇パラメータ項目のみ表示
+        if (stGrp) stGrp.style.display = 'none';
+        if (cdGrp) cdGrp.style.display = 'none';
+    } else if (type === 'skill') {
+        // ★「スキル(S)のみ」の場合: スキルの種類を表示、発動条件は隠す
+        if (stGrp) stGrp.style.display = 'block';
+        if (cdGrp) cdGrp.style.display = 'none';
+    } else if (type === 'ability') {
+        // ★「アビリティ(A)のみ」の場合: 発動条件を表示、スキルの種類は隠す
+        if (stGrp) stGrp.style.display = 'none';
+        if (cdGrp) cdGrp.style.display = 'block';
+    }
+
+    if (!dbFilter.saDetail) dbFilter.saDetail = {};
+    dbFilter.saDetail.tempType = type;
+};
+
+window.applySaDetailFilter = () => {
+    const getChecks = (name) => {
+        const arr = [];
+        document.querySelectorAll(`input[name="${name}"]:checked`).forEach(el => arr.push(el.value));
+        return arr;
+    };
+
+    const type = (dbFilter.saDetail && dbFilter.saDetail.tempType) ? dbFilter.saDetail.tempType : 'all';
+    const rarities = getChecks('sad_rarity');
+    const skillTypes = getChecks('sad_stype');
+    const conditions = getChecks('sad_cond');
+    const targetStats = getChecks('sad_param');
+
+    const hasAnyFilter = (type !== 'all') || (rarities.length > 0) || (skillTypes.length > 0) || (conditions.length > 0) || (targetStats.length > 0);
+
+    dbFilter.saDetail = {
+        active: hasAnyFilter,
+        type: type,
+        rarities: rarities,
+        skillTypes: skillTypes,
+        conditions: conditions,
+        targetStats: targetStats
+    };
+
+    renderDatabase();
+    closeSaDetailFilterModal();
+};
+
+window.resetSaDetailFilter = () => {
+    document.querySelectorAll('#saDetailFilterModal input[type="checkbox"]').forEach(el => el.checked = false);
+    setSaDetailType('all');
+    dbFilter.saDetail = { active: false, type: 'all', rarities: [], skillTypes: [], conditions: [], targetStats: [] };
+    renderDatabase();
+    closeSaDetailFilterModal();
 };

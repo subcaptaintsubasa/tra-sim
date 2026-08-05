@@ -608,15 +608,20 @@
                     </div>
                 </div>
 
-                <!-- スキル/アビリティ所持 -->
-                <div class="filter-group">
-                    <div class="filter-group-title">習得スキル・特殊効果</div>
-                    <div class="filter-chips">
-                        <div class="chk-btn"><input type="checkbox" id="f_has_skill"><label for="f_has_skill">スキル所持</label></div>
-                        <div class="chk-btn"><input type="checkbox" id="f_has_ability"><label for="f_has_ability">アビリティ所持</label></div>
-                        <div class="chk-btn"><input type="checkbox" id="f_has_special"><label for="f_has_special">覚醒Pt所持</label></div>
-                    </div>
-                </div>
+                <!-- スキル/アビリティ所持 & 詳細ボタン -->
+<div class="filter-group">
+    <div class="filter-group-title">
+        <span>習得スキル・特殊効果</span>
+        <button class="btn btn-sm" style="width:auto; font-size:0.75rem; background:var(--primary); color:#000; padding:4px 10px; font-weight:bold;" onclick="openSaDetailFilterModal()">
+            <i class="fa-solid fa-sliders"></i> 詳細設定
+        </button>
+    </div>
+    <div class="filter-chips">
+        <div class="chk-btn"><input type="checkbox" id="f_has_skill" checked><label for="f_has_skill">スキル所持</label></div>
+        <div class="chk-btn"><input type="checkbox" id="f_has_ability" checked><label for="f_has_ability">アビリティ所持</label></div>
+        <div class="chk-btn"><input type="checkbox" id="f_has_special" checked><label for="f_has_special">覚醒Pt所持</label></div>
+    </div>
+</div>
 
                 <!-- ポジション & スタイル -->
                 <div class="filter-group">
@@ -1004,6 +1009,62 @@
         </div>
         <div class="modal-body" id="simNationModalBody" style="padding:15px; overflow-y:auto; flex:1;">
             <!-- JSで動的に国ボタンが生成されます -->
+        </div>
+    </div>
+</div>
+
+<!-- スキル・アビリティ詳細絞り込みモーダル -->
+<div id="saDetailFilterModal" class="modal-overlay" style="display:none; z-index:2400;">
+    <div class="modal-content" style="max-width: 480px; max-height:85vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+            <h4><i class="fa-solid fa-sliders"></i> スキル/アビリティ詳細絞り込み</h4>
+            <button class="btn-close" onclick="closeSaDetailFilterModal()">×</button>
+        </div>
+        <div class="modal-body" style="padding:15px; overflow-y:auto; flex:1;">
+            
+            <!-- 1. 区分選択 -->
+            <div class="filter-group">
+                <div class="filter-group-title">対象区分</div>
+                <div class="sim-mode-group">
+                    <button class="sim-mode-btn active" id="btnSaTypeAll" onclick="setSaDetailType('all')">すべて</button>
+                    <button class="sim-mode-btn" id="btnSaTypeSkill" onclick="setSaDetailType('skill')">スキル(S)のみ</button>
+                    <button class="sim-mode-btn" id="btnSaTypeAbility" onclick="setSaDetailType('ability')">アビリティ(A)のみ</button>
+                </div>
+            </div>
+
+            <!-- 2. レアリティ -->
+            <div class="filter-group">
+                <div class="filter-group-title">レアリティ</div>
+                <div class="filter-chips">
+                    <div class="chk-btn"><input type="checkbox" name="sad_rarity" value="Rainbow" id="sadr_rainbow"><label for="sadr_rainbow">虹</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="sad_rarity" value="Gold" id="sadr_gold"><label for="sadr_gold">金</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="sad_rarity" value="Silver" id="sadr_silver"><label for="sadr_silver">銀</label></div>
+                    <div class="chk-btn"><input type="checkbox" name="sad_rarity" value="Bronze" id="sadr_bronze"><label for="sadr_bronze">銅</label></div>
+                </div>
+            </div>
+
+            <!-- 3. スキルの種類 (スキルタイプ) -->
+            <div class="filter-group" id="sadSkillTypeGroup">
+                <div class="filter-group-title">スキルの種類 (スキルタイプ)</div>
+                <div id="sadSkillTypeContainer" class="filter-grid-compact" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px;"></div>
+            </div>
+
+            <!-- 4. アビリティ発動条件 -->
+            <div class="filter-group" id="sadConditionGroup">
+                <div class="filter-group-title">アビリティ発動条件</div>
+                <div id="sadConditionContainer" class="filter-grid-compact" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:5px;"></div>
+            </div>
+
+            <!-- 5. 上昇パラメータ項目 -->
+            <div class="filter-group">
+                <div class="filter-group-title">上昇パラメータ項目</div>
+                <div id="sadTargetParamContainer" class="filter-grid-params"></div>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button class="btn" style="background:#444;" onclick="resetSaDetailFilter()">クリア</button>
+            <button class="btn btn-primary" onclick="applySaDetailFilter()">決定</button>
         </div>
     </div>
 </div>
