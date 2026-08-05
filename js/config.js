@@ -153,6 +153,7 @@ const GITHUB_REPO = 'subcaptaintsubasa/tra-sim';
 
 // アビリティ成長テーブル (インデックス0=Lv1 ... 4=Lv5)
 const ABILITY_GROWTH_TABLE = {
+    "Rainbow": [38, 45, 53, 63, 75],
     "Gold":   [32, 38, 44, 53, 63],
     "Silver": [30, 36, 42, 50, 60],
     "Bronze": [23, 27, 32, 38, 45]

@@ -545,7 +545,7 @@ window.renderDatabase = () => {
                 const isSkill = !!skillsDB.find(s => s.name === name);
                 const typeChar = isSkill ? 'S' : 'A';
                 const typeClass = isSkill ? 'type-S' : 'type-A';
-                const borderClass = rarity === 'Silver' ? 'bd-silver' : (rarity === 'Bronze' ? 'bd-bronze' : 'bd-gold');
+const borderClass = rarity === 'Rainbow' ? 'bd-rainbow' : (rarity === 'Silver' ? 'bd-silver' : (rarity === 'Bronze' ? 'bd-bronze' : 'bd-gold'));
 
                 return `<div class="skill-tag-chip ${borderClass}"><span class="skill-type-icon ${typeClass}">${typeChar}</span>${name}</div>`;
             }).join('');
@@ -1236,7 +1236,7 @@ window.updateComparisonTable = () => {
             
             const isSkill = !!skillsDB.find(k => k.name === name);
             const tagClass = isSkill ? 'tag-skill' : 'tag-ability';
-            const borderCol = rarity === 'Silver' ? '#cbd5e1' : (rarity === 'Bronze' ? '#d97706' : '#fbbf24');
+const borderCol = rarity === 'Rainbow' ? '#ec4899' : (rarity === 'Silver' ? '#cbd5e1' : (rarity === 'Bronze' ? '#d97706' : '#fbbf24'));
             
             return `<div class="tag ${tagClass}" style="margin-bottom:3px; border-left:3px solid ${borderCol}; text-align:left; font-size:0.6rem; padding:2px 4px;">${name}</div>`;
         }).join('');

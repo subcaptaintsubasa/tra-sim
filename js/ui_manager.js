@@ -255,11 +255,11 @@ window.updateAutoComplete = () => {
             btn.className = `tag-btn-select ${isSelected ? selectedClass : ''}`;
             
             // レアリティ色
-            const rarityColor = r === 'Silver' ? '#cbd5e1' : (r === 'Bronze' ? '#d97706' : '#fbbf24');
+const rarityColor = r === 'Rainbow' ? '#ec4899' : (r === 'Silver' ? '#cbd5e1' : (r === 'Bronze' ? '#d97706' : '#fbbf24'));
             btn.style.borderLeft = `4px solid ${rarityColor}`;
             
             // 頭文字 (G, S, B) と名前
-            btn.innerHTML = `<span style="font-size:0.6rem; opacity:0.7; margin-right:3px;">${r[0]}</span>${item.name}`;
+btn.innerHTML = `<span style="font-size:0.6rem; opacity:0.7; margin-right:3px;">${r[0]}</span>${item.name}`;
             btn.onclick = () => toggleTarget(type, saId);
             container.appendChild(btn);
         });
