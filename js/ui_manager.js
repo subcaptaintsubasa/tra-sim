@@ -2737,8 +2737,8 @@ window.toggleSimSaFilterPanel = () => {
     const abilityContainer = document.getElementById('abilityTargetContainer');
 
     if (panel) {
-        const isOpening = panel.style.display === 'none';
-        panel.style.display = isOpening ? 'block' : 'none';
+        const isOpening = !panel.classList.contains('open');
+        panel.classList.toggle('open', isOpening);
         
         if (btn) {
             btn.classList.toggle('active', isOpening);

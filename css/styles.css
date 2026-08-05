@@ -1979,3 +1979,49 @@ input:disabled + .toggle-slider {
     border-radius: 12px !important;
 }
 
+/* --- 絞り込みパネルのアニメーション設定 --- */
+#simSaFilterPanel {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    background: #0f172a;
+    border-bottom: 0px solid var(--primary);
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease,
+                padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                border-bottom-width 0.35s ease;
+}
+
+/* パネル開（アニメーション到達状態） */
+#simSaFilterPanel.open {
+    max-height: 35vh;
+    opacity: 1;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary);
+    overflow-y: auto;
+}
+
+/* タブコンテンツとスキル容器のアニメーション連動 */
+#simTargetSkillTabContent,
+#simTargetAbilityTabContent {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.tag-selector-container {
+    flex: 1;
+    min-height: 80px;
+    max-height: none !important;
+    overflow-y: auto;
+    padding: 2px 0;
+    border: none !important;
+    background: transparent !important;
+    transition: flex 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
