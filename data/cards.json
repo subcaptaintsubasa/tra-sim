@@ -3635,7 +3635,12 @@
     "bonus_type": "スプリントCB",
     "bonus_value": 35,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "アジャイルクラッシャー",
+        "rarity": "Silver"
+      }
+    ],
     "stats": {
       "ショートパス": 0.2,
       "タックル": 0.2,
