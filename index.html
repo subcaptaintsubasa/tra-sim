@@ -182,6 +182,15 @@
                             </div>
                         </div>
 
+                        <!-- 国籍選択 (ボタン式) -->
+<div style="margin-top:10px; border-bottom:1px dashed #334155; padding-bottom:10px;">
+    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:5px;">国籍 (任意)</label>
+    <button class="btn btn-sm" id="btnSimNationSelect" style="background:#000; border:1px solid #334155; color:#fff; padding:8px 10px; font-size:0.8rem; width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;" onclick="openSimNationModal()">
+        <span id="simNationText">指定なし</span>
+        <i class="fa-solid fa-chevron-right" style="font-size:0.7rem; color:#94a3b8;"></i>
+    </button>
+</div>
+
                         <!-- 追加: トグルボタン -->
                         <div style="margin-top:10px; text-align:right;">
                             <button class="btn btn-sm" style="background:#1e293b; color:#94a3b8; border:1px solid #334155;" onclick="toggleManualGapMode()">
@@ -233,10 +242,10 @@
                             powered by strange story storage
                         </div>
                         <div style="display:flex; align-items:center; gap:5px; margin-top:5px; border-top:1px dashed #333; padding-top:5px;">
-                            <span style="font-size:0.7rem;">目標:</span>
-                            <input type="range" id="targetPct" min="50" max="120" value="100" step="5" style="flex:1;" oninput="document.getElementById('targetPctDisp').innerText=this.value">
-                            <span id="targetPctDisp" style="font-size:0.7rem; min-width:25px;">100</span>%
-                        </div>
+    <span style="font-size:0.7rem;">目標:</span>
+    <input type="range" id="targetPct" min="0" max="120" value="100" step="1" style="flex:1;" oninput="document.getElementById('targetPctDisp').innerText=this.value">
+    <span id="targetPctDisp" style="font-size:0.7rem; min-width:25px;">100</span>%
+</div>
                     </div>
                 </div>
 
@@ -414,6 +423,9 @@
                         <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('CB', 10)">CB</button>
                         <button class="btn btn-sm" style="background:#334155;" onclick="addBonusRow('GK', 10)">GK</button>
                         <button class="btn btn-sm" id="btnAddStyleBonus" style="background:#1e40af; color:#fff;" onclick="addPlayStyleBonus()">+ ｽﾀｲﾙ</button>
+                        <button class="btn btn-sm" id="btnAddNationBonus" style="background:#166534; color:#fff;" onclick="openNationBonusModal()">+ 国</button>
+
+                    
                     </div>
                     <div id="editBonusList"></div>
                     <button class="btn btn-sm" onclick="addBonusRow('', '')" style="margin-top:5px; background:transparent; border:1px dashed #64748b;">+ 手動入力で追加</button>
@@ -965,6 +977,33 @@
         </div>
         <div class="modal-footer">
             <button class="btn btn-primary" onclick="execSubstituteSearch()">検索実行</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- 国ボーナス選択モーダル (Admin用) -->
+<div id="nationBonusModal" class="modal-overlay" style="display:none; z-index:2500;">
+    <div class="modal-content" style="max-width: 450px; max-height:85vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+            <h4>国ボーナスを選択</h4>
+            <button class="btn-close" onclick="closeNationBonusModal()">×</button>
+        </div>
+        <div class="modal-body" id="nationBonusModalBody" style="padding:15px; overflow-y:auto; flex:1;">
+            <!-- JSで地域ごとに国ボタンが生成されます -->
+        </div>
+    </div>
+</div>
+
+<!-- シミュレーター用 国籍選択モーダル -->
+<div id="simNationModal" class="modal-overlay" style="display:none; z-index:2500;">
+    <div class="modal-content" style="max-width: 450px; max-height:85vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+            <h4>国籍を選択</h4>
+            <button class="btn-close" onclick="closeSimNationModal()">×</button>
+        </div>
+        <div class="modal-body" id="simNationModalBody" style="padding:15px; overflow-y:auto; flex:1;">
+            <!-- JSで動的に国ボタンが生成されます -->
         </div>
     </div>
 </div>

@@ -189,7 +189,8 @@ window.collapseSelection = () => {
     if(sumDiv) {
         sumDiv.style.display = 'flex';
         const iconCode = STYLE_ICONS[selectedStyle] || 'ST';
-        document.getElementById('summaryText').innerText = `${selectedPos} / ${selectedStyle}`;
+        const nationText = selectedNation ? ` (${selectedNation})` : '';
+        document.getElementById('summaryText').innerText = `${selectedPos} / ${selectedStyle}${nationText}`;
         const img = document.getElementById('summaryIcon');
         img.src = `img/styles/${iconCode}.png`;
         img.onerror = function() { 
@@ -301,7 +302,7 @@ window.updateCalc = () => {
     const style = selectedStyle;
     
     if (!pos || !style) {
-        renderResults({}, {}, [], {}); // saMap等を空で渡す
+        renderResults({}, {}, [], {});
         renderSimSlots(null, null);
         return;
     }
@@ -310,7 +311,6 @@ window.updateCalc = () => {
     const totals_x10 = {};
     const specialEffects_x10 = {};
     
-    // スキル情報を収集するマップ (Key: "名前::レアリティ", Value: {name, rarity, maxSkillLv})
     const saMap = {};
 
     selectedSlots.forEach((card) => {
@@ -319,8 +319,8 @@ window.updateCalc = () => {
         const invData = myCards[key];
         const cardLevel = (invData && invData.level) ? parseInt(invData.level) : (card.rarity === 'SSR' ? 50 : 45);
 
-        // ステータス計算
-        const vals = getCardStatsAtLevel(card, cardLevel, pos, style, condMult);
+        // ステータス計算 (国籍ボーナス考慮)
+        const vals = getCardStatsAtLevel(card, cardLevel, pos, style, condMult, selectedNation);
         for(let s in vals) {
             if (isGK && DEF_STATS.includes(s)) continue;
             if (!isGK && GK_STATS.includes(s)) continue;
@@ -333,7 +333,6 @@ window.updateCalc = () => {
             }
         }
 
-        // スキル情報の正規化とレベル抽出
         if(card.abilities && card.abilities.length > 0) {
             const skillLv = getSkillLevelFromCardLevel(card.rarity, cardLevel);
             
@@ -344,7 +343,6 @@ window.updateCalc = () => {
                 
                 const saKey = `${saName}::${saRarity}`;
                 
-                // 同じスキルが複数カードにある場合、高い方のスキルレベルを採用
                 if (!saMap[saKey] || saMap[saKey].level < skillLv) {
                     saMap[saKey] = {
                         name: saName,
@@ -356,7 +354,6 @@ window.updateCalc = () => {
         }
     });
 
-    // 必須項目の充足チェック (Key形式で比較)
     const missingTargets = [
         ...selectedTargetSkills.filter(id => !saMap[id]),
         ...selectedTargetAbilities.filter(id => !saMap[id])
@@ -514,7 +511,6 @@ function renderSimSlots(pos, style) {
         div.onclick = () => {
             const isMobileAuto = window.innerWidth <= 768 && document.body.getAttribute('data-mobile-sim') === 'auto';
             if (isMobileAuto && c) {
-                // 自動モード結果用閲覧モーダル
                 openAutoSimResultModal(c, i); 
             } else {
                 startSimCardSelection(i);
@@ -533,16 +529,14 @@ function renderSimSlots(pos, style) {
             if (pos && style) {
                 if (c.bonuses && Array.isArray(c.bonuses) && c.bonuses.length > 0) {
                     c.bonuses.forEach(b => { 
-                        if(validPosBonuses.includes(b.type) || b.type === style) bVal += b.value; 
+                        if(validPosBonuses.includes(b.type) || b.type === style || (selectedNation && b.type === selectedNation)) bVal += b.value; 
                     });
                 } else if (c.bonus_type) {
-                    if(validPosBonuses.includes(c.bonus_type) || c.bonus_type === style) bVal += (c.bonus_value||0);
+                    if(validPosBonuses.includes(c.bonus_type) || c.bonus_type === style || (selectedNation && c.bonus_type === selectedNation)) bVal += (c.bonus_value||0);
                 }
             }
             const bText = bVal > 0 ? `+${bVal}%` : '';
-            // バッジの位置を下にずらす
             const bDisplay = bVal > 0 ? `<div class="slot-badge" style="top:22px;">${bText}</div>` : '';
-            // クリアボタン(×)の追加
             const clearBtn = `<div class="slot-clear-btn" onclick="clearSimSlot(event, ${i})"><i class="fa-solid fa-xmark"></i></div>`;
             const imgPath = `img/cards/${c.name}_${c.title}.png`;
 
@@ -2114,10 +2108,8 @@ window.openAutoSimResultModal = (card, slotIndex) => {
     const level = invData.level;
 
     const modal = document.getElementById('autoSimResultModal');
-    // タイトルを称号ではなく選手名に修正
     document.getElementById('asrmTitle').innerText = `[${card.rarity}] ${card.name}`;
     
-    // お気に入りボタンの初期状態
     const btnFav = document.getElementById('asrmBtnFav');
     if (btnFav) {
         if (invData.favorite) { btnFav.innerHTML = '<i class="fa-solid fa-heart"></i> 登録中'; btnFav.classList.add('active'); } 
@@ -2126,7 +2118,6 @@ window.openAutoSimResultModal = (card, slotIndex) => {
 
     const imgPath = `img/cards/${card.name}_${card.title}.png`;
     
-    // ボーナス判定 (現在の設定に対する合致)
     let bHtml = '';
     const pos = selectedPos;
     const style = selectedStyle;
@@ -2138,18 +2129,17 @@ window.openAutoSimResultModal = (card, slotIndex) => {
 
     if (card.bonuses && Array.isArray(card.bonuses)) {
         bHtml = card.bonuses.map(b => {
-            const isActive = validPosBonuses.includes(b.type) || b.type === style;
+            const isActive = validPosBonuses.includes(b.type) || b.type === style || (selectedNation && b.type === selectedNation);
             const cName = isActive ? 'bonus-highlight' : 'bonus-inactive';
             return `<span class="tag ${cName}" style="margin-right:4px;">${b.type}+${b.value}%</span>`;
         }).join('');
     } else if (card.bonus_type) {
-        const isActive = validPosBonuses.includes(card.bonus_type) || card.bonus_type === style;
+        const isActive = validPosBonuses.includes(card.bonus_type) || card.bonus_type === style || (selectedNation && card.bonus_type === selectedNation);
         const cName = isActive ? 'bonus-highlight' : 'bonus-inactive';
         bHtml = `<span class="tag ${cName}">${card.bonus_type}+${card.bonus_value}%</span>`;
     }
     if (!bHtml) bHtml = '<span style="font-size:0.7rem; color:#666;">なし</span>';
 
-    // スキルリスト生成
     let skillListHtml = '';
     const skillLv = getSkillLevelFromCardLevel(card.rarity, level);
     if (card.abilities && card.abilities.length > 0) {
@@ -2169,11 +2159,9 @@ window.openAutoSimResultModal = (card, slotIndex) => {
         });
     }
 
-    // ステータス生成 (素のステータス)
     const stats = getCardStatsAtLevel(card, level, null, null, 1.0);
     const statHtml = renderStatGridHTML(card.stats, stats);
     
-    // パラメータ合計値の算出
     let totalStat = 0;
     Object.keys(stats).forEach(k => { if([...STATS, ...GK_STATS].includes(k)) totalStat += stats[k]; });
     totalStat = Math.round(totalStat / 10);
@@ -2354,4 +2342,224 @@ window.exportComparisonImage = () => {
         alert("画像出力に失敗しました。");
         document.body.removeChild(exportContainer);
     });
+};
+
+// --- 国籍ドロップダウン初期化（DBに存在する国のみ抽出） ---
+window.initNationSelect = () => {
+    const select = document.getElementById('simNationSelect');
+    if (!select) return;
+
+    const presentNations = new Set();
+    cardsDB.forEach(c => {
+        if (c.bonuses && Array.isArray(c.bonuses)) {
+            c.bonuses.forEach(b => {
+                if (ALL_NATIONS.includes(b.type) || Object.values(NATION_REGIONS).some(arr => arr.includes(b.type))) {
+                    presentNations.add(b.type);
+                }
+            });
+        } else if (c.bonus_type) {
+            if (ALL_NATIONS.includes(c.bonus_type) || Object.values(NATION_REGIONS).some(arr => arr.includes(c.bonus_type))) {
+                presentNations.add(c.bonus_type);
+            }
+        }
+    });
+
+    select.innerHTML = '<option value="">指定なし</option>';
+
+    Object.keys(NATION_REGIONS).forEach(region => {
+        const nationsInRegion = NATION_REGIONS[region].filter(n => presentNations.has(n));
+        if (nationsInRegion.length > 0) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = region;
+            nationsInRegion.forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = n;
+                opt.innerText = n;
+                optgroup.appendChild(opt);
+            });
+            select.appendChild(optgroup);
+        }
+    });
+
+    const otherNations = Array.from(presentNations).filter(n => !ALL_NATIONS.includes(n));
+    if (otherNations.length > 0) {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = "その他";
+        otherNations.forEach(n => {
+            const opt = document.createElement('option');
+            opt.value = n;
+            opt.innerText = n;
+            optgroup.appendChild(opt);
+        });
+        select.appendChild(optgroup);
+    }
+};
+
+window.selectNation = (nation) => {
+    selectedNation = nation || null;
+    if (typeof collapseSelection === 'function' && selectedPos && selectedStyle) {
+        collapseSelection();
+    }
+    updateCalc();
+};
+
+// --- Admin: 国ボーナスモーダル制御 ---
+window.openNationBonusModal = () => {
+    const body = document.getElementById('nationBonusModalBody');
+    if (!body) return;
+    body.innerHTML = '';
+
+    Object.keys(NATION_REGIONS).forEach(region => {
+        const regDiv = document.createElement('div');
+        regDiv.style.cssText = 'margin-bottom:12px;';
+        regDiv.innerHTML = `<div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-bottom:6px; border-bottom:1px dashed #334155; padding-bottom:2px;">${region}</div>`;
+        
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap:6px;';
+
+        NATION_REGIONS[region].forEach(nation => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-sm';
+            btn.style.cssText = 'background:#1e293b; border:1px solid #475569; color:#f1f5f9; padding:6px 4px; font-size:0.75rem;';
+            btn.innerText = nation;
+            btn.onclick = () => selectNationBonus(nation);
+            grid.appendChild(btn);
+        });
+
+        regDiv.appendChild(grid);
+        body.appendChild(regDiv);
+    });
+
+    document.getElementById('nationBonusModal').style.display = 'flex';
+};
+
+window.closeNationBonusModal = () => {
+    document.getElementById('nationBonusModal').style.display = 'none';
+};
+
+window.selectNationBonus = (nation) => {
+    addBonusRow(nation, 10);
+    closeNationBonusModal();
+};
+
+// --- シミュレーター用 国籍選択モーダル制御 ---
+window.openSimNationModal = () => {
+    const body = document.getElementById('simNationModalBody');
+    if (!body) return;
+    body.innerHTML = '';
+
+    // 指定なし（解除）ボタン
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'btn btn-sm';
+    clearBtn.style.cssText = 'background:#334155; color:#fff; width:100%; padding:10px; margin-bottom:15px; font-weight:bold;';
+    clearBtn.innerText = '指定なし（国籍ボーナスなし）';
+    clearBtn.onclick = () => {
+        selectNation('');
+        closeSimNationModal();
+    };
+    body.appendChild(clearBtn);
+
+    // cardsDBにボーナスとして存在する国のみ抽出
+    const presentNations = new Set();
+    cardsDB.forEach(c => {
+        if (c.bonuses && Array.isArray(c.bonuses)) {
+            c.bonuses.forEach(b => {
+                if (ALL_NATIONS.includes(b.type) || Object.values(NATION_REGIONS).some(arr => arr.includes(b.type))) {
+                    presentNations.add(b.type);
+                }
+            });
+        } else if (c.bonus_type) {
+            if (ALL_NATIONS.includes(c.bonus_type) || Object.values(NATION_REGIONS).some(arr => arr.includes(c.bonus_type))) {
+                presentNations.add(c.bonus_type);
+            }
+        }
+    });
+
+    // 地域ごとに対象国があるエリアのみ表示
+    Object.keys(NATION_REGIONS).forEach(region => {
+        const nationsInRegion = NATION_REGIONS[region].filter(n => presentNations.has(n));
+        
+        if (nationsInRegion.length > 0) {
+            const regDiv = document.createElement('div');
+            regDiv.style.cssText = 'margin-bottom:12px;';
+            regDiv.innerHTML = `<div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-bottom:6px; border-bottom:1px dashed #334155; padding-bottom:2px;">${region}</div>`;
+            
+            const grid = document.createElement('div');
+            grid.style.cssText = 'display:grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap:6px;';
+
+            nationsInRegion.forEach(nation => {
+                const btn = document.createElement('button');
+                const isSelected = (selectedNation === nation);
+                btn.className = 'btn btn-sm';
+                btn.style.cssText = isSelected 
+                    ? 'background:var(--accent); border:1px solid var(--accent); color:#fff; padding:6px 4px; font-size:0.75rem; font-weight:bold;'
+                    : 'background:#1e293b; border:1px solid #475569; color:#f1f5f9; padding:6px 4px; font-size:0.75rem;';
+                btn.innerText = nation;
+                btn.onclick = () => {
+                    selectNation(nation);
+                    closeSimNationModal();
+                };
+                grid.appendChild(btn);
+            });
+
+            regDiv.appendChild(grid);
+            body.appendChild(regDiv);
+        }
+    });
+
+    // 地域定義外でDBにある国があれば「その他」として表示
+    const otherNations = Array.from(presentNations).filter(n => !ALL_NATIONS.includes(n));
+    if (otherNations.length > 0) {
+        const regDiv = document.createElement('div');
+        regDiv.style.cssText = 'margin-bottom:12px;';
+        regDiv.innerHTML = `<div style="font-size:0.75rem; color:var(--primary); font-weight:bold; margin-bottom:6px; border-bottom:1px dashed #334155; padding-bottom:2px;">その他</div>`;
+        
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap:6px;';
+
+        otherNations.forEach(nation => {
+            const btn = document.createElement('button');
+            const isSelected = (selectedNation === nation);
+            btn.className = 'btn btn-sm';
+            btn.style.cssText = isSelected 
+                ? 'background:var(--accent); border:1px solid var(--accent); color:#fff; padding:6px 4px; font-size:0.75rem; font-weight:bold;'
+                : 'background:#1e293b; border:1px solid #475569; color:#f1f5f9; padding:6px 4px; font-size:0.75rem;';
+            btn.innerText = nation;
+            btn.onclick = () => {
+                selectNation(nation);
+                closeSimNationModal();
+            };
+            grid.appendChild(btn);
+        });
+
+        regDiv.appendChild(grid);
+        body.appendChild(regDiv);
+    }
+
+    document.getElementById('simNationModal').style.display = 'flex';
+};
+
+window.closeSimNationModal = () => {
+    document.getElementById('simNationModal').style.display = 'none';
+};
+
+window.selectNation = (nation) => {
+    selectedNation = nation || null;
+    
+    // UIボタンテキストの更新
+    const textSpan = document.getElementById('simNationText');
+    if (textSpan) {
+        textSpan.innerText = selectedNation || '指定なし';
+        textSpan.style.color = selectedNation ? 'var(--primary)' : '#fff';
+        textSpan.style.fontWeight = selectedNation ? 'bold' : 'normal';
+    }
+
+    if (typeof collapseSelection === 'function' && selectedPos && selectedStyle) {
+        collapseSelection();
+    }
+    updateCalc();
+};
+
+window.initNationSelect = () => {
+    selectNation(selectedNation || '');
 };

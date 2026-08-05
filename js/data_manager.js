@@ -21,6 +21,7 @@ async function fetchAllDB() {
         if (typeof renderInventory === 'function') renderInventory(); 
         if (typeof renderSAList === 'function') renderSAList(); 
         if (typeof updateAutoComplete === 'function') updateAutoComplete(); 
+        if (typeof initNationSelect === 'function') initNationSelect(); // ★追加
         if (typeof updateCalc === 'function') updateCalc();
         
     } catch(e) { console.error(e); }

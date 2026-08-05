@@ -1,25 +1,25 @@
-function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult) {
+function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult, targetNation = null) {
     const maxLevel = card.rarity === 'SSR' ? 50 : 45;
     const useLevel = Math.max(1, Math.min(maxLevel, level));
     const growthRate = card.growth_rate || 6;
     
     let bonusTotal = 0;
 
-    // ★修正: ターゲットポジションに対応するボーナス群を取得
+    // ★ポジションに対応するボーナス群を取得
     let validPosBonuses = [targetPos];
     if (targetPos && typeof POS_BONUS_MAPPING !== 'undefined' && POS_BONUS_MAPPING[targetPos]) {
         validPosBonuses = validPosBonuses.concat(POS_BONUS_MAPPING[targetPos]);
     }
 
-    // ボーナス計算
+    // ボーナス計算 (ポジション / スタイル / 国籍)
     if (card.bonuses && Array.isArray(card.bonuses) && card.bonuses.length > 0) {
         card.bonuses.forEach(b => {
-            if (validPosBonuses.includes(b.type) || b.type === targetStyle) {
+            if (validPosBonuses.includes(b.type) || b.type === targetStyle || (targetNation && b.type === targetNation)) {
                 bonusTotal += b.value;
             }
         });
     } else if (card.bonus_type) {
-        if (validPosBonuses.includes(card.bonus_type) || card.bonus_type === targetStyle) {
+        if (validPosBonuses.includes(card.bonus_type) || card.bonus_type === targetStyle || (targetNation && card.bonus_type === targetNation)) {
             bonusTotal += (card.bonus_value || 0);
         }
     }
@@ -48,7 +48,6 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
             const d1 = se.value;
             if (!d1) return;
 
-            // 覚醒Pt等の成長率 (現時点では一律2倍として定義)
             let seGrowthRate = 2.0;
             
             const d1_int = Math.round(d1 * 10);
@@ -56,7 +55,6 @@ function getCardStatsAtLevel(card, level, targetPos, targetStyle, conditionMult)
             const growthMax = (N * 10 - d1_int);
             const growthCurrent = Math.floor(growthMax * (useLevel - 1) / (maxLevel - 1));
             const vBase_x10 = d1_int + growthCurrent;
-            // コンディションの影響は受けず、ボーナスの倍率のみ恩恵を受ける仕様
             const val_x10 = Math.round(vBase_x10 * bonusMult);
             
             calculatedSE[se.type] = val_x10;
@@ -98,6 +96,7 @@ window.runAutoSim = () => {
     
     const simPos = selectedPos;
     const simStyle = selectedStyle;
+    const simNation = selectedNation;
     if (!simPos || !simStyle) return alert("ポジションとスタイルを選択してください。");
 
     // 設定値取得
@@ -116,7 +115,7 @@ window.runAutoSim = () => {
         const k = c.name + "_" + c.title;
         const inv = myCards[k];
         if (inv && inv.owned) {
-            const rawVals = getCardStatsAtLevel(c, parseInt(inv.level), simPos, simStyle, conditionMod);
+            const rawVals = getCardStatsAtLevel(c, parseInt(inv.level), simPos, simStyle, conditionMod, simNation);
             const vals = {};
             relevantStats.forEach(s => { if (rawVals[s]) vals[s] = rawVals[s]; });
             
@@ -144,7 +143,6 @@ window.runAutoSim = () => {
         weights[s] = getStatWeight(s, currentSimMode, simStyle);
     });
 
-    // ▼修正箇所：引数に skillSet を追加し、必須スキルの不足を減点する処理を追加
     const calculateScore = (currentSums, skillSet) => {
         let score = 0;
         relevantStats.forEach(s => {
@@ -154,7 +152,7 @@ window.runAutoSim = () => {
             score += effectiveGain * weights[s];
         });
 
-        // 必須スキル/アビリティの不足ペナルティ (-100000点で絶対選ばれないようにする)
+        // 必須スキル/アビリティの不足ペナルティ
         let missing = 0;
         selectedTargetSkills.forEach(id => { if (!skillSet.has(id)) missing++; });
         selectedTargetAbilities.forEach(id => { if (!skillSet.has(id)) missing++; });
@@ -200,10 +198,9 @@ window.runAutoSim = () => {
         
         // スマホ自動モード時のスライド制御
         if (window.innerWidth <= 768 && document.body.getAttribute('data-mobile-sim') === 'auto') {
-            document.body.classList.remove('sim-no-result'); // 結果ができたのでナビを表示許可
+            document.body.classList.remove('sim-no-result');
             if (typeof slideSimPane === 'function') slideSimPane('right');
         } else {
-            // PC等の場合はアラート表示のみ
             alert(`【${modeName}モード】最適化完了\n※不足スキル等による減点を引いた評価スコア: ${bestNode.score.toFixed(0)}`);
         }
     } else {
