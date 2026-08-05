@@ -659,6 +659,7 @@ window.renderSAList = () => {
     abilitiesDB.forEach(a => l.innerHTML += renderItem(a, 'ability')); 
 };
 
+// --- 【書き換え対象】window.initEditors ---
 window.initEditors = () => {
     const grid = document.getElementById('editStatsGrid');
     if (grid) {
@@ -670,14 +671,13 @@ window.initEditors = () => {
         ];
         order.forEach(s => {
             if (s === "") {
-                grid.innerHTML += `<div></div>`; // 空セル
+                grid.innerHTML += `<div></div>`;
             } else {
                 grid.innerHTML += `<div class="stat-item"><label>${s}</label><input type="number" step="0.1" class="edit-val" data-stat="${s}"></div>`;
             }
         });
     }
 
-    // --- 管理画面用ポジション＆スタイルUIの初期化 ---
     const editPosGrid = document.getElementById('editPosGroup');
     if (editPosGrid) {
         editPosGrid.innerHTML = '';
@@ -691,25 +691,49 @@ window.initEditors = () => {
             chip.onclick = () => toggleEditPos(p, chip);
             editPosGrid.appendChild(chip);
         });
-        // 初期状態のスタイルオプションを生成
         updateEditStyleOptions();
     }
     
-    // アビリティ用パラメータチェックボックス生成
+    // アビリティ用対象パラメータボタン生成 (7列グリッド)
     const saChecks = document.getElementById('saParamChecks');
     if (saChecks) {
         saChecks.innerHTML = '';
-        const allParams = [...STATS, ...GK_STATS];
-        allParams.forEach(s => {
-            saChecks.innerHTML += `<label style="font-size:0.7rem; display:flex; align-items:center; gap:4px;"><input type="checkbox" value="${s}" class="sa-param-check"> ${s}</label>`;
+        const order = [
+            "決定力", "ショートパス", "突破力", "タックル", "セービング", "ジャンプ", "走力",
+            "キック力", "ロングパス", "キープ力", "パスカット", "反応速度", "コンタクト", "敏捷性",
+            "冷静さ", "キック精度", "ボールタッチ", "マーク", "1対1", "スタミナ"
+        ];
+        order.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'chk-btn param';
+            div.innerHTML = `<input type="checkbox" name="sa_ability_param" value="${s}" id="sa_ab_prm_${s}"><label for="sa_ab_prm_${s}">${s}</label>`;
+            saChecks.appendChild(div);
         });
     }
     
+    // 発動エリア 9分割グリッド
     const areaGrid = document.getElementById('saAreaGrid');
     if (areaGrid) {
         areaGrid.innerHTML = '';
         for(let i=0; i<9; i++) areaGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
     }
+
+    // パスターゲット用 9分割グリッド
+    const passGrid = document.getElementById('saPassTargetGrid');
+    if (passGrid) {
+        passGrid.innerHTML = '';
+        for(let i=0; i<9; i++) passGrid.innerHTML += `<div class="area-cell" onclick="this.classList.toggle('active')"></div>`;
+    }
+    
+    renderSkillTypeBtnChips(); // スキル種類ボタン群のレンダリング
+    
+    // パラメータ初期1枠配置
+    const pContainer = document.getElementById('saParamRows');
+    if (pContainer && pContainer.children.length === 0) {
+        addSkillParamRow();
+    }
+
+    switchAdminSaTab('skill'); // デフォルトはスキル編集
 };
 
 // --- 管理画面UIトグル・動的生成用のヘルパー関数 ---
@@ -1242,21 +1266,24 @@ window.setAbilityCondition = (cond) => {
     });
 };
 
+// --- 【書き換え対象】addSkillParamRow ---
 window.addSkillParamRow = (target='', vals=[]) => {
     const container = document.getElementById('saParamRows');
+    if (!container) return;
+
     const div = document.createElement('div');
     div.className = 'param-input-group';
     
-    // パラメータ選択肢生成
-    let options = STATS.map(s => `<option>${s}</option>`).join('');
-    // GK用も追加
-    options += GK_STATS.map(s => `<option>${s}</option>`).join('');
-
     const v1 = vals[0] || ''; const v2 = vals[1] || ''; const v3 = vals[2] || '';
     const v4 = vals[3] || ''; const v5 = vals[4] || '';
 
+    const labelText = target ? target : "パラメータを選択";
+    const textStyle = target ? "color:#fff; font-weight:bold;" : "color:#94a3b8;";
+
     div.innerHTML = `
-        <select style="font-size:0.7rem; padding:2px;"><option value="">Param</option>${options}</select>
+        <button class="btn btn-sm param-select-trigger" data-stat="${target}" onclick="openParamSelectDialog(this)" style="font-size:0.7rem; padding:4px 2px; background:#0f172a; border:1px solid #475569; ${textStyle} text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">
+            ${labelText}
+        </button>
         <input type="number" placeholder="L1" value="${v1}">
         <input type="number" placeholder="L2" value="${v2}">
         <input type="number" placeholder="L3" value="${v3}">
@@ -1265,60 +1292,105 @@ window.addSkillParamRow = (target='', vals=[]) => {
         <button class="btn btn-sm" style="background:#ef4444; padding:0;" onclick="this.parentElement.remove()">×</button>
     `;
     
-    // Select値セット
-    if(target) div.querySelector('select').value = target;
-    
     container.appendChild(div);
 };
 
+// --- 【書き換え対象】window.loadSA ---
 window.loadSA = (type, name, rarity) => { 
     const db = type === 'skill' ? skillsDB : abilitiesDB;
-    // 名前とレアリティで検索
     const item = db.find(i => i.name === name && (!rarity || i.rarity === rarity)); 
     if(!item) return; 
 
-    // --- 変更前の情報を保持 ---
     const editor = document.getElementById('saEditor');
     editor.dataset.originalName = item.name;
-    // ★重要修正: レアリティがない場合は空文字をセットする (勝手にGoldにしない)
     editor.dataset.originalRarity = item.rarity || ""; 
     editor.dataset.isEditMode = "true";
-    // ------------------------
 
-    document.getElementById('saType').value = type;
-    document.getElementById('saName').value = item.name; 
-    
-    // UI上の選択肢は、データにレアリティがなければデフォルト(Gold)を表示しておく
-    document.getElementById('saRarity').value = item.rarity || 'Gold';
-
-    toggleSaEditorMode();
+    switchAdminSaTab(type);
 
     if (type === 'skill') {
-        document.getElementById('saSkillType').value = item.skill_type || '';
-        document.getElementById('saNote').value = item.note || '';
+        document.getElementById('saName').value = item.name;
+        setSaBtnChipVal('saRarity', item.rarity || 'Gold');
         
-        const pContainer = document.getElementById('saParamRows');
-        pContainer.innerHTML = '';
-        if (item.params && Array.isArray(item.params)) {
-            item.params.forEach(p => addSkillParamRow(p.stat, p.values));
-        } else if (item.value && item.targets) {
-            // 旧データ互換
-            item.targets.forEach(t => addSkillParamRow(t, [item.value, item.value, item.value, item.value, item.value]));
-        } else {
-            addSkillParamRow();
-        }
-
-        const cells = document.querySelectorAll('.area-cell'); 
+        // 1. フォーメーション条件 (複数)
+        setSaBtnChipMultiVals('saFormPos', item.formation_condition || []);
+        
+        // 2. 発動エリア
+        const cells = document.querySelectorAll('#saAreaGrid .area-cell'); 
         cells.forEach((c, idx) => { 
             c.classList.remove('active'); 
             if(item.area?.[idx]) c.classList.add('active'); 
         });
 
+        // 3. 発動条件
+        setSaBtnChipVal('saSkillType', item.skill_type || ALL_SKILL_TYPES[0]);
+        
+        // シチュエーション (複数対応・旧データ互換)
+        let situations = [];
+        if (Array.isArray(item.situation)) {
+            situations = item.situation;
+        } else if (item.situation) {
+            situations = [item.situation];
+        }
+        situations.forEach(s => addCustomSituationCandidateWithVal(s));
+        setSaBtnChipMultiVals('saSituation', situations);
+
+        // 4. 効果
+        const pContainer = document.getElementById('saParamRows');
+        pContainer.innerHTML = '';
+        if (item.params && Array.isArray(item.params) && item.params.length > 0) {
+            item.params.forEach(p => addSkillParamRow(p.stat, p.values));
+        } else {
+            addSkillParamRow();
+        }
+        
+        // 追加効果 (複数対応・旧データ互換)
+        let addEffects = [];
+        if (Array.isArray(item.additional_effect)) {
+            addEffects = item.additional_effect;
+        } else if (item.additional_effect) {
+            addEffects = [item.additional_effect];
+        }
+        setSaBtnChipMultiVals('saAddEffect', addEffects);
+
+        // 5. パスターゲット
+        if (item.pass_target) {
+            if (item.pass_target.pos && item.pass_target.pos.length > 0) {
+                setPassTargetMode('pos');
+                setSaBtnChipMultiVals('saPassPos', item.pass_target.pos);
+            } else if (item.pass_target.area) {
+                setPassTargetMode('area');
+                const pCells = document.querySelectorAll('#saPassTargetGrid .area-cell');
+                pCells.forEach((c, idx) => {
+                    c.classList.remove('active');
+                    if (item.pass_target.area[idx]) c.classList.add('active');
+                });
+            } else {
+                setPassTargetMode('none');
+            }
+
+            // 優先スキル (複数対応・旧データ互換)
+            let priorities = [];
+            if (Array.isArray(item.pass_target.priority_skill_type)) {
+                priorities = item.pass_target.priority_skill_type;
+            } else if (item.pass_target.priority_skill_type) {
+                priorities = [item.pass_target.priority_skill_type];
+            }
+            setSaBtnChipMultiVals('saPassPriority', priorities);
+        } else {
+            setPassTargetMode('none');
+            setSaBtnChipMultiVals('saPassPriority', []);
+        }
+
+        document.getElementById('saNote').value = item.note || '';
+
     } else {
         // Ability
+        document.getElementById('saAbilityNameInput').value = item.name;
+        setSaBtnChipVal('saAbilityRarity', item.rarity || 'Gold');
         setAbilityCondition(item.condition || '');
-        // チェックボックス反映
-        document.querySelectorAll('.sa-param-check').forEach(c => {
+        
+        document.querySelectorAll('input[name="sa_ability_param"]').forEach(c => {
             c.checked = (item.targets && item.targets.includes(c.value));
         });
     }
@@ -1783,8 +1855,8 @@ function renderDetailSkills(card) {
 }
 
 // --- スキル/アビリティ詳細モーダル (レベル連動版) ---
+// --- 【書き換え対象】window.openSaModal ---
 window.openSaModal = (name, rarity = null, level = 1) => {
-    // 1. データ検索
     let skill = null, ability = null;
     if (rarity) {
         skill = skillsDB.find(s => s.name === name && s.rarity === rarity);
@@ -1800,7 +1872,7 @@ window.openSaModal = (name, rarity = null, level = 1) => {
 
     const isSkill = !!skill;
     const itemRarity = target.rarity || (rarity || 'Gold');
-    const skillLv = Math.max(1, Math.min(5, level)); // 1~5の範囲
+    const skillLv = Math.max(1, Math.min(5, level));
 
     const modal = document.getElementById('saModal');
     const headerTitle = document.getElementById('saModalTitle');
@@ -1812,20 +1884,32 @@ window.openSaModal = (name, rarity = null, level = 1) => {
     const typeLabel = isSkill ? 'SKILL' : 'ABILITY';
 
     let html = `
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; border-bottom:1px solid #334155; padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; border-bottom:1px solid #334155; padding-bottom:8px;">
             <span class="${badgeClass}" style="font-size:0.9rem; padding:4px 8px;">${typeLabel}</span>
-            <div style="font-weight:bold; font-size:1.2rem;">${target.name}</div>
+            <div style="font-weight:bold; font-size:1.2rem; flex:1;">${target.name}</div>
         </div>
     `;
 
     if (isSkill) {
-        // --- SKILL の表示 ---
-        if (target.note) html += `<div style="font-size:0.8rem; color:#ccc; margin-bottom:10px; white-space:pre-wrap;">${target.note}</div>`;
+        // 1. フォーメーション条件
+        if (target.formation_condition && target.formation_condition.length > 0) {
+            html += `<div style="font-size:0.75rem; color:#fbbf24; margin-bottom:6px;"><i class="fa-solid fa-users"></i> ${target.formation_condition.join('/')}が存在</div>`;
+        }
+
+        // 2. 発動条件タグ (種類 + 複数シチュエーション)
+        html += `<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">`;
+        if (target.skill_type) html += `<span class="tag tag-skill">${target.skill_type}</span>`;
         
-        html += `<div class="card-box">`;
+        const situations = Array.isArray(target.situation) ? target.situation : (target.situation ? [target.situation] : []);
+        situations.forEach(st => {
+            html += `<span class="tag" style="background:#334155; color:#fff;">${st}</span>`;
+        });
+        html += `</div>`;
+
+        // 3. 上昇パラメータ
+        html += `<div class="card-box" style="margin-bottom:8px;">`;
         if (target.params && target.params.length > 0) {
             target.params.forEach(p => {
-                // レベルに応じた値を取得
                 const val = p.values[skillLv - 1] !== undefined ? p.values[skillLv - 1] : (p.values[0] || 0);
                 html += `
                 <div class="sa-modal-param-row">
@@ -1833,21 +1917,44 @@ window.openSaModal = (name, rarity = null, level = 1) => {
                     <span class="sa-modal-val">+${val}%</span>
                 </div>`;
             });
-        } else {
-            // 旧データ互換
-            const legacyVal = target.value || 0;
-            html += `<div class="sa-modal-param-row"><span style="color:#ccc;">効果</span><span class="sa-modal-val">+${legacyVal}%</span></div>`;
+        }
+        
+        // 4. 追加効果 (複数誘発)
+        const addEffects = Array.isArray(target.additional_effect) ? target.additional_effect : (target.additional_effect ? [target.additional_effect] : []);
+        if (addEffects.length > 0) {
+            const addStr = addEffects.map(e => `誘発：${e}`).join(' / ');
+            html += `<div style="margin-top:6px; border-top:1px dashed #444; padding-top:4px; font-size:0.8rem; color:var(--primary); font-weight:bold;">${addStr}</div>`;
         }
         html += `</div>`;
 
+        // 5. パスターゲット
+        if (target.pass_target) {
+            let ptText = '';
+            if (target.pass_target.pos && target.pass_target.pos.length > 0) {
+                ptText += `ターゲット: ${target.pass_target.pos.join('/')}`;
+            }
+            
+            const priorities = Array.isArray(target.pass_target.priority_skill_type) ? target.pass_target.priority_skill_type : (target.pass_target.priority_skill_type ? [target.pass_target.priority_skill_type] : []);
+            if (priorities.length > 0) {
+                if (ptText) ptText += ' / ';
+                ptText += `優先：${priorities.join('・')}スキル所持`;
+            }
+            if (ptText) {
+                html += `<div class="card-box" style="margin-bottom:8px; font-size:0.75rem; color:#a78bfa;"><i class="fa-solid fa-location-crosshairs"></i> ${ptText}</div>`;
+            }
+        }
+
+        if (target.note) html += `<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px;">${target.note}</div>`;
+
         if (target.area) {
-            html += `<div style="text-align:center; margin-top:15px;">
+            html += `<div style="text-align:center; margin-top:10px;">
                 <label style="font-size:0.7rem; color:#94a3b8;">発動エリア</label>
                 <div class="area-grid" id="saModalAreaGridRender" style="margin:5px auto;"></div>
             </div>`;
         }
+
     } else {
-        // --- ABILITY の表示 ---
+        // ABILITY
         const condition = target.condition || 'なし';
         html += `
         <div class="card-box" style="margin-bottom:10px; background:rgba(167, 139, 250, 0.1); border-color:var(--ability);">
@@ -1855,7 +1962,6 @@ window.openSaModal = (name, rarity = null, level = 1) => {
             <div style="font-weight:bold; font-size:0.9rem;">${condition}</div>
         </div>`;
 
-        // レアリティとLvに基づいた固定テーブル参照
         const table = ABILITY_GROWTH_TABLE[itemRarity] || ABILITY_GROWTH_TABLE["Gold"];
         const val = table[skillLv - 1];
 
@@ -1870,7 +1976,6 @@ window.openSaModal = (name, rarity = null, level = 1) => {
 
     body.innerHTML = html;
 
-    // エリアの描画
     if (isSkill && target.area) {
         setTimeout(() => {
             const grid = document.getElementById('saModalAreaGridRender');
@@ -2782,4 +2887,206 @@ window.resetSimSaFilter = () => {
     document.querySelectorAll('#simSaFilterPanel input[type="checkbox"]').forEach(el => el.checked = false);
     simSaFilter = { rarities: [], skillTypes: [], conditions: [], targetStats: [] };
     updateAutoComplete();
+};
+
+// --- 【新規追加】管理画面 スキル/アビリティサブタブ切替 & ボタンチップ制御 ---
+let currentAdminSaTab = 'skill';
+
+window.switchAdminSaTab = (tab) => {
+    currentAdminSaTab = tab;
+    
+    const btnSkill = document.getElementById('btnAdminSaTabSkill');
+    const btnAbility = document.getElementById('btnAdminSaTabAbility');
+    if (btnSkill) btnSkill.classList.toggle('active', tab === 'skill');
+    if (btnAbility) btnAbility.classList.toggle('active', tab === 'ability');
+
+    const skillForm = document.getElementById('skillAdminForm');
+    const abilityForm = document.getElementById('abilityAdminForm');
+    if (skillForm) skillForm.style.display = (tab === 'skill') ? 'block' : 'none';
+    if (abilityForm) abilityForm.style.display = (tab === 'ability') ? 'block' : 'none';
+};
+
+// ボタンチップの単一選択
+window.selectSaBtnChip = (btn) => {
+    const group = btn.dataset.group;
+    document.querySelectorAll(`.sa-btn-chip[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+};
+
+// ボタンチップの複数選択トグル
+window.toggleSaBtnChipMulti = (btn) => {
+    btn.classList.toggle('active');
+};
+
+// 選択されたボタンの値を取得
+function getSaBtnChipVal(group) {
+    const active = document.querySelector(`.sa-btn-chip[data-group="${group}"].active`);
+    return active ? active.dataset.val : "";
+}
+
+function getSaBtnChipMultiVals(group) {
+    const actives = document.querySelectorAll(`.sa-btn-chip[data-group="${group}"].active`);
+    return Array.from(actives).map(b => b.dataset.val);
+}
+
+function setSaBtnChipVal(group, val) {
+    document.querySelectorAll(`.sa-btn-chip[data-group="${group}"]`).forEach(b => {
+        b.classList.toggle('active', b.dataset.val === (val || ""));
+    });
+}
+
+function setSaBtnChipMultiVals(group, vals = []) {
+    document.querySelectorAll(`.sa-btn-chip[data-group="${group}"]`).forEach(b => {
+        b.classList.toggle('active', vals.includes(b.dataset.val));
+    });
+}
+
+// カスタムシチュエーション候補の追加
+window.addCustomSituationCandidate = () => {
+    const input = document.getElementById('saCustomSituationInput');
+    const val = input ? input.value.trim() : "";
+    if (!val) return;
+
+    const group = document.getElementById('saSituationBtnGroup');
+    if (!group) return;
+
+    const exists = Array.from(group.querySelectorAll('.sa-btn-chip')).some(b => b.dataset.val === val);
+    if (!exists) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm sa-btn-chip active';
+        btn.dataset.group = 'saSituation';
+        btn.dataset.val = val;
+        btn.innerText = val;
+        btn.onclick = function() { selectSaBtnChip(this); };
+        
+        group.querySelectorAll('.sa-btn-chip').forEach(b => b.classList.remove('active'));
+        group.appendChild(btn);
+    } else {
+        setSaBtnChipVal('saSituation', val);
+    }
+    input.value = '';
+};
+
+function addCustomSituationCandidateWithVal(val) {
+    const input = document.getElementById('saCustomSituationInput');
+    if (input) input.value = val;
+    addCustomSituationCandidate();
+}
+
+// パスターゲットモード切替
+let currentPassTargetMode = 'none';
+window.setPassTargetMode = (mode) => {
+    currentPassTargetMode = mode;
+    ['None', 'Pos', 'Area'].forEach(m => {
+        const btn = document.getElementById(`btnPassTargetMode${m}`);
+        if (btn) btn.classList.remove('active');
+    });
+    const activeBtn = document.getElementById(`btnPassTargetMode${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    const posArea = document.getElementById('passTargetPosArea');
+    const gridArea = document.getElementById('passTargetGridArea');
+    if (posArea) posArea.style.display = (mode === 'pos') ? 'block' : 'none';
+    if (gridArea) gridArea.style.display = (mode === 'area') ? 'block' : 'none';
+};
+
+// --- 【新規追加】スキル種類マスターリスト & パラメータ選択ダイアログ制御 ---
+const ALL_SKILL_TYPES = [
+    "シュート", "ダイレクトシュート", "ロングシュート", "直接FK", 
+    "トラップ", "ドリブル", "ショートパス", "ロングパス", "クロス", 
+    "パス", "パスを届けるFK", "タックル", "パスカット", "GKセーブ"
+];
+
+// --- 【書き換え対象】renderSkillTypeBtnChips & addCustomSituationCandidate ---
+function renderSkillTypeBtnChips() {
+    const groups = [
+        { id: 'saSkillTypeBtnGroup', groupName: 'saSkillType', prefix: '', isMulti: false },
+        { id: 'saAddEffectBtnGroup', groupName: 'saAddEffect', prefix: '誘発: ', isMulti: true },
+        { id: 'saPassPrioritySkillGroup', groupName: 'saPassPriority', prefix: '優先: ', isMulti: true }
+    ];
+
+    groups.forEach(g => {
+        const container = document.getElementById(g.id);
+        if (!container) return;
+        container.innerHTML = '';
+
+        ALL_SKILL_TYPES.forEach((st, idx) => {
+            const btn = document.createElement('button');
+            btn.className = `btn btn-sm sa-btn-chip ${(!g.isMulti && idx === 0) ? 'active' : ''}`;
+            btn.dataset.group = g.groupName;
+            btn.dataset.val = st;
+            btn.innerText = `${g.prefix}${st}`;
+            btn.onclick = function() { 
+                if (g.isMulti) {
+                    toggleSaBtnChipMulti(this);
+                } else {
+                    selectSaBtnChip(this);
+                }
+            };
+            container.appendChild(btn);
+        });
+    });
+}
+
+// カスタムシチュエーション候補の追加 (複数選択対応)
+window.addCustomSituationCandidate = () => {
+    const input = document.getElementById('saCustomSituationInput');
+    const val = input ? input.value.trim() : "";
+    if (!val) return;
+
+    const group = document.getElementById('saSituationBtnGroup');
+    if (!group) return;
+
+    const exists = Array.from(group.querySelectorAll('.sa-btn-chip')).some(b => b.dataset.val === val);
+    if (!exists) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm sa-btn-chip active';
+        btn.dataset.group = 'saSituation';
+        btn.dataset.val = val;
+        btn.innerText = val;
+        btn.onclick = function() { toggleSaBtnChipMulti(this); };
+        group.appendChild(btn);
+    } else {
+        const btn = Array.from(group.querySelectorAll('.sa-btn-chip')).find(b => b.dataset.val === val);
+        if (btn) btn.classList.add('active');
+    }
+    input.value = '';
+};
+
+// パラメータ選択ダイアログ制御
+let currentEditingParamBtn = null;
+
+window.openParamSelectDialog = (btnEl) => {
+    currentEditingParamBtn = btnEl;
+    const container = document.getElementById('saParamSelectGrid');
+    if (container && container.children.length === 0) {
+        container.innerHTML = '';
+        const order = [
+            "決定力", "ショートパス", "突破力", "タックル", "セービング", "ジャンプ", "走力",
+            "キック力", "ロングパス", "キープ力", "パスカット", "反応速度", "コンタクト", "敏捷性",
+            "冷静さ", "キック精度", "ボールタッチ", "マーク", "1対1", "スタミナ"
+        ];
+        order.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'chk-btn param';
+            div.innerHTML = `<label style="padding:10px 2px; font-size:0.75rem;" onclick="selectParamFromDialog('${s}')">${s}</label>`;
+            container.appendChild(div);
+        });
+    }
+    document.getElementById('skillParamSelectModal').style.display = 'flex';
+};
+
+window.closeParamSelectDialog = () => {
+    document.getElementById('skillParamSelectModal').style.display = 'none';
+    currentEditingParamBtn = null;
+};
+
+window.selectParamFromDialog = (statName) => {
+    if (currentEditingParamBtn) {
+        currentEditingParamBtn.innerText = statName;
+        currentEditingParamBtn.dataset.stat = statName;
+        currentEditingParamBtn.style.color = '#fff';
+        currentEditingParamBtn.style.fontWeight = 'bold';
+    }
+    closeParamSelectDialog();
 };

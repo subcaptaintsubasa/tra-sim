@@ -425,71 +425,171 @@
         <div id="masterList" class="admin-card-grid"></div>
     </div>
 
-    <!-- 5. スキル管理 (Admin) - 開発者限定 -->
+<!-- 5. スキル管理 (Admin) - 開発者限定 -->
     <div id="view-admin-skill" class="view-content">
         <div class="card-box" id="saEditor" style="border:2px solid var(--primary)">
-            <h4>スキル/アビリティ編集</h4>
             
-            <div class="sa-editor-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                <select id="saType" onchange="toggleSaEditorMode()">
-                    <option value="skill">SKILL (パラメータ)</option>
-                    <option value="ability">ABILITY (固定値)</option>
-                </select>
-                <select id="saRarity">
-                    <option value="Rainbow" style="color:#ec4899; font-weight:bold;">虹 (Rainbow)</option>
-                    <option value="Gold" style="color:#d97706; font-weight:bold;">金 (Gold)</option>
-                    <option value="Silver" style="color:#94a3b8; font-weight:bold;">銀 (Silver)</option>
-                    <option value="Bronze" style="color:#78350f; font-weight:bold;">銅 (Bronze)</option>
-                </select>
+            <!-- スキル / アビリティ 切替サブタブ -->
+            <div class="sim-mode-group" style="margin-bottom:15px;">
+                <button class="sim-mode-btn active" id="btnAdminSaTabSkill" onclick="switchAdminSaTab('skill')">スキル (S) 編集</button>
+                <button class="sim-mode-btn" id="btnAdminSaTabAbility" onclick="switchAdminSaTab('ability')">アビリティ (A) 編集</button>
             </div>
-            <input id="saName" placeholder="名称 (例: シュート)" style="margin-bottom:5px;">
 
-            <div id="abilityEditorArea" style="display:none; border-top:1px dashed #444; padding-top:10px; margin-top:10px;">
-                <label style="font-size:0.7rem; color:var(--ability);">発動条件</label>
-                <div class="cond-btn-group">
-                    <button class="cond-select-btn" onclick="setAbilityCondition('途中出場')">途中出場</button>
-                    <button class="cond-select-btn" onclick="setAbilityCondition('好調以上')">好調以上</button>
-                    <button class="cond-select-btn" onclick="setAbilityCondition('絶好調')">絶好調</button>
-                </div>
-                <input id="saCondition" type="hidden">
+            <!-- ▼▼ スキル編集フォーム ▼▼ -->
+            <div id="skillAdminForm" style="display:block;">
+                <h4 style="margin-top:0; color:var(--skill);">スキルデータ編集</h4>
                 
-                <label style="font-size:0.7rem; color:var(--ability); display:block; margin-top:10px;">対象パラメータ (これら全てに数値が加算されます)</label>
-                <div id="saParamChecks" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(85px, 1fr)); gap:5px; margin-top:5px; background:#1e293b; padding:10px; border-radius:4px;"></div>
-
-                <div style="margin-top:5px; font-size:0.7rem; color:#ccc;">
-                    ※数値はレアリティに応じて自動計算されます (虹:38~75, 金:32~63, 銀:30~60, 銅:23~45)
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:0.75rem; color:#94a3b8;">スキル名称</label>
+                    <input id="saName" placeholder="名称 (例: 一撃必殺)" style="margin-top:2px;">
                 </div>
-            </div>
 
-            <div id="skillEditorArea" style="display:none; border-top:1px dashed #444; padding-top:10px; margin-top:10px;">
-                <label style="font-size:0.7rem; color:var(--skill);">種類</label>
-                <select id="saSkillType" style="margin-bottom:5px;">
-                    <option value="">-- 選択してください --</option>
-                    <option>ダイレクトシュート</option><option>ヘディングシュート</option><option>直接FK</option>
-                    <option>ロングシュート</option><option>トラップ</option><option>シュート</option><option>ドリブル</option>
-                    <option>ロングパス</option><option>ショートパス</option><option>パス</option>
-                    <option>パスを届けるFK</option><option>クロス</option><option>コンタクト</option>
-                    <option>タックル</option><option>パスカット</option><option>GKセーブ</option>
-                </select>
-
-                <label style="font-size:0.7rem; color:var(--skill); display:block; margin-top:5px;">効果パラメータ (Lv1〜Lv5)</label>
-                <div class="param-header">
-                    <div>対象</div><div>Lv1</div><div>Lv2</div><div>Lv3</div><div>Lv4</div><div>Lv5</div><div></div>
+                <!-- レアリティ選択 -->
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:0.75rem; color:#94a3b8; display:block; margin-bottom:4px;">レアリティ</label>
+                    <div class="sim-mode-group" id="saRarityBtnGroup">
+                        <button class="sim-mode-btn sa-btn-chip" data-group="saRarity" data-val="Rainbow" onclick="selectSaBtnChip(this)" style="color:#ec4899;">虹 (Rainbow)</button>
+                        <button class="sim-mode-btn sa-btn-chip active" data-group="saRarity" data-val="Gold" onclick="selectSaBtnChip(this)" style="color:#fbbf24;">金 (Gold)</button>
+                        <button class="sim-mode-btn sa-btn-chip" data-group="saRarity" data-val="Silver" onclick="selectSaBtnChip(this)" style="color:#cbd5e1;">銀 (Silver)</button>
+                        <button class="sim-mode-btn sa-btn-chip" data-group="saRarity" data-val="Bronze" onclick="selectSaBtnChip(this)" style="color:#d97706;">銅 (Bronze)</button>
+                    </div>
                 </div>
-                <div id="saParamRows"></div>
-                <button class="btn btn-sm" onclick="addSkillParamRow()">+ パラメータ追加</button>
+
+                <!-- 1. フォーメーション条件 -->
+                <div class="filter-group">
+                    <div class="filter-group-title">1. フォーメーション条件 (表示: ○○が存在)</div>
+                    <div style="font-size:0.7rem; color:#64748b; margin-bottom:4px;">使用フォーメーションに必要なポジションを選択（複数指定可）</div>
+                    <div class="pos-grid" id="saFormationPosGroup">
+                        <div class="pos-chip sa-btn-chip" data-group="saFormPos" data-val="CF" onclick="toggleSaBtnChipMulti(this)">CF</div>
+                        <div class="pos-chip sa-btn-chip" data-group="saFormPos" data-val="AM" onclick="toggleSaBtnChipMulti(this)">AM</div>
+                        <div class="pos-chip sa-btn-chip" data-group="saFormPos" data-val="WM" onclick="toggleSaBtnChipMulti(this)">WM</div>
+                        <div class="pos-chip sa-btn-chip" data-group="saFormPos" data-val="WF" onclick="toggleSaBtnChipMulti(this)">WF</div>
+                        <div class="pos-chip sa-btn-chip" data-group="saFormPos" data-val="DM" onclick="toggleSaBtnChipMulti(this)">DM</div>
+                        <div class="pos-chip sa-btn-chip" data-group="saFormPos" data-val="FB" onclick="toggleSaBtnChipMulti(this)">FB</div>
+                        <div class="pos-chip sa-btn-chip" data-group="saFormPos" data-val="CB" onclick="toggleSaBtnChipMulti(this)">CB</div>
+                        <div class="pos-chip sa-btn-chip" data-group="saFormPos" data-val="GK" onclick="toggleSaBtnChipMulti(this)">GK</div>
+                    </div>
+                </div>
+
+                <!-- 2. 発動エリア -->
+                <div class="filter-group">
+                    <div class="filter-group-title">2. 発動エリア (9分割エリア)</div>
+                    <div class="area-grid" id="saAreaGrid" style="margin:5px 0;"></div>
+                </div>
+
+                <!-- 3. 発動条件 -->
+                <div class="filter-group">
+                    <div class="filter-group-title">3. 発動条件</div>
+                    
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:4px;">① スキル種類 (skill_type)</label>
+                    <div class="filter-chips" id="saSkillTypeBtnGroup" style="margin-bottom:10px;"></div>
+
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:4px;">② シチュエーション (状況)</label>
+                    <div class="filter-chips" id="saSituationBtnGroup" style="margin-bottom:6px;">
+                        <button class="btn btn-sm sa-btn-chip active" data-group="saSituation" data-val="" onclick="selectSaBtnChip(this)">なし (指定なし)</button>
+                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="パスを受けた直後" onclick="selectSaBtnChip(this)">パスを受けた直後</button>
+                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="ルーズボールに対して" onclick="selectSaBtnChip(this)">ルーズボールに対して</button>
+                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="指定のパスターゲットに向けて" onclick="selectSaBtnChip(this)">指定のパスターゲットに向けて</button>
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" id="saCustomSituationInput" placeholder="カスタムシチュエーションを入力..." style="font-size:0.75rem; padding:4px;">
+                        <button class="btn btn-sm btn-primary" style="width:auto; white-space:nowrap;" onclick="addCustomSituationCandidate()">候補追加</button>
+                    </div>
+                </div>
+
+                <!-- 4. 効果 -->
+                <div class="filter-group">
+                    <div class="filter-group-title">4. 効果 (パラメータ & 追加効果)</div>
+                    
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">① 上昇パラメータ (Lv1〜Lv5)</label>
+                    <div class="param-header">
+                        <div>対象</div><div>Lv1</div><div>Lv2</div><div>Lv3</div><div>Lv4</div><div>Lv5</div><div></div>
+                    </div>
+                    <div id="saParamRows"></div>
+                    <button class="btn btn-sm" onclick="addSkillParamRow()" style="margin-bottom:12px; margin-top:4px; background:#334155;">+ パラメータ追加</button>
+
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:4px;">② 追加効果 (表示: 誘発：○○)</label>
+                    <div class="filter-chips" id="saAddEffectBtnGroup"></div>
+                </div>
+
+                <!-- 5. パスターゲット -->
+                <div class="filter-group">
+                    <div class="filter-group-title">5. パスターゲット</div>
+                    
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:4px;">① ターゲット指定タイプ</label>
+                    <div class="sim-mode-group" style="margin-bottom:8px;">
+                        <button class="sim-mode-btn active" id="btnPassTargetModeNone" onclick="setPassTargetMode('none')">なし</button>
+                        <button class="sim-mode-btn" id="btnPassTargetModePos" onclick="setPassTargetMode('pos')">ポジション指定</button>
+                        <button class="sim-mode-btn" id="btnPassTargetModeArea" onclick="setPassTargetMode('area')">エリア指定(9分割)</button>
+                    </div>
+
+                    <!-- ポジション指定時のエリア -->
+                    <div id="passTargetPosArea" style="display:none; margin-bottom:8px;">
+                        <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">指定ポジション</label>
+                        <div class="pos-grid" id="saPassTargetPosGroup">
+                            <div class="pos-chip sa-btn-chip" data-group="saPassPos" data-val="CF" onclick="toggleSaBtnChipMulti(this)">CF</div>
+                            <div class="pos-chip sa-btn-chip" data-group="saPassPos" data-val="AM" onclick="toggleSaBtnChipMulti(this)">AM</div>
+                            <div class="pos-chip sa-btn-chip" data-group="saPassPos" data-val="WM" onclick="toggleSaBtnChipMulti(this)">WM</div>
+                            <div class="pos-chip sa-btn-chip" data-group="saPassPos" data-val="WF" onclick="toggleSaBtnChipMulti(this)">WF</div>
+                            <div class="pos-chip sa-btn-chip" data-group="saPassPos" data-val="DM" onclick="toggleSaBtnChipMulti(this)">DM</div>
+                            <div class="pos-chip sa-btn-chip" data-group="saPassPos" data-val="FB" onclick="toggleSaBtnChipMulti(this)">FB</div>
+                            <div class="pos-chip sa-btn-chip" data-group="saPassPos" data-val="CB" onclick="toggleSaBtnChipMulti(this)">CB</div>
+                            <div class="pos-chip sa-btn-chip" data-group="saPassPos" data-val="GK" onclick="toggleSaBtnChipMulti(this)">GK</div>
+                        </div>
+                    </div>
+
+                    <!-- エリア指定時のエリア -->
+                    <div id="passTargetGridArea" style="display:none; margin-bottom:8px;">
+                        <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">ターゲットエリア (9分割)</label>
+                        <div class="area-grid" id="saPassTargetGrid"></div>
+                    </div>
+
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:4px;">② 優先スキル (表示: 優先：○○スキル所持)</label>
+                    <div class="filter-chips" id="saPassPrioritySkillGroup"></div>
+                </div>
 
                 <div style="margin-top:10px;">
-                    <label style="font-size:0.7rem;">発動エリア</label>
-                    <div class="area-grid" id="saAreaGrid"></div>
+                    <label style="font-size:0.7rem; color:#64748b;">既存データの備考メモ (新規入力停止)</label>
+                    <input id="saNote" placeholder="備考 (既存データ表示専用)" readonly style="opacity:0.6; background:#0f172a;">
                 </div>
-                
-                <input id="saNote" placeholder="備考 (発動条件など)" style="margin-top:10px;">
             </div>
 
-            <div id="saTargetsLegacy" style="display:none; margin-top:10px; opacity:0.5;">
-                <label style="font-size:0.7rem;">(旧)効果対象タグ</label>
-                <div id="saTargets" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:5px;"></div>
+            <!-- ▼▼ アビリティ編集フォーム ▼▼ -->
+            <div id="abilityAdminForm" style="display:none;">
+                <h4 style="margin-top:0; color:var(--ability);">アビリティデータ編集</h4>
+                
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:0.75rem; color:#94a3b8;">アビリティ名称</label>
+                    <input id="saAbilityNameInput" placeholder="名称 (例: 精緻な指揮者)" style="margin-top:2px;">
+                </div>
+
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:0.75rem; color:#94a3b8; display:block; margin-bottom:4px;">レアリティ</label>
+                    <div class="sim-mode-group" id="saAbilityRarityBtnGroup">
+                        <button class="sim-mode-btn sa-btn-chip" data-group="saAbilityRarity" data-val="Rainbow" onclick="selectSaBtnChip(this)" style="color:#ec4899;">虹 (Rainbow)</button>
+                        <button class="sim-mode-btn sa-btn-chip active" data-group="saAbilityRarity" data-val="Gold" onclick="selectSaBtnChip(this)" style="color:#fbbf24;">金 (Gold)</button>
+                        <button class="sim-mode-btn sa-btn-chip" data-group="saAbilityRarity" data-val="Silver" onclick="selectSaBtnChip(this)" style="color:#cbd5e1;">銀 (Silver)</button>
+                        <button class="sim-mode-btn sa-btn-chip" data-group="saAbilityRarity" data-val="Bronze" onclick="selectSaBtnChip(this)" style="color:#d97706;">銅 (Bronze)</button>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-group-title">発動条件</div>
+                    <div class="cond-btn-group">
+                        <button class="cond-select-btn" onclick="setAbilityCondition('途中出場')">途中出場</button>
+                        <button class="cond-select-btn" onclick="setAbilityCondition('好調以上')">好調以上</button>
+                        <button class="cond-select-btn" onclick="setAbilityCondition('絶好調')">絶好調</button>
+                    </div>
+                    <input id="saCondition" type="hidden">
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-group-title">対象パラメータ</div>
+                    <div id="saParamChecks" class="filter-grid-params"></div>
+                    <div style="margin-top:5px; font-size:0.7rem; color:#ccc;">
+                        ※数値はレアリティに応じて自動計算されます (虹:38~75, 金:32~63, 銀:30~60, 銅:23~45)
+                    </div>
+                </div>
             </div>
 
             <button class="btn btn-accent" style="margin-top:15px;" onclick="saveSA()">保存</button>
@@ -1065,6 +1165,19 @@
         <div class="modal-footer">
             <button class="btn" style="background:#444;" onclick="resetSaDetailFilter()">クリア</button>
             <button class="btn btn-primary" onclick="applySaDetailFilter()">決定</button>
+        </div>
+    </div>
+</div>
+
+<!-- スキルパラメータ選択ポップアップモーダル -->
+<div id="skillParamSelectModal" class="modal-overlay" style="display:none; z-index:2600;">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h4>上昇パラメータを選択</h4>
+            <button class="btn-close" onclick="closeParamSelectDialog()">×</button>
+        </div>
+        <div class="modal-body" style="padding:15px;">
+            <div class="filter-grid-params" id="saParamSelectGrid"></div>
         </div>
     </div>
 </div>

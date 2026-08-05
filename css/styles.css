@@ -2025,3 +2025,22 @@ input:disabled + .toggle-slider {
     background: transparent !important;
     transition: flex 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* 管理画面 スキル編集用ボタンチップ */
+.sa-btn-chip {
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.sa-btn-chip.active {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+    font-weight: bold;
+    box-shadow: 0 0 6px rgba(0, 242, 255, 0.4);
+}

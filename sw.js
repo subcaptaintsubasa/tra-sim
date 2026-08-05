@@ -22,7 +22,7 @@ messaging.onBackgroundMessage(function(payload) {
   // 通常はFirebaseコンソールからの送信時に自動で適用されます。
 });
 
-const CACHE_NAME = 'tra-sim-v2.8.5'; // 更新時はここを変更すると確実です
+const CACHE_NAME = 'tra-sim-v2.8.9'; // 更新時はここを変更すると確実です
 const ASSETS = [
   './',
   './index.html',

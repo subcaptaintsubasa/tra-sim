@@ -289,18 +289,24 @@ async function batchRegisterCards() {
     } 
 }
 
-// --- スキル/アビリティ保存 (連動更新機能付き) ---
+// --- 【書き換え対象】window.saveSA ---
 window.saveSA = async () => { 
-    const type = document.getElementById('saType').value;
-    const newName = document.getElementById('saName').value; 
-    const newRarity = document.getElementById('saRarity').value;
+    const type = currentAdminSaTab || 'skill';
     
+    let newName = '';
+    let newRarity = 'Gold';
+    
+    if (type === 'skill') {
+        newName = document.getElementById('saName').value.trim();
+        newRarity = getSaBtnChipVal('saRarity') || 'Gold';
+    } else {
+        newName = document.getElementById('saAbilityNameInput').value.trim();
+        newRarity = getSaBtnChipVal('saAbilityRarity') || 'Gold';
+    }
+
     const editor = document.getElementById('saEditor');
     const originalName = editor.dataset.originalName;
-    let originalRarity = editor.dataset.originalRarity;
-    if (!originalRarity || originalRarity === "undefined" || originalRarity === "null") {
-        originalRarity = "";
-    }
+    let originalRarity = editor.dataset.originalRarity || "";
 
     const isEditMode = editor.dataset.isEditMode === "true";
 
@@ -313,22 +319,55 @@ window.saveSA = async () => {
         const fileName = (type === 'skill') ? 'skills.json' : 'abilities.json';
 
         const data = { name: newName, rarity: newRarity }; 
+        
         if(type === 'skill'){ 
-            data.skill_type = document.getElementById('saSkillType').value;
-            data.note = document.getElementById('saNote').value;
-            data.area = Array.from(document.querySelectorAll('.area-cell')).map(c => c.classList.contains('active') ? 1 : 0); 
+            // 1. フォーメーション条件 (配列)
+            data.formation_condition = getSaBtnChipMultiVals('saFormPos');
+            
+            // 2. 発動エリア
+            data.area = Array.from(document.querySelectorAll('#saAreaGrid .area-cell')).map(c => c.classList.contains('active') ? 1 : 0); 
+            
+            // 3. 発動条件
+            data.skill_type = getSaBtnChipVal('saSkillType');
+            data.situation = getSaBtnChipMultiVals('saSituation'); // 複数取得
+
+            // 4. 効果
             const params = [];
-            document.querySelectorAll('.param-input-group').forEach(grp => {
-                const stat = grp.querySelector('select').value;
-                const inputs = grp.querySelectorAll('input');
+            document.querySelectorAll('#saParamRows .param-input-group').forEach(grp => {
+                const triggerBtn = grp.querySelector('.param-select-trigger');
+                const stat = triggerBtn ? triggerBtn.dataset.stat : '';
+                const inputs = grp.querySelectorAll('input[type="number"]');
                 const vals = Array.from(inputs).map(inp => parseFloat(inp.value)||0);
-                if (stat) params.push({ stat: stat, values: vals });
+                if (stat && stat !== 'undefined') params.push({ stat: stat, values: vals });
             });
             data.params = params;
+            data.additional_effect = getSaBtnChipMultiVals('saAddEffect'); // 複数取得
+
+            // 5. パスターゲット
+            const ptMode = currentPassTargetMode || 'none';
+            if (ptMode !== 'none') {
+                data.pass_target = {};
+                if (ptMode === 'pos') {
+                    data.pass_target.pos = getSaBtnChipMultiVals('saPassPos');
+                } else if (ptMode === 'area') {
+                    data.pass_target.area = Array.from(document.querySelectorAll('#saPassTargetGrid .area-cell')).map(c => c.classList.contains('active') ? 1 : 0);
+                }
+                const prioritySkills = getSaBtnChipMultiVals('saPassPriority'); // 複数取得
+                if (prioritySkills.length > 0) data.pass_target.priority_skill_type = prioritySkills;
+            } else {
+                const prioritySkills = getSaBtnChipMultiVals('saPassPriority'); // 複数取得
+                if (prioritySkills.length > 0) {
+                    data.pass_target = { priority_skill_type: prioritySkills };
+                }
+            }
+
+            data.note = document.getElementById('saNote').value;
+
         } else { 
+            // Ability
             data.condition = document.getElementById('saCondition').value; 
             const targets = [];
-            document.querySelectorAll('.sa-param-check:checked').forEach(c => targets.push(c.value));
+            document.querySelectorAll('input[name="sa_ability_param"]:checked').forEach(c => targets.push(c.value));
             data.targets = targets;
         }
 
@@ -338,7 +377,6 @@ window.saveSA = async () => {
             return item.name === name && itemR === targetR;
         };
 
-        // ★ GitHub API から最新のデータを取得してマージ
         const token = localStorage.getItem('gh_token');
         const repo = localStorage.getItem('gh_repo');
         let targetDB = (type === 'skill') ? skillsDB : abilitiesDB;
@@ -367,59 +405,11 @@ window.saveSA = async () => {
 
         await pushToGH(fileName, targetDB, `Update ${type}: ${newName} (${newRarity})`);
 
-        const hasKeyChanged = (originalName !== newName) || (originalRarity !== newRarity);
-        
-        if (isEditMode && hasKeyChanged && 
-            confirm(`この${type}を持っているカードのデータも自動更新しますか？\n(対象: ${originalName})`)) {
-            
-            let updatedCardCount = 0;
-            
-            // cardsDBも最新を取得
-            if (token && repo) {
-                const urlCards = `https://api.github.com/repos/${repo}/contents/data/cards.json`;
-                const gc = await fetch(urlCards, { 
-                    headers: { 'Authorization': `token ${token}` },
-                    cache: 'no-store'
-                });
-                if (gc.ok) {
-                    const resJsonCards = await gc.json();
-                    const contentStrCards = decodeURIComponent(escape(atob(resJsonCards.content)));
-                    cardsDB = JSON.parse(contentStrCards);
-                }
-            }
-
-            cardsDB.forEach(card => {
-                if (!card.abilities) return;
-                let cardChanged = false;
-                
-                card.abilities = card.abilities.map(ab => {
-                    const currentName = (typeof ab === 'string') ? ab : ab.name;
-                    const currentRarity = (typeof ab === 'string') ? "" : (ab.rarity || "");
-                    
-                    if (currentName === originalName && currentRarity === originalRarity) {
-                        cardChanged = true;
-                        return { name: newName, rarity: newRarity };
-                    }
-                    return ab;
-                });
-
-                if (cardChanged) updatedCardCount++;
-            });
-
-            if (updatedCardCount > 0) {
-                await pushToGH('cards.json', cardsDB, `Cascading update: ${newName}`);
-                alert(`保存完了しました。\n関連するカード ${updatedCardCount}枚 の情報も更新しました。`);
-            } else {
-                alert("保存完了しました。(関連カードなし)");
-            }
-        } else {
-            alert("保存完了しました。");
-        }
-
         editor.dataset.isEditMode = "false";
         delete editor.dataset.originalName;
         delete editor.dataset.originalRarity;
         
+        alert("保存完了しました。");
         renderSAList();
         updateAutoComplete();
 
@@ -427,7 +417,7 @@ window.saveSA = async () => {
         console.error(e);
         alert("エラーが発生しました: " + e.message);
     } finally {
-        if(btn) { btn.disabled = false; btn.innerHTML = "保存"; }
+        if(btn) { btn.disabled = false; btn.innerText = "保存"; }
     }
 };
 
