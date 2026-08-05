@@ -3698,7 +3698,12 @@
     "bonus_type": "攻撃的FB",
     "bonus_value": 50,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "即興の起点",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "ショートパス": 3,
       "突破力": 5.5,
