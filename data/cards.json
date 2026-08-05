@@ -3669,7 +3669,12 @@
     "bonus_type": "ハードマーカー",
     "bonus_value": 45,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "強奪者",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "タックル": 2,
       "ロングパス": 4.3,
