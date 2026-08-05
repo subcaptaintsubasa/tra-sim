@@ -3607,7 +3607,12 @@
     "bonus_type": "ラインブレーカー",
     "bonus_value": 15,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "時を止める斬撃",
+        "rarity": "Rainbow"
+      }
+    ],
     "stats": {
       "決定力": 4.2,
       "突破力": 3.3,
