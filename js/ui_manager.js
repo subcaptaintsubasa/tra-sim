@@ -1893,21 +1893,27 @@ window.openSaModal = (name, rarity = null, level = 1) => {
     if (isSkill) {
         // 1. フォーメーション条件
         if (target.formation_condition && target.formation_condition.length > 0) {
-            html += `<div style="font-size:0.75rem; color:#fbbf24; margin-bottom:6px;"><i class="fa-solid fa-users"></i> ${target.formation_condition.join('/')}が存在</div>`;
+            html += `<div style="margin-bottom:8px;">
+                <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">【フォーメーション条件】</label>
+                <div style="font-size:0.8rem; color:#fbbf24; font-weight:bold;"><i class="fa-solid fa-users"></i> ${target.formation_condition.join('/')}が存在</div>
+            </div>`;
         }
 
-        // 2. 発動条件タグ (種類 + 複数シチュエーション)
-        html += `<div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">`;
-        if (target.skill_type) html += `<span class="tag tag-skill">${target.skill_type}</span>`;
-        
+        // 2. 発動条件
         const situations = Array.isArray(target.situation) ? target.situation : (target.situation ? [target.situation] : []);
+        html += `<div style="margin-bottom:8px;">
+            <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">【発動条件】</label>
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">`;
+        if (target.skill_type) html += `<span class="tag tag-skill">${target.skill_type}</span>`;
         situations.forEach(st => {
             html += `<span class="tag" style="background:#334155; color:#fff;">${st}</span>`;
         });
-        html += `</div>`;
+        html += `</div></div>`;
 
-        // 3. 上昇パラメータ
-        html += `<div class="card-box" style="margin-bottom:8px;">`;
+        // 3. 効果
+        html += `<div style="margin-bottom:8px;">
+            <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">【効果】</label>
+            <div class="card-box" style="margin-bottom:0;">`;
         if (target.params && target.params.length > 0) {
             target.params.forEach(p => {
                 const val = p.values[skillLv - 1] !== undefined ? p.values[skillLv - 1] : (p.values[0] || 0);
@@ -1919,15 +1925,15 @@ window.openSaModal = (name, rarity = null, level = 1) => {
             });
         }
         
-        // 4. 追加効果 (複数誘発)
+        // 追加効果 (複数誘発)
         const addEffects = Array.isArray(target.additional_effect) ? target.additional_effect : (target.additional_effect ? [target.additional_effect] : []);
         if (addEffects.length > 0) {
             const addStr = addEffects.map(e => `誘発：${e}`).join(' / ');
             html += `<div style="margin-top:6px; border-top:1px dashed #444; padding-top:4px; font-size:0.8rem; color:var(--primary); font-weight:bold;">${addStr}</div>`;
         }
-        html += `</div>`;
+        html += `</div></div>`;
 
-        // 5. パスターゲット
+        // 4. パスターゲット (テキスト情報)
         if (target.pass_target) {
             let ptText = '';
             if (target.pass_target.pos && target.pass_target.pos.length > 0) {
@@ -1940,16 +1946,33 @@ window.openSaModal = (name, rarity = null, level = 1) => {
                 ptText += `優先：${priorities.join('・')}スキル所持`;
             }
             if (ptText) {
-                html += `<div class="card-box" style="margin-bottom:8px; font-size:0.75rem; color:#a78bfa;"><i class="fa-solid fa-location-crosshairs"></i> ${ptText}</div>`;
+                html += `<div style="margin-bottom:8px;">
+                    <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">【パスターゲット】</label>
+                    <div class="card-box" style="margin-bottom:0; font-size:0.75rem; color:#a78bfa;">
+                        <div><i class="fa-solid fa-location-crosshairs"></i> ${ptText}</div>
+                    </div>
+                </div>`;
             }
         }
 
-        if (target.note) html += `<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px;">${target.note}</div>`;
+        // 5. 発動エリア ＆ パスターゲットエリア 統合グリッド
+        const hasArea = !!target.area;
+        const hasPassArea = !!(target.pass_target && target.pass_target.area);
 
-        if (target.area) {
+        if (hasArea || hasPassArea) {
             html += `<div style="text-align:center; margin-top:10px;">
-                <label style="font-size:0.7rem; color:#94a3b8;">発動エリア</label>
-                <div class="area-grid" id="saModalAreaGridRender" style="margin:5px auto;"></div>
+                <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:4px;">【対象エリア】</label>
+                <div class="area-grid" id="saModalAreaGridRender" style="margin:0 auto;"></div>
+                
+                <!-- 凡例 (レジェンド) -->
+                <div style="display:flex; justify-content:center; align-items:center; gap:12px; font-size:0.65rem; color:#ccc; margin-top:6px;">
+                    <span style="display:inline-flex; align-items:center; gap:3px;">
+                        <span style="width:10px; height:10px; background:#fbbf24; border-radius:2px; display:inline-block;"></span> 発動エリア
+                    </span>
+                    <span style="display:inline-flex; align-items:center; gap:3px;">
+                        <i class="fa-solid fa-bullseye" style="color:#ef4444; font-size:0.8rem;"></i> パスターゲット
+                    </span>
+                </div>
             </div>`;
         }
 
@@ -1957,36 +1980,61 @@ window.openSaModal = (name, rarity = null, level = 1) => {
         // ABILITY
         const condition = target.condition || 'なし';
         html += `
-        <div class="card-box" style="margin-bottom:10px; background:rgba(167, 139, 250, 0.1); border-color:var(--ability);">
-            <label style="font-size:0.7rem; color:var(--ability);">発動条件</label>
-            <div style="font-weight:bold; font-size:0.9rem;">${condition}</div>
+        <div style="margin-bottom:8px;">
+            <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">【発動条件】</label>
+            <div class="card-box" style="margin-bottom:0; background:rgba(167, 139, 250, 0.1); border-color:var(--ability);">
+                <div style="font-weight:bold; font-size:0.9rem; color:var(--ability);">${condition}</div>
+            </div>
         </div>`;
 
         const table = ABILITY_GROWTH_TABLE[itemRarity] || ABILITY_GROWTH_TABLE["Gold"];
         const val = table[skillLv - 1];
 
-        html += `<div class="card-box"><label style="font-size:0.7rem; color:#94a3b8; margin-bottom:5px; display:block;">効果パラメータ</label>`;
+        html += `<div>
+            <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:2px;">【効果】</label>
+            <div class="card-box">`;
         if (target.targets && target.targets.length > 0) {
             target.targets.forEach(t => {
                 html += `<div class="sa-modal-param-row"><span style="color:#ccc;">${t}</span><span class="sa-modal-val">+${val}</span></div>`;
             });
         }
-        html += `</div>`;
+        html += `</div></div>`;
     }
 
     body.innerHTML = html;
 
-    if (isSkill && target.area) {
-        setTimeout(() => {
+    // グリッド描画 (発動エリア:黄色塗りつぶし / パスターゲット:赤い的マーク)
+    setTimeout(() => {
+        if (isSkill && (target.area || (target.pass_target && target.pass_target.area))) {
             const grid = document.getElementById('saModalAreaGridRender');
             if (grid) {
                 grid.innerHTML = '';
-                target.area.forEach(isActive => {
-                    grid.innerHTML += `<div class="area-cell ${isActive ? 'active' : ''}"></div>`;
-                });
+                for (let i = 0; i < 9; i++) {
+                    const isArea = !!(target.area && target.area[i] === 1);
+                    const isPassArea = !!(target.pass_target && target.pass_target.area && target.pass_target.area[i] === 1);
+                    
+                    const cell = document.createElement('div');
+                    cell.className = 'area-cell';
+                    cell.style.display = 'flex';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                    
+                    if (isArea) {
+                        cell.style.background = '#fbbf24'; // 発動エリア: 黄色塗りつぶし
+                        cell.style.border = '1px solid #fff';
+                    }
+                    
+                    if (isPassArea) {
+                        // パスターゲット: 赤色の的アイコン
+                        cell.innerHTML = `<i class="fa-solid fa-bullseye" style="color:#ef4444; font-size:1.1rem; filter:drop-shadow(0 0 2px #000);"></i>`;
+                    }
+                    
+                    grid.appendChild(cell);
+                }
             }
-        }, 0);
-    }
+        }
+    }, 0);
+
     modal.style.display = 'flex';
 };
 

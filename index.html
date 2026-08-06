@@ -486,10 +486,9 @@
 
                     <label style="font-size:0.7rem; color:#94a3b8; display:block; margin-bottom:4px;">② シチュエーション (状況)</label>
                     <div class="filter-chips" id="saSituationBtnGroup" style="margin-bottom:6px;">
-                        <button class="btn btn-sm sa-btn-chip active" data-group="saSituation" data-val="" onclick="selectSaBtnChip(this)">なし (指定なし)</button>
-                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="パスを受けた直後" onclick="selectSaBtnChip(this)">パスを受けた直後</button>
-                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="ルーズボールに対して" onclick="selectSaBtnChip(this)">ルーズボールに対して</button>
-                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="指定のパスターゲットに向けて" onclick="selectSaBtnChip(this)">指定のパスターゲットに向けて</button>
+                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="パスを受けた直後" onclick="toggleSaBtnChipMulti(this)">パスを受けた直後</button>
+                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="ルーズボールに対して" onclick="toggleSaBtnChipMulti(this)">ルーズボールに対して</button>
+                        <button class="btn btn-sm sa-btn-chip" data-group="saSituation" data-val="指定のパスターゲットに向けて" onclick="toggleSaBtnChipMulti(this)">指定のパスターゲットに向けて</button>
                     </div>
                     <div style="display:flex; gap:5px;">
                         <input type="text" id="saCustomSituationInput" placeholder="カスタムシチュエーションを入力..." style="font-size:0.75rem; padding:4px;">
