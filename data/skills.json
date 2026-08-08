@@ -1,54 +1,5 @@
 [
   {
-    "name": "楔のパス",
-    "rarity": "Bronze",
-    "skill_type": "パス",
-    "note": "CFに当てる",
-    "area": [
-      0,
-      0,
-      0,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1
-    ],
-    "params": [
-      {
-        "stat": "ロングパス",
-        "values": [
-          7,
-          7,
-          8,
-          8,
-          9
-        ]
-      },
-      {
-        "stat": "キック精度",
-        "values": [
-          7,
-          7,
-          8,
-          8,
-          9
-        ]
-      },
-      {
-        "stat": "ショートパス",
-        "values": [
-          7,
-          7,
-          8,
-          8,
-          9
-        ]
-      }
-    ]
-  },
-  {
     "name": "インビンシブルフィード",
     "rarity": "Gold",
     "skill_type": "ロングパス",
@@ -1394,5 +1345,74 @@
     ],
     "additional_effect": [],
     "note": ""
+  },
+  {
+    "name": "楔のパス",
+    "rarity": "Bronze",
+    "formation_condition": [
+      "CF",
+      "AM"
+    ],
+    "area": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "skill_type": "パス",
+    "situation": [
+      "指定のパスターゲットに向けて"
+    ],
+    "params": [
+      {
+        "stat": "ロングパス",
+        "values": [
+          7,
+          7,
+          8,
+          8,
+          9
+        ]
+      },
+      {
+        "stat": "キック精度",
+        "values": [
+          7,
+          7,
+          8,
+          8,
+          9
+        ]
+      },
+      {
+        "stat": "ショートパス",
+        "values": [
+          7,
+          7,
+          8,
+          8,
+          9
+        ]
+      }
+    ],
+    "additional_effect": [
+      "ショートパス"
+    ],
+    "pass_target": {
+      "pos": [
+        "CF",
+        "AM"
+      ],
+      "priority_skill_type": [
+        "ドリブル",
+        "ショートパス"
+      ]
+    },
+    "note": "CFに当てる"
   }
 ]
