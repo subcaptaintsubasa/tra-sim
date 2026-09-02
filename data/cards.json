@@ -3843,11 +3843,11 @@
     "bonuses": [
       {
         "type": "守備的FB",
-        "value": 28
+        "value": 50
       }
     ],
     "bonus_type": "守備的FB",
-    "bonus_value": 28,
+    "bonus_value": 50,
     "special_effects": [],
     "abilities": [
       {
