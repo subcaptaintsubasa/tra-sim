@@ -1628,5 +1628,49 @@
     ],
     "additional_effect": [],
     "note": ""
+  },
+  {
+    "name": "心眼",
+    "rarity": "Gold",
+    "formation_condition": [],
+    "area": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "skill_type": "トラップ",
+    "situation": [],
+    "params": [
+      {
+        "stat": "ボールタッチ",
+        "values": [
+          8,
+          8.5,
+          9,
+          9.5,
+          10
+        ]
+      },
+      {
+        "stat": "ショートパス",
+        "values": [
+          8,
+          8.5,
+          9,
+          9.5,
+          10
+        ]
+      }
+    ],
+    "additional_effect": [
+      "ショートパス"
+    ],
+    "note": ""
   }
 ]
