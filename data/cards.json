@@ -3936,5 +3936,37 @@
       "冷静さ": 2.7,
       "スタミナ": 0.2
     }
+  },
+  {
+    "title": "【ピザーラ】",
+    "name": "肉2倍盛り！プルコギ",
+    "rarity": "SSR",
+    "positions": [
+      "CB"
+    ],
+    "play_style": "組立CB",
+    "bonuses": [
+      {
+        "type": "組立CB",
+        "value": 40
+      }
+    ],
+    "bonus_type": "組立CB",
+    "bonus_value": 40,
+    "special_effects": [
+      {
+        "type": "覚醒Pt",
+        "value": 500
+      }
+    ],
+    "abilities": [],
+    "stats": {
+      "ショートパス": 1.7,
+      "ジャンプ": 3.7,
+      "ロングパス": 1.7,
+      "コンタクト": 4.7,
+      "キック精度": 1.7,
+      "マーク": 2.5
+    }
   }
 ]
