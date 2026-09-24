@@ -1933,5 +1933,62 @@
       ]
     },
     "note": ""
+  },
+  {
+    "name": "テリチキクロス",
+    "rarity": "Bronze",
+    "formation_condition": [
+      "CF",
+      "AM",
+      "WF"
+    ],
+    "area": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "skill_type": "ロングパス",
+    "situation": [
+      "指定のパスターゲットに向けて"
+    ],
+    "params": [
+      {
+        "stat": "ロングパス",
+        "values": [
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      {
+        "stat": "キック精度",
+        "values": [
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      }
+    ],
+    "additional_effect": [
+      "シュート"
+    ],
+    "pass_target": {
+      "pos": [
+        "CF",
+        "AM",
+        "WF"
+      ]
+    },
+    "note": ""
   }
 ]
