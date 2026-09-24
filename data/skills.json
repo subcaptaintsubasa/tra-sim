@@ -1874,5 +1874,64 @@
     ],
     "additional_effect": [],
     "note": ""
+  },
+  {
+    "name": "ボールをお届け！",
+    "rarity": "Bronze",
+    "formation_condition": [],
+    "area": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1
+    ],
+    "skill_type": "ショートパス",
+    "situation": [
+      "指定のパスターゲットに向けて"
+    ],
+    "params": [
+      {
+        "stat": "ショートパス",
+        "values": [
+          28,
+          30,
+          32,
+          34,
+          36
+        ]
+      },
+      {
+        "stat": "コンタクト",
+        "values": [
+          6.5,
+          7,
+          7.5,
+          8,
+          8.5
+        ]
+      }
+    ],
+    "additional_effect": [
+      "ロングパス"
+    ],
+    "pass_target": {
+      "area": [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    "note": ""
   }
 ]
