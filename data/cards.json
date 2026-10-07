@@ -4072,11 +4072,25 @@
     "rarity": "SSR",
     "positions": [],
     "play_style": "ドリブラー",
-    "bonuses": [],
-    "bonus_type": "",
-    "bonus_value": 0,
+    "bonuses": [
+      {
+        "type": "ドリブラー",
+        "value": 35
+      }
+    ],
+    "bonus_type": "ドリブラー",
+    "bonus_value": 35,
     "special_effects": [],
     "abilities": [],
-    "stats": {}
+    "stats": {
+      "決定力": 0.2,
+      "ショートパス": 0.5,
+      "突破力": 5.3,
+      "走力": 5.8,
+      "敏捷性": 4.7,
+      "冷静さ": 0.3,
+      "ボールタッチ": 7.5,
+      "スタミナ": 2.5
+    }
   }
 ]
