@@ -4081,7 +4081,12 @@
     "bonus_type": "ドリブラー",
     "bonus_value": 35,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "予測不能",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "決定力": 0.2,
       "ショートパス": 0.5,
