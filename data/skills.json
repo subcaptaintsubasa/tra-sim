@@ -2078,5 +2078,52 @@
       "ショートパス"
     ],
     "note": ""
+  },
+  {
+    "name": "一閃の咆哮",
+    "rarity": "Gold",
+    "formation_condition": [],
+    "area": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "skill_type": "タックル",
+    "situation": [],
+    "params": [
+      {
+        "stat": "タックル",
+        "values": [
+          12,
+          12.75,
+          13.5,
+          14.25,
+          15
+        ]
+      },
+      {
+        "stat": "コンタクト",
+        "values": [
+          16,
+          17,
+          18,
+          19,
+          20
+        ]
+      }
+    ],
+    "additional_effect": [
+      "ロングパス"
+    ],
+    "pass_target": {
+      "pos": []
+    },
+    "note": ""
   }
 ]
