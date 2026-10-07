@@ -4054,7 +4054,12 @@
     "bonus_type": "ストライカー",
     "bonus_value": 15,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "上空の覇者",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "決定力": 10,
       "突破力": 0.8,
