@@ -4118,7 +4118,12 @@
     "bonus_type": "セントラルMF",
     "bonus_value": 40,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "遮断のアーチ",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "ショートパス": 0.5,
       "キック力": 4.7,
