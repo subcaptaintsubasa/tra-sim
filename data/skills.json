@@ -2034,5 +2034,49 @@
     ],
     "additional_effect": [],
     "note": ""
+  },
+  {
+    "name": "予測不能",
+    "rarity": "Gold",
+    "formation_condition": [],
+    "area": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "skill_type": "ドリブル",
+    "situation": [],
+    "params": [
+      {
+        "stat": "突破力",
+        "values": [
+          20,
+          21.25,
+          22.5,
+          23.75,
+          25
+        ]
+      },
+      {
+        "stat": "キープ力",
+        "values": [
+          20,
+          21.25,
+          22.5,
+          23.75,
+          25
+        ]
+      }
+    ],
+    "additional_effect": [
+      "ショートパス"
+    ],
+    "note": ""
   }
 ]
