@@ -4177,7 +4177,12 @@
     "bonus_type": "",
     "bonus_value": 0,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "ロングキャノン",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "決定力": 3,
       "ショートパス": 0.2,
