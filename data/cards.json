@@ -4204,7 +4204,12 @@
     "bonus_type": "",
     "bonus_value": 0,
     "special_effects": [],
-    "abilities": [],
+    "abilities": [
+      {
+        "name": "瞬刻の制圧者",
+        "rarity": "Gold"
+      }
+    ],
     "stats": {
       "ショートパス": 0.3,
       "タックル": 8.8,
