@@ -4200,9 +4200,14 @@
     "rarity": "SSR",
     "positions": [],
     "play_style": "攻撃的FB",
-    "bonuses": [],
-    "bonus_type": "",
-    "bonus_value": 0,
+    "bonuses": [
+      {
+        "type": "攻撃的FB",
+        "value": 45
+      }
+    ],
+    "bonus_type": "攻撃的FB",
+    "bonus_value": 45,
     "special_effects": [],
     "abilities": [
       {
