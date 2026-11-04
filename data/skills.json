@@ -2167,5 +2167,47 @@
     ],
     "additional_effect": [],
     "note": ""
+  },
+  {
+    "name": "ロングキャノン",
+    "rarity": "Silver",
+    "formation_condition": [],
+    "area": [
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "skill_type": "ロングシュート",
+    "situation": [],
+    "params": [
+      {
+        "stat": "決定力",
+        "values": [
+          7.5,
+          8,
+          8.5,
+          9,
+          9.5
+        ]
+      },
+      {
+        "stat": "キック力",
+        "values": [
+          15,
+          16,
+          17,
+          18,
+          19
+        ]
+      }
+    ],
+    "additional_effect": [],
+    "note": ""
   }
 ]
