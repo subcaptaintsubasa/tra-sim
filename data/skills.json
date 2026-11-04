@@ -2167,5 +2167,59 @@
     ],
     "additional_effect": [],
     "note": ""
+  },
+  {
+    "name": "奪還",
+    "rarity": "Silver",
+    "formation_condition": [],
+    "area": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "skill_type": "タックル",
+    "situation": [],
+    "params": [
+      {
+        "stat": "タックル",
+        "values": [
+          7.5,
+          8,
+          8.5,
+          9,
+          9.5
+        ]
+      },
+      {
+        "stat": "マーク",
+        "values": [
+          7.5,
+          8,
+          8.5,
+          9,
+          9.5
+        ]
+      },
+      {
+        "stat": "ショートパス",
+        "values": [
+          7.5,
+          8,
+          8.5,
+          9,
+          9.5
+        ]
+      }
+    ],
+    "additional_effect": [
+      "ショートパス"
+    ],
+    "note": ""
   }
 ]
